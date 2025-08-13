@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1755052646.25923 "c:/Users/hecto/OneDrive/Desktop/Github UTEC/proyectoIntegrador2/latex/main.tex" "main.pdf" "main" 1755052647.75132 0
+["pdflatex"] 1755052922.74489 "c:/Users/hecto/OneDrive/Desktop/Github UTEC/proyectoIntegrador2/latex/main.tex" "main.pdf" "main" 1755052924.01775 0
   "0_introduccion.tex" 1755024976 24 6ecc0162fcda78ed0176c752146fd9b9 ""
   "1_marco_teorico.tex" 1755024975 26 e6d95523e351f7eca152c6b8bb488ec7 ""
   "2_metodologia.tex" 1755026203 46 9b24980107448ef986154410dc5c5340 ""
@@ -120,10 +120,10 @@
   "C:/Users/hecto/AppData/Local/Programs/MiKTeX/tex/latex/translations/translations.sty" 1644048522 44247 2188b95d0ee74e31eca4d316263c58a7 ""
   "C:/Users/hecto/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "C:/Users/hecto/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1729265222 55384 b454dec21c2d9f45ec0b793f0995b992 ""
-  "c:/Users/hecto/OneDrive/Desktop/Github UTEC/proyectoIntegrador2/latex/main.tex" 1755051252 1494 e8d6a6728d8d11f4c314fdf6f8654a7a ""
-  "main.aux" 1755052647 2358 dbf13f04fca108396c305b4c37ac24e1 "pdflatex"
-  "main.out" 1755052647 880 531b38fadc4b982c7fb1170338f04337 "pdflatex"
-  "main.tex" 1755051252 1494 e8d6a6728d8d11f4c314fdf6f8654a7a ""
+  "c:/Users/hecto/OneDrive/Desktop/Github UTEC/proyectoIntegrador2/latex/main.tex" 1755052922 1721 7def7637706d6194e4c6dabf77a5fc66 ""
+  "main.aux" 1755052923 2358 dbf13f04fca108396c305b4c37ac24e1 "pdflatex"
+  "main.out" 1755052923 880 531b38fadc4b982c7fb1170338f04337 "pdflatex"
+  "main.tex" 1755052922 1721 7def7637706d6194e4c6dabf77a5fc66 ""
   (generated)
   "main.aux"
   "main.log"
