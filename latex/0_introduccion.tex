@@ -2,6 +2,43 @@
 \subsection{Planteamiento del problema}
 La enseñanza de robótica manipuladora en contextos educativos (escuelas, UTU, liceo y cursos introductorios universitarios) suele verse limitada por el alto costo, riesgos de seguridad y poca “apertura” de los equipos comerciales. Esto reduce la práctica real de manipulación, dificulta integrar contenidos de mecánica, electrónica y control, y hace inviable llevar equipos a giras didácticas.
 
+\subsection{Soluciones consideradas}
+A partir del planteamiento del problema, se evaluaron tres alternativas tecnológicas para el accionamiento del brazo. A continuación se presentan de forma breve sus características, ventajas y limitaciones principales.
+
+\begin{itemize}
+  \item Servomotores (MG996R): Proporciona control directo por PWM, integración sencilla con microcontroladores y velocidad adecuada para demostraciones didácticas. En comparación con MG90 (insuficientes en par), los MG996R cubren el requerimiento de carga (hasta 100\,g a 40\,cm) con una repetibilidad aceptable. Ventajas: simplicidad, menor complejidad electrónica, buena disponibilidad y costo moderado. Consideraciones: picos de corriente, holguras propias del servo y límite de torque cerca del alcance máximo.
+  
+  \item Actuadores lineales tornillo---tuerca (motor DC con reductora). Ofrecen alta fuerza y buen costo, pero el mecanismo es más lento y con menor precisión sin realimentación. Requiere instrumentación adicional (encoders o potenciómetros, finales de carrera) y control más complejo para conocer el ángulo articular. Además, el juego mecánico (backlash) y la fricción pueden degradar la repetibilidad.
+  
+  \item Actuadores lineales con asistencia hidráulica (jeringas). Mejoran la relación fuerza---peso y permiten componentes económicos, pero añaden otra capa de complejidad: menor velocidad, histéresis, posibles fugas, purgado/cebado del circuito y mantenimiento. El diseño y control (válvulas, amortiguación) incrementan el esfuerzo de ingeniería frente a los beneficios en este contexto didáctico.
+\end{itemize}
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{l c c c c}
+\toprule
+\textbf{Criterio} & \textbf{Peso} & \textbf{Servo} & \textbf{Actuador} & \textbf{Hidráulico} \\
+\midrule
+Peso        & 0.10 & 4 & 3 & 3 \\
+Velocidad   & 0.20 & 4 & 2 & 1 \\
+Simplicidad & 0.30 & 5 & 2 & 1 \\
+Precio      & 0.20 & 4 & 4 & 4 \\
+Fuerza      & 0.15 & 3 & 4 & 5 \\
+Libertad    & 0.05 & 5 & 3 & 3 \\
+\midrule
+\textbf{Total ponderado} &       & \textbf{4.20} & \textbf{2.85} & \textbf{2.50} \\
+\bottomrule
+\end{tabular}
+\caption{Matriz de selección de actuadores (1 = peor, 5 = mejor). Totales calculados con los pesos indicados.}
+\end{table}
+
+\newpage
+
+\subsubsection*{Decisión técnica}
+Se adopta la solución con \textbf{servomotores MG996R} por ofrecer el mejor equilibrio entre \emph{simplicidad}, \emph{velocidad} y \emph{libertad de movimiento}, manteniendo el \emph{costo} dentro del objetivo y una \emph{fuerza} suficiente para las tareas de \emph{pick \& place} previstas. Las otras alternativas se documentan como trabajo futuro para escenarios donde la fuerza disponible sea prioritaria sobre la velocidad o la sencillez de control.
+
+
 \subsection{Solución propuesta}
 Un brazo robótico didáctico a escala de 4 GDL con efector intercambiable: electroimán (para piezas ferromagnéticas) y garra (para piezas no magnéticas). Estructura paramétrica cortada en MDF (3.2–10 mm), tornillería estándar y electrónica de fácil reposición. Control con ESP32/ATmega328P, modos manual/automático, GUI en Python (Tkinter/PyQt), y documentación abierta para replicación.
 

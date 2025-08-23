@@ -5,7 +5,20 @@
 \usepackage{graphicx} 
 \usepackage{amssymb} 
 \usepackage{amsmath}
-\usepackage{geometry} 
+\usepackage[
+  a4paper,
+  top=25mm,
+  bottom=25mm,
+  left=25mm,
+  right=25mm,
+  includefoot,      % cuenta el pie dentro del área
+  heightrounded,    % redondea a líneas enteras (evita desbordes)
+  footskip=12mm     % separación texto–pie (ajusta si solapa)
+]{geometry}
+\usepackage{booktabs}
+% \usepackage[showframe]{geometry} % <- activalo para depurar visualmente
+\usepackage{lipsum}
+
     
 \begin{document}
 
