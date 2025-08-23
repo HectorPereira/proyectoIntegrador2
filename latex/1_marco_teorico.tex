@@ -1,2 +1,91 @@
-\section{Marco Teórico}
+\section{Fundamento técnico-conceptual}
 
+\subsection{Soluciones consideradas}
+A partir del planteamiento del problema, se evaluaron tres alternativas tecnológicas para el accionamiento del brazo. A continuación se presentan de forma breve sus características, ventajas y limitaciones principales.
+
+\begin{itemize}
+  \item \textbf{Servomotores (MG996R).} Proporcionan control directo por PWM, integración sencilla con microcontroladores y velocidad adecuada para demostraciones didácticas. En comparación con MG90 (insuficientes en par), los MG996R cubren el requerimiento de carga (hasta 100\,g a 40\,cm) con una repetibilidad aceptable.\ \emph{Detractor principal:} es la alternativa más cara dentro de las consideradas; se estimó un costo de \textbf{4 servos por \mbox{\$U~2600}} (disponibles en línea), aunque mantiene baja la complejidad de diseño y puesta en marcha.
+
+  \item \textbf{Actuadores lineales tornillo---tuerca (motor DC con reductora).} Ofrecen alta fuerza y buen costo por actuador, y a niveles educativos más avanzados pueden resultar más \emph{didácticos} por la necesidad de instrumentación. Sin embargo, el mecanismo es más lento y menos preciso sin realimentación; requiere encoders o potenciómetros y finales de carrera para conocer el ángulo articular. Además, el diseño de eslabones y articulaciones se complica para alojar el husillo, y los mecanismos de codificación de posición son más propensos a \emph{interferencias/ruido} y se convierten en otro posible punto de fallo. El juego mecánico (backlash) y la fricción pueden degradar la repetibilidad.
+
+  \item \textbf{Actuadores lineales con asistencia hidráulica (jeringas).} Es la alternativa más compleja: añade una capa de transmisión hidráulica sobre el actuador lineal. A cambio, ofrece una \emph{relación fuerza---peso} muy favorable (bajo peso en el extremo móvil frente a la fuerza aplicable). No obstante, introduce menor velocidad, histéresis, necesidad de purgado/cebado, riesgo de fugas y mayor mantenimiento; el control (válvulas, amortiguación) eleva la complejidad de ingeniería. Al igual que en la opción de tornillo---tuerca, la posición debe codificarse (p.\,ej., potenciómetros/encoders lineales), añadiendo sensores y puntos de fallo adicionales.
+\end{itemize}
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{l c c c c}
+\toprule
+\textbf{Criterio} & \textbf{Peso} & \textbf{Servo} & \textbf{Actuador} & \textbf{Hidráulico} \\
+\midrule
+Peso        & 0.10 & 4 & 3 & 3 \\
+Velocidad   & 0.20 & 4 & 2 & 1 \\
+Simplicidad & 0.30 & 5 & 2 & 1 \\
+Precio      & 0.20 & 4 & 4 & 4 \\
+Fuerza      & 0.15 & 3 & 4 & 5 \\
+Libertad    & 0.05 & 5 & 3 & 3 \\
+\midrule
+\textbf{Total ponderado} &       & \textbf{4.20} & \textbf{2.85} & \textbf{2.50} \\
+\bottomrule
+\end{tabular}
+\caption{Matriz de selección de actuadores (1 = peor, 5 = mejor). Totales calculados con los pesos indicados.}
+\end{table}
+
+\newpage
+
+\subsubsection*{Decisión técnica}
+Se implementa la solución con \textbf{servomotores MG996R} por \textbf{simplicidad de control}, \textbf{velocidad} adecuada y \textbf{disponibilidad}, manteniendo el costo dentro del objetivo y una fuerza suficiente para las tareas de \emph{pick \& place}. 
+No obstante, se \textbf{adopta la filosofía de diseño} observada en las alternativas de actuadores lineales e hidráulicos: 
+\emph{concentrar masa cerca de los ejes de rotación} y \emph{transmitir el movimiento mediante eslabones} hasta las articulaciones distales. 
+Con ello se reduce el brazo de palanca efectivo sobre cada servo, disminuye el par exigido y se baja la inercia en el extremo móvil, 
+conservando parte de los beneficios de aquellas soluciones sin incorporar su complejidad de sensado y control.
+
+\paragraph{Lineamientos de diseño adoptados}
+\begin{itemize}
+  \item Ubicar los actuadores lo más cerca posible de los ejes principales o de la base para minimizar el par requerido.
+  \item Emplear eslabones/bielas para accionar articulaciones alejadas, manteniendo baja la masa en el efector.
+  \item Limitar configuraciones que generen grandes brazos de palanca y añadir topes/curvas de velocidad para proteger a los servos.
+  \item Mantener la \emph{modularidad} e \emph{intercambiabilidad} del efector (electroimán/garra) y el diseño paramétrico para distintos espesores de MDF.\@
+\end{itemize}
+
+En síntesis, el resultado es un \textbf{diseño híbrido}: control directo con servos potentes y una \textbf{arquitectura mecánica inspirada} en sistemas lineales/hidráulicos que traslada masa hacia la estructura fija. 
+Esto simplifica la implementación y el mantenimiento, a la vez que mejora la eficiencia mecánica y la repetibilidad del prototipo.
+
+
+\section{Alcance}
+
+\subsection{Alcance del proyecto}
+El proyecto comprende el diseño, construcción y validación de un \textbf{brazo robótico didáctico a escala} con:
+\begin{itemize}
+  \item \textbf{Arquitectura mecánica:} 4 grados de libertad (sin contar el efector), estructura paramétrica para corte láser en MDF (3.2--10\,mm), con posibilidad de adaptación a acrílico/metal. Base fija dentro de 50$\times$50$\times$50\,cm.
+  \item \textbf{Efectores intercambiables:} electroimán para piezas ferromagnéticas y garra mecánica para piezas no magnéticas, con cambio rápido.
+  \item \textbf{Actuación:} servomotores MG996R (uno por articulación principal). Transmisión por eslabones para mantener masa cerca de los ejes.
+  \item \textbf{Control y electrónica:} microcontrolador (ESP32 o ATmega328P), driver MOSFET para el electroimán (IRFZ44N o equivalente), finales de carrera para homing, LEDs/buzzer de estado.
+  \item \textbf{Software:} firmware en C/C++ y GUI en Python (Tkinter o PyQt) con modos \emph{manual} y \emph{automático}, control ON/OFF del electroimán y cinemática inversa planar básica.
+  \item \textbf{Alimentación:} fuente para lógica y potencia, con convertidores adecuados para servos y electroimán.
+  \item \textbf{Documentación y docencia:} manual de armado, guía docente y un conjunto mínimo de 5 prácticas de laboratorio.
+\end{itemize}
+
+\subsection{Rendimiento y límites operativos}
+\begin{itemize}
+  \item \textbf{Alcance y carga:} manipulación de objetos hasta 100\,g con alcance aproximado de 40\,cm.
+  \item \textbf{Repetibilidad:} objetivo entre 3 y 5\,mm en el volumen útil.
+  \item \textbf{Tiempo de ciclo:} \emph{pick} $\rightarrow$ \emph{place} $\rightarrow$ retorno $\leq$ 3\,s para desplazamientos de 10--15\,cm.
+  \item \textbf{Seguridad:} paro de emergencia, velocidades reducidas en modo enseñanza y carenados opcionales para cableado y zonas de pinzamiento.
+\end{itemize}
+
+\subsection{Fuera de alcance}
+\begin{itemize}
+  \item Implementación de actuadores lineales (tornillo---tuerca) o hidráulicos; solo se documentan como alternativas.
+  \item Visión artificial, seguimiento por cámara o planificación avanzada de trayectorias en 3D.
+  \item Cargas superiores a 100\,g o uso industrial continuo.
+  \item Calibración metrológica de alta precisión o certificaciones industriales.
+\end{itemize}
+
+\subsection{Criterios de aceptación}
+\begin{itemize}
+  \item \textbf{Funcionalidad:} ejecución de trayectorias punto a punto en modo manual y automático; cambio de efector sin herramientas especiales.
+  \item \textbf{Desempeño:} tasa de éxito de agarre $\geq$ 90\% para el conjunto de pruebas definido; repetibilidad dentro del rango objetivo.
+  \item \textbf{Homing y seguridad:} rutina de referencia operativa, paro de emergencia y límites mecánicos verificados.
+  \item \textbf{Entregables:} prototipo ensamblado, firmware, GUI, manual de usuario y guía docente con 5 prácticas evaluables.
+\end{itemize}

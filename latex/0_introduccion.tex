@@ -1,42 +1,6 @@
 \section{Introducción}
 \subsection{Planteamiento del problema}
-La enseñanza de robótica manipuladora en contextos educativos (escuelas, UTU, liceo y cursos introductorios universitarios) suele verse limitada por el alto costo, riesgos de seguridad y poca “apertura” de los equipos comerciales. Esto reduce la práctica real de manipulación, dificulta integrar contenidos de mecánica, electrónica y control, y hace inviable llevar equipos a giras didácticas.
-
-\subsection{Soluciones consideradas}
-A partir del planteamiento del problema, se evaluaron tres alternativas tecnológicas para el accionamiento del brazo. A continuación se presentan de forma breve sus características, ventajas y limitaciones principales.
-
-\begin{itemize}
-  \item Servomotores (MG996R): Proporciona control directo por PWM, integración sencilla con microcontroladores y velocidad adecuada para demostraciones didácticas. En comparación con MG90 (insuficientes en par), los MG996R cubren el requerimiento de carga (hasta 100\,g a 40\,cm) con una repetibilidad aceptable. Ventajas: simplicidad, menor complejidad electrónica, buena disponibilidad y costo moderado. Consideraciones: picos de corriente, holguras propias del servo y límite de torque cerca del alcance máximo.
-  
-  \item Actuadores lineales tornillo---tuerca (motor DC con reductora). Ofrecen alta fuerza y buen costo, pero el mecanismo es más lento y con menor precisión sin realimentación. Requiere instrumentación adicional (encoders o potenciómetros, finales de carrera) y control más complejo para conocer el ángulo articular. Además, el juego mecánico (backlash) y la fricción pueden degradar la repetibilidad.
-  
-  \item Actuadores lineales con asistencia hidráulica (jeringas). Mejoran la relación fuerza---peso y permiten componentes económicos, pero añaden otra capa de complejidad: menor velocidad, histéresis, posibles fugas, purgado/cebado del circuito y mantenimiento. El diseño y control (válvulas, amortiguación) incrementan el esfuerzo de ingeniería frente a los beneficios en este contexto didáctico.
-\end{itemize}
-
-
-\begin{table}[h!]
-\centering
-\begin{tabular}{l c c c c}
-\toprule
-\textbf{Criterio} & \textbf{Peso} & \textbf{Servo} & \textbf{Actuador} & \textbf{Hidráulico} \\
-\midrule
-Peso        & 0.10 & 4 & 3 & 3 \\
-Velocidad   & 0.20 & 4 & 2 & 1 \\
-Simplicidad & 0.30 & 5 & 2 & 1 \\
-Precio      & 0.20 & 4 & 4 & 4 \\
-Fuerza      & 0.15 & 3 & 4 & 5 \\
-Libertad    & 0.05 & 5 & 3 & 3 \\
-\midrule
-\textbf{Total ponderado} &       & \textbf{4.20} & \textbf{2.85} & \textbf{2.50} \\
-\bottomrule
-\end{tabular}
-\caption{Matriz de selección de actuadores (1 = peor, 5 = mejor). Totales calculados con los pesos indicados.}
-\end{table}
-
-\newpage
-
-\subsubsection*{Decisión técnica}
-Se adopta la solución con \textbf{servomotores MG996R} por ofrecer el mejor equilibrio entre \emph{simplicidad}, \emph{velocidad} y \emph{libertad de movimiento}, manteniendo el \emph{costo} dentro del objetivo y una \emph{fuerza} suficiente para las tareas de \emph{pick \& place} previstas. Las otras alternativas se documentan como trabajo futuro para escenarios donde la fuerza disponible sea prioritaria sobre la velocidad o la sencillez de control.
+La enseñanza de robótica manipuladora en contextos educativos (escuelas, UTU, liceo y cursos introductorios universitarios) suele verse limitada por el alto costo, riesgos de seguridad y poca facilidad de modificación y/o reparación de los equipos comerciales. Esto reduce la práctica real de manipulación, dificulta integrar contenidos de mecánica, electrónica y control, y hace inviable llevar equipos a giras didácticas.
 
 
 \subsection{Solución propuesta}
@@ -52,6 +16,27 @@ Diseñar, construir y validar un brazo robótico didáctico de 4 GDL, seguro, po
   \item \textbf{Tiempo de ciclo:} \emph{pick} $\rightarrow$ \emph{place} $\rightarrow$ retorno $\leq$ 3\,s a 10--15\,cm entre posiciones.
   \item \textbf{Efector intercambiable:} cambio imán/garra en $\leq 60$\,s sin herramientas especiales.
   \item \textbf{Seguridad:} paro de emergencia, cableado protegido, tensión segura en zona de usuario; checklist previo a operación.
-  \item \textbf{Software:} GUI con lectura de posición, control ON/OFF del imán, modos manual/automático y cinemática inversa planar.
-  \item \textbf{Documentación:} manual de armado, guía docente y 5 prácticas con rúbrica (pre/post test con mejora $\geq 20\%$).
+  \item \textbf{Software:} GUI con lectura de posición, control ON/OFF del imán, modos manual y automático y cinemática inversa planar.
 \end{enumerate}
+
+\subsection{Obstáculos}
+A partir del alcance y de las decisiones técnicas, se identifican los siguientes obstáculos que pueden afectar cronograma, costo y calidad del prototipo:
+
+\begin{itemize}
+  \item \textbf{Presupuesto:} mantener un costo \emph{razonable y no excesivo} considerando servos, fuente, electrónica y materiales.\ \emph{Mitigación:} priorizar compras esenciales, consolidar pedidos, alternativas locales y revisión de la BOM por etapas.
+  
+  \item \textbf{Tiempo de trabajo:} limitaciones de calendario académico y disponibilidad del equipo para CAD, corte, montaje y pruebas.\ \emph{Mitigación:} hitos semanales, versiones incrementales y criterios de aceptación por etapa.
+  
+  \item \textbf{Complejidad de diseño:} ajustes paramétricos para distintos espesores, transmisión por eslabones y tolerancias de corte.\ \emph{Mitigación:} plantillas de agujeros unificadas, librería de piezas parametrizadas y pruebas de “cupón” antes del corte final.
+  
+  \item \textbf{Fuerza de trabajo:} cantidad de integrantes y experiencia en mecánica, electrónica y software.\ \emph{Mitigación:} división clara de roles, documentación mínima obligatoria y revisiones cruzadas.
+  
+  \item \textbf{Disponibilidad de materiales:} variación de espesores de MDF (3.2--10\,mm), alternativas en acrílico/metal y stock de tornillería.\ \emph{Mitigación:} diseño con holguras controladas, insertos/espaciadores y piezas “shim” para compensar espesores.
+  
+  \item \textbf{Reparabilidad:} acceso a componentes para reemplazo, desgaste en articulaciones y cableado.\ \emph{Mitigación:} modularidad por subconjuntos, tornillería estándar M3, bujes/arandelas en puntos de fricción y canalización de cables.
+  
+  \item \textbf{Ensamblaje:} alineación de ejes, juego mecánico y centrado previo de servos.\ \emph{Mitigación:} guías paso a paso, marcas de referencia, útiles simples de alineación y checklist de calibración inicial.
+\end{itemize}
+
+
+

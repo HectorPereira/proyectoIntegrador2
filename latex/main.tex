@@ -1,33 +1,30 @@
-\documentclass[12pt]{article}
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
-\usepackage[T1]{fontenc}
-\usepackage{graphicx} 
-\usepackage{amssymb} 
-\usepackage{amsmath}
+\usepackage{graphicx}
 \usepackage[
   a4paper,
-  top=25mm,
-  bottom=25mm,
-  left=25mm,
-  right=25mm,
-  includefoot,      % cuenta el pie dentro del área
-  heightrounded,    % redondea a líneas enteras (evita desbordes)
-  footskip=12mm     % separación texto–pie (ajusta si solapa)
+  top=25mm,bottom=25mm,left=25mm,right=25mm,
+  includefoot,heightrounded,footskip=12mm
 ]{geometry}
-\usepackage{booktabs}
-% \usepackage[showframe]{geometry} % <- activalo para depurar visualmente
-\usepackage{lipsum}
+\flushbottom      % asegura que el texto llegue al margen inferior
 
-    
 \begin{document}
 
+% --- Portada a sangre (sin márgenes) ---
+\newgeometry{
+  left=0mm,right=0mm,top=0mm,bottom=0mm,
+  headheight=0pt,headsep=0pt,footskip=0pt,
+  includehead=false,includefoot=false
+}
 \begin{titlepage}
   \thispagestyle{empty}
-  \newgeometry{margin=0pt} % elimina márgenes solo para esta página
-  \noindent\includegraphics[width=\paperwidth, height=\paperheight]{Anexos/Portada.png}% imagen de fondo para la portada.jpg}
-  \restoregeometry% vuelve a los márgenes normales para el resto
+  \noindent\includegraphics[width=\paperwidth,height=\paperheight]{Anexos/Portada.png}
 \end{titlepage}
+\restoregeometry{}
+\clearpage   % página limpia con márgenes restaurados
 
 
 \input{0_introduccion}
