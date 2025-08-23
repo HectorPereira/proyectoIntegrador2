@@ -1,3 +1,20 @@
 \section{Introducción}
 \subsection{Planteamiento del problema}
-\subsection{Objetivos}
+La enseñanza de robótica manipuladora en contextos educativos (escuelas, UTU, liceo y cursos introductorios universitarios) suele verse limitada por el alto costo, riesgos de seguridad y poca “apertura” de los equipos comerciales. Esto reduce la práctica real de manipulación, dificulta integrar contenidos de mecánica, electrónica y control, y hace inviable llevar equipos a giras didácticas.
+
+\subsection{Solución propuesta}
+Un brazo robótico didáctico a escala de 4 GDL con efector intercambiable: electroimán (para piezas ferromagnéticas) y garra (para piezas no magnéticas). Estructura paramétrica cortada en MDF (3.2–10 mm), tornillería estándar y electrónica de fácil reposición. Control con ESP32/ATmega328P, modos manual/automático, GUI en Python (Tkinter/PyQt), y documentación abierta para replicación.
+
+\subsection{Objetivo General}
+Diseñar, construir y validar un brazo robótico didáctico de 4 GDL, seguro, portable y de bajo costo, con efectores electroimán/garra intercambiables, capaz de ejecutar tareas básicas de pick \& place en un volumen de trabajo de hasta 50×50×50 cm.
+
+\subsection{Objetivos específicos}
+\begin{enumerate}
+  \item \textbf{Repetibilidad:} $\leq$ 3--5\,mm en el volumen útil (validado con 10 repeticiones por punto).
+  \item \textbf{Carga y alcance:} manipular $\leq$ 100\,g a un alcance de 40\,cm con tasa de éxito $\geq 90\%$ (10 intentos).
+  \item \textbf{Tiempo de ciclo:} \emph{pick} $\rightarrow$ \emph{place} $\rightarrow$ retorno $\leq$ 3\,s a 10--15\,cm entre posiciones.
+  \item \textbf{Efector intercambiable:} cambio imán/garra en $\leq 60$\,s sin herramientas especiales.
+  \item \textbf{Seguridad:} paro de emergencia, cableado protegido, tensión segura en zona de usuario; checklist previo a operación.
+  \item \textbf{Software:} GUI con lectura de posición, control ON/OFF del imán, modos manual/automático y cinemática inversa planar.
+  \item \textbf{Documentación:} manual de armado, guía docente y 5 prácticas con rúbrica (pre/post test con mejora $\geq 20\%$).
+\end{enumerate}
