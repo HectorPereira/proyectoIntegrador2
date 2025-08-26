@@ -1,7 +1,30 @@
 \section{Introducción}
 \subsection{Planteamiento del problema}
-La enseñanza de robótica manipuladora en contextos educativos (escuelas, UTU, liceo y cursos introductorios universitarios) suele verse limitada por el alto costo, riesgos de seguridad y poca facilidad de modificación y/o reparación de los equipos comerciales. Esto reduce la práctica real de manipulación, dificulta integrar contenidos de mecánica, electrónica y control, y hace inviable llevar equipos a giras didácticas.
+La enseñanza de la robótica manipuladora en contextos educativos (escuelas, UTU, liceos y cursos introductorios universitarios) enfrenta importantes limitaciones debido al alto costo de los equipos comerciales, los riesgos de seguridad que presentan y la escasa facilidad de modificación o reparación. Estas restricciones reducen la práctica real de manipulación, dificultan la integración de contenidos de mecánica, electrónica y control, y limitan la posibilidad de trasladar equipos a actividades extracurriculares o giras didácticas.
 
+En este escenario surge la necesidad de un modelo de manipulador robótico accesible, adaptable y con un diseño pensado para fines didácticos. Si bien existen alternativas de código abierto, gran parte de ellas dependen de la impresión 3D, un método de fabricación que resulta lento y poco accesible para muchas instituciones educativas. Como alternativa, se propone el uso de MDF como material principal, aprovechando sus ventajas de bajo costo, disponibilidad y rapidez en la manufactura mediante corte láser o fresado CNC, lo que permite una producción más eficiente y replicable.
+
+De este modo, se busca ofrecer un manipulador capaz de adaptarse a diversas aplicaciones y demostraciones, fomentando el aprendizaje en robótica y automatización desde etapas tempranas de formación. El objetivo final es inspirar a los estudiantes, acercándolos a los procesos industriales actuales y motivándolos a explorar el potencial de la tecnología en su desarrollo académico y profesional.
+
+\subsection{Diagrama de Ishikawa}
+
+\vspace{1em}
+
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{anexos/Diagrama Ishikawa.png}
+  \caption{Diagrama de Ishikawa}\label{fig:Diagrama Ishikawa}
+\end{figure}
+En el diagrama se identifican seis ramas principales que agrupan las limitaciones más comunes de los brazos robóticos didácticos disponibles en el mercado. Cada una de ellas aborda un conjunto de problemáticas específicas:
+\begin{itemize}
+  \item Diseño y fabricación: engloba aspectos relacionados con la construcción del brazo, los materiales empleados y la facilidad de reparación o mantenimiento.
+  \item Automatización: considera las limitaciones en la precisión, capacidad de carga, compatibilidad y posibilidades de integración con otros sistemas de control.
+  \item Adaptabilidad: se refiere a la capacidad de modificar, escalar o personalizar el brazo, así como a la dependencia de software propietario que restringe su flexibilidad.
+  \item Experiencia de usuario: abarca las dificultades que enfrentan los usuarios en el manejo del brazo, tales como controles limitados, documentación insuficiente y vida útil reducida.
+  \item Costo y disponibilidad: contempla el precio de adquisición, el costo de mantenimiento y la dificultad para conseguir repuestos o componentes compatibles.
+  \item Aplicaciones educativas: analiza las limitaciones de los kits en contextos formativos, como la escasa realismo de los movimientos y el alcance reducido de sus usos pedagógicos.
+\end{itemize}
 
 \subsection{Solución propuesta}
 Un brazo robótico didáctico a escala de 4 GDL con efector intercambiable: electroimán (para piezas ferromagnéticas) y garra (para piezas no magnéticas). Estructura paramétrica cortada en MDF (3.2–10 mm), tornillería estándar y electrónica de fácil reposición. Control con ESP32/ATmega328P, modos manual/automático, GUI en Python (Tkinter/PyQt), y documentación abierta para replicación.

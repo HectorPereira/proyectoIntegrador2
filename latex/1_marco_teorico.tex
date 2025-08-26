@@ -1,12 +1,89 @@
 \section{Fundamento técnico-conceptual}
 
 \subsection{Análisis de mercado}
-Se realiza un periodo de investigación donde se recopilan modelos ya existentes en el mercado actual para solventar la problemática proporcionada. 
+Se realiza un periodo de investigación donde se recopilan modelos ya existentes en el mercado actual para solventar la problemática proporcionada.
+
 
 \subsubsection{GrabCAD}
-GrabCAD es una plataforma comunitaria donde ingenieros y diseñadores comparten modelos 3D, ensamblajes y recursos CAD. Permite subir, buscar, previsualizar y descargar modelos en formatos comunes (p.\,ej.\ STEP/IGES, STL, SLDPRT), organizar colecciones y discutir mejoras en comentarios. Suele incluir descripciones, imágenes renderizadas y, en algunos casos, archivos auxiliares (planos o BOM).
+GrabCAD es una plataforma comunitaria donde ingenieros y diseñadores comparten modelos 3D, ensamblajes y recursos CAD.\@ Permite subir, buscar, previsualizar y descargar modelos en formatos comunes (p.\,ej.\ STEP/IGES, STL, SLDPRT), organizar colecciones y discutir mejoras en comentarios. Suele incluir descripciones, imágenes renderizadas y, en algunos casos, archivos auxiliares (planos o BOM).
 
-En estas se encontraron múltiples diseños para brazos robóticos, como los que se pueden ver a continuación
+
+\subsection{Inspiraciones}
+
+% images
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/1actuadores.png}
+  \caption{Modelo con actuadores lineales}\label{fig:insp.actuadores}
+\end{figure}
+Inspiración inicial tomada de GrabCAD para un modelo con actuadores actuadores lineales. Se observa como se posicionarían los actuadores dentro del modelo para lograr una mejor distribución de masa.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/2oruga.png}
+  \caption{Modelo hibrido/hidráulico}\label{fig:insp.oruga}
+\end{figure}
+Modelo mixto con servomotores y actuadores lineales encontrado en GrabCAD, primera consideración para el uso de eslabones y articulaciones. En este modelo se aprecia la restricción del movimiento de la acticulación final del manipulador.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/3orugaGarra.png}
+  \caption{Manipulador por garra y servomotor}\label{fig:insp.orugaGarra}
+\end{figure}
+Modelo aparte del manipulador con el servomotor sg90 y la garra. A partir de este modelo se considera el uso de un servomotor más pequeño para aprovechar que el manipulador no requiere tanta fuerza de agarre y delegar los servomotores más potentes mg996r a realizar el movimiento de las articulaciones. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/4eslabones.png}
+  \caption{Sistema de eslabones}\label{fig:insp.eslabones}
+\end{figure}
+
+Otra inspiración para implementar el uso de eslabones en el brazo robótico ya con el uso de servomotores mg996r (encontrado en GrabCAD)
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/5eslabones.png}
+  \caption{Sistema de eslabones con mayor libertad}\label{fig:insp.eslabones2}
+\end{figure}
+Una idea más general del posicionamiento de los eslabones porporcionado por el creador de contenido `thang010146' en YouTube. Este modeo cuenta con el grado de libertad faltante en modelos anteriores
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/6mdf.png}
+  \caption{Modelo en mdf}\label{fig:insp.mdf}
+\end{figure}
+Implemetación de un brazo robótico con especificaciones similares a las buscadas y haciendo uso de materiales como MDF y tornillos. Se descubre que el modelo pertenece a una empresa Mexicana llamada Robodacta, y que distribuyen este brazo como un kit de aprendizaje ensamblable.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/7plastico.png}
+  \caption{Modelo similar en plástico}\label{fig:insp.plastico}
+\end{figure}
+Modelo muy similar al anterior, haciendo uso de materiales plásticos y tornillos, comercializado en Uruguay por Mercado Libre.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/8control.png}
+  \caption{Controlador espejo con potenciometros}\label{fig:insp.control}
+\end{figure}
+Inspiración dedicada a la realización de un control `espejo' para comandar el brazo articulado, haciendo usod e potenciometros los cuales controlan el ángulo de cada articulación.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/9joystick.png}
+  \caption{Control por joystick}\label{fig:insp.joystick}
+\end{figure}
+
+Modelo original de Robodacta, el cual se encuentra publicado en su sitio web. Este cuenta con un control de joystick para comandar el brazo articulado.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/10impreso.png}
+  \caption{Modelo impreso con control espejo}\label{fig:insp.impreso}
+\end{figure}
+
+Modelo impreso de código libre por el creador de contenido `Build Some Stuff' con un sistema de control espejo similar al mostrado anteriormente. Dispone de una serie de videos mostrando materiales, ensamblaje, software y uso del brazo articulado con su controlador. Muestra funcionalidades similares a las que se pretende implementar en el proyecto.
+
+
 
 
 \subsection{Soluciones consideradas}
@@ -21,7 +98,7 @@ A partir del planteamiento del problema, se evaluaron tres alternativas tecnoló
 \end{itemize}
 
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \begin{tabular}{l c c c c}
 \toprule
@@ -40,7 +117,6 @@ Libertad    & 0.05 & 5 & 3 & 3 \\
 \caption{Matriz de selección de actuadores (1 = peor, 5 = mejor). Totales calculados con los pesos indicados.}
 \end{table}
 
-\newpage
 
 \subsubsection*{Decisión técnica}
 Se implementa la solución con \textbf{servomotores MG996R} por simplicidad de control, velocidad adecuada y disponibilidad, manteniendo el costo dentro del objetivo y una fuerza suficiente para las tareas de \emph{pick \& place}. 
@@ -61,6 +137,7 @@ En síntesis, el resultado es un diseño híbrido control directo con servos pot
 Esto simplifica la implementación y el mantenimiento, a la vez que mejora la eficiencia mecánica y la repetibilidad del prototipo.
 
 \newpage
+
 \section{Alcance}
 
 \subsection{Alcance del proyecto}
