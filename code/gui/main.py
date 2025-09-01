@@ -101,7 +101,7 @@ class ArmControlApp(tk.Tk):
         self.home = Posicion(512, 512, 512, 512, 0)
 
         # Branding (tu logo + autores)
-        self.logo_path = "utec_logo.png"  # poné acá la ruta si está en otro lado
+        self.logo_path = "code/gui/assets/utec_logo.png"  # poné acá la ruta si está en otro lado
         self.authors = [
             "Hector Pereira",
             "Priscila Rossi",
