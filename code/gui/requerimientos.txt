@@ -1,0 +1,8 @@
+Requerimientos para utilizar el software de control del brazo.
+
+---- CMD ----
+
+Ingresar los siguientes comandos dentro del CMD
+
+ - pip install pyserial
+ - pip install pillow
