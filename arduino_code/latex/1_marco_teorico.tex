@@ -111,30 +111,28 @@ Todas las soluciones involucran un brazo robótico de 4 articulaciones controlad
 
 \begin{table}[H]
 \centering
-\begin{tabular}{l c c c c}
+\caption{Evaluación comparativa de mecanismos de actuación}
+\begin{tabular}{lccccc}
 \toprule
-\textbf{Criterio} & \textbf{Peso} & \textbf{Servo} & \textbf{Actuador} & \textbf{Hidráulico} \\
+\textbf{Atributo} & \textbf{Peso} & \textbf{Servomotores} & \textbf{Eslabones} & \textbf{Actuadores lin.} & \textbf{Pistones hidr.} \\
 \midrule
-Peso        & 0.10 & 4 & 3 & 3 \\
-Velocidad   & 0.20 & 4 & 2 & 1 \\
-Simplicidad & 0.30 & 5 & 2 & 1 \\
-Precio      & 0.20 & 4 & 4 & 4 \\
-Fuerza      & 0.15 & 3 & 4 & 5 \\
-Libertad    & 0.05 & 5 & 3 & 3 \\
+Distribución de peso & 1 & 6  & 8  & 9 & 10 \\
+Simplicidad          & 3 & 10 & 6  & 5 & 4  \\
+Costo                & 3 & 9  & 8  & 7 & 7  \\
+Reparabilidad        & 2 & 9  & 7  & 6 & 5  \\
+Durabilidad          & 2 & 8  & 5  & 4 & 3  \\
+Cap. de carga        & 2 & 7  & 7  & 8 & 9  \\
+Velocidad            & 1 & 8  & 8  & 5 & 4  \\
+Precisión            & 1 & 8  & 7  & 6 & 5  \\
 \midrule
-\textbf{Total ponderado} &       & \textbf{4.20} & \textbf{2.85} & \textbf{2.50} \\
+\textbf{Total}       &    & 127 & 103 & 92 & 86 \\
 \bottomrule
 \end{tabular}
-\caption{Matriz de selección de actuadores (1 = peor, 5 = mejor). Totales calculados con los pesos indicados.}
 \end{table}
 
 
 \subsubsection*{Decisión técnica}
-Se implementa la solución con \textbf{servomotores MG996R} por simplicidad de control, velocidad adecuada y disponibilidad, manteniendo el costo dentro del objetivo y una fuerza suficiente para las tareas de \emph{pick \& place}. 
-No obstante, se adopta la filosofía de diseño observada en las alternativas de actuadores lineales e hidráulicos: 
-\emph{concentrar masa cerca de los ejes de rotación} y \emph{transmitir el movimiento mediante eslabones} hasta las articulaciones distales. 
-Con ello se reduce el brazo de palanca efectivo sobre cada servo, disminuye el par exigido y se baja la inercia en el extremo móvil, 
-conservando parte de los beneficios de aquellas soluciones sin incorporar su complejidad de sensado y control.
+Tomando en cuenta los atributos con sus respectivos pesos se llega a la conclusión que el modelo de servomotores articulado es el más adecuado para implementar. Este modelo si bien maneja una distribución de 
 
 \paragraph{Lineamientos de diseño adoptados}
 \begin{itemize}
