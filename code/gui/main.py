@@ -202,10 +202,6 @@ class ArmControlApp(tk.Tk):
         self.arm_canvas.grid(row=0, column=0, pady=5, sticky="n")
         self.arm_canvas_text = self.arm_canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
 
-        # Botón para cambiar imagen del brazo (opcional)
-        ttk.Button(center, text="Cargar imagen del brazo...", command=self._cargar_brazo_dialog)\
-            .grid(row=1, column=0, sticky="w")
-
         # Teleop toggle + seguridad
         teleop_frame = ttk.Frame(center)
         teleop_frame.grid(row=2, column=0, sticky="we", pady=(8,4))
