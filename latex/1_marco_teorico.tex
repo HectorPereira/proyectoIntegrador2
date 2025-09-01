@@ -7,14 +7,16 @@ Se realiza un periodo de investigación donde se recopilan modelos ya existentes
 \subsubsection{GrabCAD}
 GrabCAD es una plataforma comunitaria donde ingenieros y diseñadores comparten modelos 3D, ensamblajes y recursos CAD.\@ Permite subir, buscar, previsualizar y descargar modelos en formatos comunes (p.\,ej.\ STEP/IGES, STL, SLDPRT), organizar colecciones y discutir mejoras en comentarios. Suele incluir descripciones, imágenes renderizadas y, en algunos casos, archivos auxiliares (planos o BOM).
 
+\newpage
 
 \subsection{Inspiraciones}
 
+\begin{multicols}{2}
 % images
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/1actuadores.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/1actuadores.png}
   \caption{Modelo con actuadores lineales~\cite{grabcad_robot_arm_6dof}.}\label{fig:insp.actuadores}
 \end{figure}
 
@@ -22,7 +24,7 @@ Inspiración inicial tomada de GrabCAD para un modelo con actuadores actuadores 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/2oruga.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/2oruga.png}
   \caption{Modelo hibrido/hidráulico~\cite{grabcad_robotic_arm_216}.}\label{fig:insp.oruga}
 \end{figure}
 
@@ -30,7 +32,7 @@ Modelo mixto con servomotores y actuadores lineales encontrado en GrabCAD, prime
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/3orugaGarra.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/3orugaGarra.png}
   \caption{Manipulador por garra y servomotor~\cite{grabcad_robotic_gripper_17}.}\label{fig:insp.orugaGarra}
 \end{figure}
 
@@ -38,7 +40,7 @@ Modelo aparte del manipulador con el servomotor sg90 y la garra. A partir de est
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/4eslabones.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/4eslabones.png}
   \caption{Sistema de eslabones~\cite{grabcad_sea_reach_robot_arm}.}\label{fig:insp.eslabones}
 \end{figure}
 
@@ -46,7 +48,7 @@ Otra inspiración para implementar el uso de eslabones en el brazo robótico ya 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/5eslabones.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/5eslabones.png}
   \caption{Sistema de eslabones con mayor libertad~\cite{youtube_robot_arm_link}.}\label{fig:insp.eslabones2}
 \end{figure}
 
@@ -54,15 +56,15 @@ Una idea más general del posicionamiento de los eslabones porporcionado por el 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/6mdf.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/6mdf.png}
   \caption{Modelo en MDF~\cite{youtube_robot_arm_mdf}.}\label{fig:insp.mdf}
 \end{figure}
 
-Implemetación de un brazo robótico con especificaciones similares a las buscadas y haciendo uso de materiales como MDF y tornillos. Se descubre que el modelo pertenece a una empresa Mexicana llamada Robodacta, y que distribuyen este brazo como un kit de aprendizaje ensamblable.
+Implemetación de un brazo robótico con especificaciones similares a las buscadas y haciendo uso de materiales como MDF y tornillos. Se descubre que el modelo pertenece a una empresa Mejicana llamada Robodacta, y que distribuyen este brazo como un kit de aprendizaje ensamblable.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/7plastico.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/7plastico.png}
   \caption{Modelo similar en plástico~\cite{mercadolibre_robot_arm}.}\label{fig:insp.plastico}
 \end{figure}
 
@@ -70,14 +72,14 @@ Modelo muy similar al anterior, haciendo uso de materiales plásticos y tornillo
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/8control.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/8control.png}
   \caption{Controlador espejo con potenciometros}\label{fig:insp.control}
 \end{figure}
 Inspiración dedicada a la realización de un control `espejo' para comandar el brazo articulado, haciendo usod e potenciometros los cuales controlan el ángulo de cada articulación.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/9joystick.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/9joystick.png}
   \caption{Control por joystick}\label{fig:insp.joystick}
 \end{figure}
 
@@ -85,20 +87,21 @@ Modelo original de Robodacta, el cual se encuentra publicado en su sitio web. Es
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{anexos/inspiraciones/10impreso.png}
+  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/10impreso.png}
   \caption{Modelo impreso con control espejo}\label{fig:insp.impreso}
 \end{figure}
 
 Modelo impreso de código libre por el creador de contenido `Build Some Stuff' con un sistema de control espejo similar al mostrado anteriormente. Dispone de una serie de videos mostrando materiales, ensamblaje, software y uso del brazo articulado con su controlador. Muestra funcionalidades similares a las que se pretende implementar en el proyecto.
 
+\end{multicols}
 
-
-
-\subsection{Soluciones consideradas}
-A partir del planteamiento del problema, se evaluaron tres alternativas tecnológicas para el accionamiento del brazo. A continuación se presentan de forma breve sus características, ventajas y limitaciones principales.
+\subsection{Diseños considerados}
+Todas las soluciones involucran un brazo robótico de 4 articulaciones controladas por un Arduino. Las variaciones en los modelos se pueden clasificar en como se manejan las articulaciones y los actuadores utilizados. Las clasificaciones son:
 
 \begin{itemize}
-  \item \textbf{Servomotores (MG996R).} Proporcionan control directo por PWM, integración sencilla con microcontroladores y velocidad adecuada para demostraciones didácticas. En comparación con MG90 (insuficientes en par), los MG996R cubren el requerimiento de carga (hasta 100\,g a 40\,cm) con una repetibilidad aceptable.\ \emph{Detractor principal:} es la alternativa más cara dentro de las consideradas; se estimó un costo de \textbf{4 servos por \mbox{\$U~2600}} (disponibles en línea), aunque mantiene baja la complejidad de diseño y puesta en marcha.
+  \item \textbf{Servomotores MG996R.} Un modelado directo y más convencional del brazo robótico, utilizando un servomotor por articulación y colocado directamente en la misma. Apuntando el diseño a la simplicidad, en fácil ensamblado y la reparabilidad, utilizando una combinación entre corte láser en mdf e impresión 3d.
+  
+  \item \textbf{Servomotores MG996R con eslabones.} Proporcionan control directo por PWM, integración sencilla con microcontroladores y velocidad adecuada para demostraciones didácticas. En comparación con MG90 (insuficientes en par), los MG996R cubren el requerimiento de carga (hasta 100\,g a 40\,cm) con una repetibilidad aceptable.\ \emph{Detractor principal:} es la alternativa más cara dentro de las consideradas; se estimó un costo de \textbf{4 servos por \mbox{\$U~2600}} (disponibles en línea), aunque mantiene baja la complejidad de diseño y puesta en marcha.
 
   \item \textbf{Actuadores lineales tornillo---tuerca (motor DC con reductora).} Ofrecen alta fuerza y buen costo por actuador, y a niveles educativos más avanzados pueden resultar más \emph{didácticos} por la necesidad de instrumentación. Sin embargo, el mecanismo es más lento y menos preciso sin realimentación; requiere encoders o potenciómetros y finales de carrera para conocer el ángulo articular. Además, el diseño de eslabones y articulaciones se complica para alojar el husillo, y los mecanismos de codificación de posición son más propensos a \emph{interferencias/ruido} y se convierten en otro posible punto de fallo. El juego mecánico (backlash) y la fricción pueden degradar la repetibilidad.
 
