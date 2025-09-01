@@ -1,3 +1,4 @@
+import os
 import json
 import threading
 import time
@@ -6,14 +7,14 @@ from tkinter import ttk, messagebox, filedialog
 from dataclasses import dataclass
 from typing import List, Optional
 
-# ---- Extra para branding (logo) ----
+# ---- Imágenes (Pillow opcional para reescalar) ----
 try:
     from PIL import Image, ImageTk
     PIL_AVAILABLE = True
 except Exception:
     PIL_AVAILABLE = False
 
-# ---- Comunicación serie (pyserial) ----
+# ---- Serie (pyserial) ----
 try:
     import serial
     import serial.tools.list_ports
@@ -21,6 +22,7 @@ except Exception:
     serial = None
 
 
+# ------------------------- DATOS -------------------------
 @dataclass
 class Posicion:
     m1: int
@@ -37,6 +39,7 @@ class Posicion:
         return Posicion(int(lst[0]), int(lst[1]), int(lst[2]), int(lst[3]), int(lst[4]))
 
 
+# ------------------------- SERIAL -------------------------
 class SerialClient:
     """Cliente serie simple para enviar/recibir líneas ASCII."""
     def __init__(self):
@@ -85,23 +88,28 @@ class SerialClient:
             return None
 
 
+# ------------------------- APP -------------------------
 class ArmControlApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Control de Brazo Robot")
-        self.geometry("1160x680")
+        self.geometry("1160x700")
 
-        # Estado
+        # Estado serie
         self.serial_arm = SerialClient()      # Puerto hacia el brazo REAL (SET ...)
         self.serial_mini = SerialClient()     # Puerto desde el MINIbrazo (POT ...)
         self.ejecutando = False               # flag para reproducción de secuencia
-        self._updating_from_telemetry = False # evita bucle al mover sliders por telemetría
+        self._updating_from_telemetry = False # evita eco al mover sliders por telemetría
 
         # HOME por defecto (se puede redefinir)
         self.home = Posicion(512, 512, 512, 512, 0)
 
-        # Branding (tu logo + autores)
-        self.logo_path = "code/gui/assets/utec_logo.png"  # poné acá la ruta si está en otro lado
+        # Rutas fijas que me pasaste
+        self.assets_dir   = r"D:\UTEC\Semestre_4\PIC_2\SOFTWARE CONTROL\brazo_app\imagenes_recursos"
+        self.logo_path    = os.path.join(self.assets_dir, "utec_logo.png")  # LOGO FIJO
+        self.arm_img_path = os.path.join(self.assets_dir, "brazo.png")
+
+        # Autores
         self.authors = [
             "Hector Pereira",
             "Priscila Rossi",
@@ -110,12 +118,17 @@ class ArmControlApp(tk.Tk):
 
         self._build_ui()
 
-        # Si hay logo por defecto, intentar cargarlo
-        if self.logo_path:
-            try:
+        # Cargar logo e imagen del brazo si existen
+        try:
+            if os.path.exists(self.logo_path):
                 self._cargar_logo(self.logo_path)
-            except Exception:
-                pass
+        except Exception:
+            pass
+        try:
+            if os.path.exists(self.arm_img_path):
+                self._cargar_brazo(self.arm_img_path)
+        except Exception:
+            pass
 
     # ---------------- UI ----------------
     def _build_ui(self):
@@ -177,20 +190,25 @@ class ArmControlApp(tk.Tk):
         ttk.Button(left, text="Guardar lista (JSON)", command=self._guardar_json).grid(row=18, column=0, columnspan=2, sticky="we", pady=3)
         ttk.Button(left, text="Cargar lista (JSON)", command=self._cargar_json).grid(row=19, column=0, columnspan=2, sticky="we", pady=3)
 
-        # ==== Centro: imagen + lista ====
+        # ==== Centro: imagen del brazo + teleop + lista ====
         center = ttk.Frame(self, padding=10)
         center.grid(row=0, column=1, sticky="nsew")
         center.columnconfigure(0, weight=1)
-        center.rowconfigure(2, weight=1)
+        center.rowconfigure(4, weight=1)
 
-        canvas = tk.Canvas(center, width=360, height=360, bg="#f4f4f4",
-                           highlightthickness=1, highlightbackground="#888")
-        canvas.grid(row=0, column=0, pady=5, sticky="n")
-        canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
+        # Canvas de imagen del brazo
+        self.arm_canvas = tk.Canvas(center, width=360, height=360, bg="#f4f4f4",
+                                    highlightthickness=1, highlightbackground="#888")
+        self.arm_canvas.grid(row=0, column=0, pady=5, sticky="n")
+        self.arm_canvas_text = self.arm_canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
+
+        # Botón para cambiar imagen del brazo (opcional)
+        ttk.Button(center, text="Cargar imagen del brazo...", command=self._cargar_brazo_dialog)\
+            .grid(row=1, column=0, sticky="w")
 
         # Teleop toggle + seguridad
         teleop_frame = ttk.Frame(center)
-        teleop_frame.grid(row=1, column=0, sticky="we", pady=(8,4))
+        teleop_frame.grid(row=2, column=0, sticky="we", pady=(8,4))
         self.teleop_var = tk.IntVar(value=0)
         ttk.Checkbutton(teleop_frame, text="Teleop ON/OFF (Minibrazo → Brazo)",
                         variable=self.teleop_var).pack(side="left", padx=(0,10))
@@ -198,9 +216,9 @@ class ArmControlApp(tk.Tk):
         ttk.Button(teleop_frame, text="Definir HOME", command=self._definir_home).pack(side="left", padx=4)
         ttk.Button(teleop_frame, text="STOP", command=self._stop_seguro).pack(side="left", padx=4)
 
-        ttk.Label(center, text="Posiciones guardadas").grid(row=2, column=0, sticky="w", pady=(10,3))
+        ttk.Label(center, text="Posiciones guardadas").grid(row=3, column=0, sticky="w", pady=(10,3))
         list_frame = ttk.Frame(center)
-        list_frame.grid(row=3, column=0, sticky="nsew")
+        list_frame.grid(row=4, column=0, sticky="nsew")
         self.lista = tk.Listbox(list_frame, height=12)
         self.lista.pack(side="left", fill="both", expand=True)
         sb = ttk.Scrollbar(list_frame, orient="vertical", command=self.lista.yview)
@@ -236,23 +254,19 @@ class ArmControlApp(tk.Tk):
         ttk.Checkbutton(right, text="Enviar en vivo al mover sliders",
                         variable=self.live_var).grid(row=10, column=0, columnspan=2, sticky="w")
 
-        # ---- Branding (logo + autores) ----
+        # ---- Branding (logo fijo + autores) ----
         ttk.Separator(right).grid(row=11, column=0, columnspan=3, sticky="we", pady=10)
         brand = ttk.LabelFrame(right, text="Proyecto / Autores")
         brand.grid(row=12, column=0, columnspan=3, sticky="nsew")
         brand.columnconfigure(0, weight=1)
 
-        # Logo (tk.Label para atributo 'image')
+        # Logo fijo (tk.Label con imagen)
         self._logo_label = tk.Label(brand)
         self._logo_label.grid(row=0, column=0, sticky="n", pady=(8,6))
 
-        btns = ttk.Frame(brand)
-        btns.grid(row=1, column=0, pady=(0,6))
-        ttk.Button(btns, text="Cargar logo...", command=self._cargar_logo_dialog).pack(side="left", padx=4)
-
-        # Autores
+        # Autores (sin emails)
         self._authors_frame = ttk.Frame(brand)
-        self._authors_frame.grid(row=2, column=0, sticky="we", padx=6, pady=(2,10))
+        self._authors_frame.grid(row=1, column=0, sticky="we", padx=6, pady=(2,10))
         self._refrescar_autores_ui()
 
         # Estado
@@ -326,7 +340,6 @@ class ArmControlApp(tk.Tk):
                 # Actualizar sliders desde telemetría (sin eco)
                 self._updating_from_telemetry = True
                 try:
-                    # Desactiva envío en vivo temporal para no duplicar
                     prev_live = self.live_var.get()
                     self.live_var.set(0)
 
@@ -342,12 +355,10 @@ class ArmControlApp(tk.Tk):
                         p.m1, p.m2, p.m3, p.m4 = m1, m2, m3, m4
                         self.serial_arm.send_set(p)
 
-                    # Restaurar estado de "enviar en vivo"
                     self.live_var.set(prev_live)
                 finally:
                     self._updating_from_telemetry = False
 
-        # salir hilo
         return
 
     # ---------------- Handlers UI ----------------
@@ -360,7 +371,6 @@ class ArmControlApp(tk.Tk):
             self._on_change_send()
 
     def _on_change_send(self):
-        # Enviar posición actual si está conectado el brazo
         p = self._pos_actual()
         self.serial_arm.send_immediate(p.m1, p.m2, p.m3, p.m4, p.mag)
 
@@ -411,7 +421,6 @@ class ArmControlApp(tk.Tk):
     def _run_sequence(self, secuencia: List[Posicion], delay_ms: int):
         try:
             for p in secuencia:
-                # Actualizar sliders visualmente (sin eco)
                 self._updating_from_telemetry = True
                 self.sl_vars[0].set(p.m1); self.sl_vars[1].set(p.m2)
                 self.sl_vars[2].set(p.m3); self.sl_vars[3].set(p.m4)
@@ -421,7 +430,6 @@ class ArmControlApp(tk.Tk):
                 self.update_idletasks()
                 self._updating_from_telemetry = False
 
-                # Enviar al brazo
                 self.serial_arm.send_set(p)
                 time.sleep(delay_ms / 1000.0)
             self._set_status_text("Secuencia finalizada.")
@@ -432,7 +440,7 @@ class ArmControlApp(tk.Tk):
 
     # ---- HOME / STOP ----
     def _ir_home(self):
-        self.teleop_var.set(0)  # por las dudas, cortar teleop
+        self.teleop_var.set(0)
         self._apply_pose(self.home)
         self.serial_arm.send_set(self.home)
         self._set_status_text("HOME enviado.")
@@ -442,7 +450,6 @@ class ArmControlApp(tk.Tk):
         self._set_status_text(f"HOME definido: {self.home.m1},{self.home.m2},{self.home.m3},{self.home.m4}, MAG={self.home.mag}")
 
     def _stop_seguro(self):
-        # Corta teleop y manda HOME (o podrías implementar PWM OFF en firmware)
         self.teleop_var.set(0)
         self._apply_pose(self.home)
         self.serial_arm.send_set(self.home)
@@ -488,20 +495,13 @@ class ArmControlApp(tk.Tk):
         except Exception as e:
             messagebox.showerror("JSON", f"No se pudo cargar:\n{e}")
 
-    # ---- Branding helpers ----
+    # ---- Branding / Imágenes ----
     def _refrescar_autores_ui(self):
         for w in self._authors_frame.winfo_children():
             w.destroy()
         ttk.Label(self._authors_frame, text="Autores:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", pady=(0,4))
         for i, name in enumerate(self.authors, start=1):
             ttk.Label(self._authors_frame, text=f"• {name}").grid(row=i, column=0, sticky="w")
-
-    def _cargar_logo_dialog(self):
-        path = filedialog.askopenfilename(filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg;*.gif;*.bmp")])
-        if not path:
-            return
-        self.logo_path = path
-        self._cargar_logo(path)
 
     def _cargar_logo(self, path: str, max_w: int = 260, max_h: int = 120):
         try:
@@ -510,12 +510,34 @@ class ArmControlApp(tk.Tk):
                 img.thumbnail((max_w, max_h), Image.LANCZOS)
                 self._logo_tk = ImageTk.PhotoImage(img)
             else:
-                # Fallback sin Pillow: soporta solo algunos formatos según Tk
                 self._logo_tk = tk.PhotoImage(file=path)
             self._logo_label.configure(image=self._logo_tk)
             self._logo_label.image = self._logo_tk  # evitar GC
         except Exception as e:
             messagebox.showerror("Logo", f"No se pudo cargar la imagen:\n{e}")
+
+    def _cargar_brazo_dialog(self):
+        path = filedialog.askopenfilename(filetypes=[('Imágenes','*.png;*.jpg;*.jpeg;*.gif;*.bmp')])
+        if not path:
+            return
+        self.arm_img_path = path
+        self._cargar_brazo(path)
+
+    def _cargar_brazo(self, path: str, max_w: int = 360, max_h: int = 360):
+        """Carga la imagen del brazo y la dibuja centrada en el canvas."""
+        try:
+            if PIL_AVAILABLE:
+                img = Image.open(path)
+                img.thumbnail((max_w, max_h), Image.LANCZOS)
+                self._arm_img_tk = ImageTk.PhotoImage(img)
+            else:
+                self._arm_img_tk = tk.PhotoImage(file=path)
+
+            self.arm_canvas.delete("all")
+            self.arm_canvas.create_image(max_w // 2, max_h // 2, image=self._arm_img_tk)
+            self.arm_canvas.image = self._arm_img_tk  # evitar GC
+        except Exception as e:
+            messagebox.showerror("Imagen del brazo", f"No se pudo cargar '{path}':\n{e}")
 
     # ---- Estado ----
     def _set_status(self):
