@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from dataclasses import dataclass
 from typing import List, Optional
+from typing import Optional, Any
 
 # ---- Imágenes (Pillow opcional para reescalar) ----
 try:
@@ -43,7 +44,7 @@ class Posicion:
 class SerialClient:
     """Cliente serie simple para enviar/recibir líneas ASCII."""
     def __init__(self):
-        self.ser: Optional['serial.Serial'] = None
+        self.ser: Optional[Any] = None
 
     def ports(self):
         if serial is None:
