@@ -1,0 +1,48 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{booktabs}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[
+  a4paper,
+  top=25mm,bottom=25mm,left=25mm,right=25mm,
+  includefoot,heightrounded,footskip=12mm
+]{geometry}
+\flushbottom      % asegura que el texto llegue al margen inferior
+
+\begin{document}
+
+% --- Portada a sangre (sin márgenes) ---
+\newgeometry{
+  left=0mm,right=0mm,top=0mm,bottom=0mm,
+  headheight=0pt,headsep=0pt,footskip=0pt,
+  includehead=false,includefoot=false
+}
+\begin{titlepage}
+  \thispagestyle{empty}
+  \noindent\includegraphics[width=\paperwidth,height=\paperheight]{anexos/Portada.png}
+\end{titlepage}
+\restoregeometry{}
+\clearpage   % página limpia con márgenes restaurados
+
+
+\input{0_introduccion}
+
+\input{1_marco_teorico}
+
+\input{2_metodologia}
+
+\input{3_resultados}
+
+\input{4_conclusiones}
+            
+\bibliographystyle{IEEEtran}
+\nocite{*}
+% \bibliography{5_referencias}
+
+\input{6_apendice}
+
+\end{document}
+
