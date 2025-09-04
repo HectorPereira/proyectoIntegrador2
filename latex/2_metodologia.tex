@@ -1,5 +1,42 @@
 \section{Metodología}
 \subsection{Materiales}
+\section*{Estructura del sistema}
+
+\begin{itemize}[leftmargin=1.2cm]
+  \item \textbf{Estructura mecánica:}
+  \begin{itemize}
+    \item MDF de 3.2 a 10 mm (cortado por láser).
+    \item Tornillería estándar (M3, tuercas, arandelas, bujes, espaciadores).
+  \end{itemize}
+
+  \item \textbf{Actuadores:}
+  \begin{itemize}
+    \item 4 × Servomotores MG996R de 180° (uno por articulación).
+    Según la hoja de datos del MG996R, este servo de engranajes metálicos y doble rodamientos ofrece un par de detención (“stall torque”) de hasta 11 kg·cm a 6 V y una velocidad de 0,14 s por 60° 
+components101.com.
+  \end{itemize}
+
+  \item \textbf{Efectores:}
+  \begin{itemize}
+    \item Garra mecánica.
+    \item Electroimán para piezas ferromagnéticas.
+  \end{itemize}
+
+  \item \textbf{Electrónica de control:}
+  \begin{itemize}
+    \item Microcontrolador ATmega328P (ejemplo: Arduino Uno/Nano).
+    \item Driver MOSFET  para el electroimán.
+    \item Finales de carrera (para homing).
+    \item LEDs indicadores y buzzer de estado.
+  \end{itemize}
+
+  \item \textbf{Fuente de alimentación:}
+  \begin{itemize}
+    \item Fuente de poder (capaz de alimentar servos y microcontrolador).
+    \item Reguladores o convertidores de voltaje según necesidad.
+  \end{itemize}
+\end{itemize}
+
 \subsection{Software de control}
 
 \begin{figure}[H]
