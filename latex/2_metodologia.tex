@@ -1,42 +1,34 @@
 \section{Metodología}
 \subsection{Materiales}
-\section*{Estructura del sistema}
 
-\begin{itemize}[leftmargin=1.2cm]
-  \item \textbf{Estructura mecánica:}
-  \begin{itemize}
+\begin{itemize}
+  \item \textbf{Estructura mecánica:} \begin{itemize}
     \item MDF de 3.2 a 10 mm (cortado por láser).
-    \item Tornillería estándar (M3, tuercas, arandelas, bujes, espaciadores).
-    \item PLA
+    \item Tornillería estándar (M3, tuercas, tornillos, y arandelas).
+    \item PLA (Impresión 3D)
   \end{itemize}
 
   \item \textbf{Actuadores:}
   \begin{itemize}
     \item 4 × Servomotores MG996R de 180° (uno por articulación).
+    \item Servomotor sg90 de 180° (garra)
     \item Bobinado de alambre de cobre con cobertura para bobina.
     \item Núcleo de bobina.
   \end{itemize}
 
-  \item \textbf{Efectores:}
-  \begin{itemize}
-    \item Garra mecánica.
-    \item Electroimán para piezas ferromagnéticas.
-  \end{itemize}
-
   \item \textbf{Electrónica de control:}
   \begin{itemize}
-    \item Microcontrolador ATmega328P 
-    \item Driver MOSFET  para el electroimán.
+    \item Plataforma de desarrollo Arduino UNO
+    \item Driver MOSFET para el electroimán.
     \item Finales de carrera (para homing).
     \item LEDs indicadores y buzzer de estado.
     \item 4 x potenciometros
     \item Fusible de protección 
-    
   \end{itemize}
 
   \item \textbf{Fuente de alimentación:}
   \begin{itemize}
-    \item Fuente de poder (capaz de alimentar servos y microcontrolador).
+    \item Fuente de alimentación 5v 5A.
   \end{itemize}
 \end{itemize}
 \subsection{Software de control}
