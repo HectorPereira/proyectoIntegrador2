@@ -1,4 +1,5 @@
 \section{Metodología}
+\section{Metodología}
 \subsection{Materiales}
 \section*{Estructura del sistema}
 
@@ -7,13 +8,14 @@
   \begin{itemize}
     \item MDF de 3.2 a 10 mm (cortado por láser).
     \item Tornillería estándar (M3, tuercas, arandelas, bujes, espaciadores).
+    \item PLA
   \end{itemize}
 
   \item \textbf{Actuadores:}
   \begin{itemize}
     \item 4 × Servomotores MG996R de 180° (uno por articulación).
-    Según la hoja de datos del MG996R, este servo de engranajes metálicos y doble rodamientos ofrece un par de detención (“stall torque”) de hasta 11 kg·cm a 6 V y una velocidad de 0,14 s por 60° 
-components101.com.
+    \item Bobinado de alambre de cobre con cobertura para bobina.
+    \item Núcleo de bobina.
   \end{itemize}
 
   \item \textbf{Efectores:}
@@ -28,15 +30,16 @@ components101.com.
     \item Driver MOSFET  para el electroimán.
     \item Finales de carrera (para homing).
     \item LEDs indicadores y buzzer de estado.
+    \item 4 potenciometros
+    \item Fusible de protección 
+    
   \end{itemize}
 
   \item \textbf{Fuente de alimentación:}
   \begin{itemize}
     \item Fuente de poder (capaz de alimentar servos y microcontrolador).
-    \item Reguladores o convertidores de voltaje según necesidad.
   \end{itemize}
 \end{itemize}
-
 \subsection{Software de control}
 
 \begin{figure}[H]
