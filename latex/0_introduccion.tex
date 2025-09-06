@@ -1,11 +1,9 @@
 \section{Introducción}
 \subsection{Planteamiento del problema}
 
-La robótica está cada vez más involucrada en el mercado laboral, lo que hace que la educación, en muchos casos, se quede corta para cubrir esta demanda. Por ello, se busca fomentar la inclusión de la robótica en diferentes niveles educativos: inspirando a los más jóvenes, introduciendo a los estudiantes en educación secundaria, y permitiendo que los más avanzados puedan profundizar en el área.
+La robótica está cada vez más involucrada en el mercado laboral, lo que hace que la educación no pueda seguir el ritmo de evolución de tecnologías de producción cada vez más prevalentes. Por ello, se busca fomentar la inclusión de la robótica en diferentes niveles educativos: inspirando a los más jóvenes, introduciendo a los estudiantes en educación secundaria, y permitiendo que los más avanzados puedan profundizar en el área.
 
-En este contexto, surge la necesidad de un modelo de brazo robótico accesible, fácil de ensamblar, de bajo costo y con un diseño sencillo que sea adecuado para usuarios inexpertos o jóvenes. Este modelo debe ser, además, duradero, mantenible y fácil de reparar, para garantizar su uso a largo plazo. Adicionalmente, se plantea que el manipulador sea modular, con la posibilidad de modificación y expansión, permitiendo a los estudiantes más avanzados involucrarse en proyectos más complejos y adaptarlos a otros sistemas o tecnologías.
-
-La propuesta de utilizar MDF como material principal, aprovechando sus ventajas de bajo costo y facilidad de fabricación mediante corte láser o fresado CNC, busca superar las limitaciones que presentan los métodos de fabricación más lentos y costosos como la impresión 3D. De esta forma, se logra una producción más eficiente y replicable, accesible para más instituciones educativas.
+En este contexto, surge la necesidad de un modelo de brazo robótico accesible, fácil de ensamblar, de bajo costo y con un diseño sencillo que sea adecuado para usuarios inexpertos o jóvenes. Este modelo debe ser, además, duradero, mantenible y fácil de reparar, para garantizar su uso a largo plazo. Adicionalmente, se plantea que el manipulador sea modular, con la posibilidad de modificación y expansión, permitiendo a los estudiantes involucrarse en proyectos más complejos y adaptarlos a otros sistemas o tecnologías.
 
 El objetivo final es ofrecer un manipulador robótico que pueda adaptarse a diversas aplicaciones y demostraciones, fomentando el aprendizaje en robótica y automatización desde etapas tempranas de formación, inspirando a los estudiantes y acercándolos a los procesos industriales actuales.
 
@@ -30,22 +28,24 @@ En el diagrama se identifican seis ramas principales que agrupan las limitacione
 \end{itemize}
 
 \subsection{Solución propuesta}
-Un brazo robótico didáctico a escala de 4 GDL con efector intercambiable: electroimán (para piezas ferromagnéticas) y garra (para piezas no magnéticas). Estructura paramétrica cortada en MDF (3.2–10 mm), tornillería estándar y electrónica de fácil reposición. Control con ESP32/ATmega328P, modos manual/automático, GUI en Python (Tkinter/PyQt), y documentación abierta para replicación.
+Un brazo robótico didáctico a escala de 4 grados de libertad, con efector intercambiable: electroimán (para piezas ferromagnéticas) y garra (para piezas no magnéticas). Estructura paramétrica cortada en MDF (3.2–10 mm), tornillería estándar y electrónica de fácil reposición. Control con ESP32/ATmega328P, modos manual/automático, GUI en Python (Tkinter/PyQt), y documentación abierta para replicación.
 
 \subsection{Objetivo General}
-Desaroolar un modelo de brazo robótico didáctico de 4 grados de libertad, seguro, portable y accesible, con efectores electroimán/garra intercambiables, capaz de ejecutar tareas básicas de pick \& place en un volumen de trabajo de hasta 50×50×50 cm.
+Desarrollar un modelo de brazo robótico didáctico de 4 grados de libertad, seguro, portable y accesible, con efectores electroimán/garra intercambiables.
 
 \subsection{Objetivos específicos}
 \begin{enumerate}
-  \item Diseñar la estructura mecánica del brazo robótico de 4 GDL en MDF paramétrico, asegurando su facilidad de ensamblaje, modularidad y bajo costo.
+  \item Diseñar la estructura mecánica del brazo robótico de 4 grados de libertad.
 
-  \item Desarrollar un sistema de actuación con servomotores que permita manipular cargas de hasta 100 g en un alcance de 40 cm con una tasa de éxito superior al 90%.
+  \item Investigación y revisión de materiales y componentes 
+  
+  \item Desarrollar un sistema de actuación con servomotores que permita manipular cargas útiles dentro del contexto educativo/demostrativo.
 
-  \item Implementar un sistema de efectores intercambiables (electroimán y garra) con un mecanismo de cambio rápido que no requiera herramientas especiales.
+  \item Implementar un sistema que permita un cambio rápido del efector del robot
 
-  \item Incorporar medidas de seguridad en el prototipo, incluyendo paro de emergencia, cableado protegido y tensiones seguras en la zona de usuario.
+  \item Diseñar planos eléctricos y esquemas programáticos del funcionamiento interno del dispositivo 
 
-  \item Desarrollar una interfaz gráfica de usuario (GUI) que permita el control manual y automático del brazo, con funciones de lectura de posición, activación del electroimán y cinemática inversa planar.
+  \item Desarrollar una interfaz gráfica de usuario (GUI) que permita el control manual y automático del brazo.
 \end{enumerate}
 
 

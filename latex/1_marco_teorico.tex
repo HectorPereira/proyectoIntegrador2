@@ -109,13 +109,26 @@ Diseño própio descartado. Elaborado con servomotores mg996r y eslabones como p
 Todas las soluciones involucran un brazo robótico de 4 articulaciones controladas por un Arduino. Las variaciones en los modelos se pueden clasificar en como se manejan las articulaciones y los actuadores utilizados. Las clasificaciones son:
 
 \begin{itemize}
-  \item \textbf{Servomotores MG996R.} Un modelado directo y más convencional del brazo robótico, utilizando un servomotor por articulación y colocado directamente en la misma. Apuntando el diseño a la simplicidad, en fácil ensamblado y la reparabilidad, utilizando una combinación entre corte láser en de mdf (en mayor medida) e impresión 3d.
+  \item\textbf{Servomotores MG996R.} Un modelado directo y más convencional del brazo robótico, utilizando un servomotor por articulación y colocado directamente en la misma. Apuntando el diseño a la simplicidad, en fácil ensamblado y la reparabilidad, utilizando una combinación entre corte láser en de mdf (en mayor medida) e impresión 3d.
   
-  \item \textbf{Servomotores MG996R con eslabones.} Modelo implementado con servomotores pero optimizando la distribución de peso alojando a los mismos lo más cerca del eje de rotación de cada articulación y transmitiendo el movimiento mediante eslabones y palancas, buscando mejorar la eficiencia mecánica. El diseño se vuelve más vistoso y potencialmente útil para instruir en el uso de eslabones y mecanismos simples, sin embargo aumenta la complejidad del diseño llevando mayor cantidad de partes móviles, y disminuyendo la facilidad de ensamble y reparación.
+  \item\textbf{Servomotores MG996R con eslabones.} Modelo implementado con servomotores pero optimizando la distribución de peso alojando a los mismos lo más cerca del eje de rotación de cada articulación y transmitiendo el movimiento mediante eslabones y palancas, buscando mejorar la eficiencia mecánica. El diseño se vuelve más vistoso y potencialmente útil para instruir en el uso de eslabones y mecanismos simples, sin embargo aumenta la complejidad del diseño llevando mayor cantidad de partes móviles, y disminuyendo la facilidad de ensamble y reparación.
 
-  \item \textbf{Actuadores lineales tornillo---tuerca (motor DC con reductora).} Ofrecen alta fuerza y buen costo por actuador, y pueden estar enfocados a niveles educativos superiores por la implementación de controles PID con sensado de ángulo y calibración manual, entre otras cosas. Sin embargo, el mecanismo es más lento y menos preciso; requiere encoders o potenciómetros y finales de carrera para conocer el ángulo articular. Además, el diseño de eslabones y articulaciones se torna más complejo,  y los mecanismos de codificación de posición son más propensos a \emph{interferencias/ruido} y se convierten en otro posible punto de fallo. El juego mecánico (backlash) y la fricción, además del desgaste de los potenciometros pueden degradar la repetibilidad.
+  \item\textbf{Actuadores lineales tornillo---tuerca (motor DC con reductora).} Ofrecen alta fuerza y buen costo por actuador, y pueden estar enfocados a niveles educativos superiores por la implementación de controles PID con sensado de ángulo y calibración manual, entre otras cosas. Sin embargo, el mecanismo es más lento y menos preciso; requiere encoders o potenciómetros y finales de carrera para conocer el ángulo articular. Además, el diseño de eslabones y articulaciones se torna más complejo,  y los mecanismos de codificación de posición son más propensos a \emph{interferencias/ruido} y se convierten en otro posible punto de fallo. El juego mecánico (backlash) y la fricción, además del desgaste de los potenciometros pueden degradar la repetibilidad.
 
-  \item \textbf{Actuadores lineales con asistencia hidráulica (jeringas).} Siendo la alternativa más atractiva, pero también la más compleja. Añade una capa de transmisión hidráulica sobre el actuador lineal. A cambio, ofrece una \emph{relación fuerza---peso} muy favorable (bajo peso en el extremo móvil frente a la fuerza aplicable). No obstante, introduce menor velocidad, necesidad de purgado/cebado, riesgo de fugas y mayor mantenimiento; el control (válvulas, amortiguación) eleva la complejidad significativamente. Al igual que en la opción de tornillo---tuerca, la posición debe codificarse (p.\,ej., potenciómetros/encoders lineales), añadiendo potenciales puntos de fallo.
+  \item\textbf{Actuadores lineales con asistencia hidráulica (jeringas).} Siendo la alternativa más atractiva, pero también la más compleja. Añade una capa de transmisión hidráulica sobre el actuador lineal. A cambio, ofrece una \emph{relación fuerza---peso} muy favorable (bajo peso en el extremo móvil frente a la fuerza aplicable). No obstante, introduce menor velocidad, necesidad de purgado/cebado, riesgo de fugas y mayor mantenimiento; el control (válvulas, amortiguación) eleva la complejidad significativamente. Al igual que en la opción de tornillo---tuerca, la posición debe codificarse (p.\,ej., potenciómetros/encoders lineales), añadiendo potenciales puntos de fallo.
+\end{itemize}
+
+\subsubsection{Criterios de selección}
+
+\begin{itemize}
+  \item Distribución de peso: mide la capacidad del sistema de actuación para ubicar la masa de los actuadores cerca de la base o de los ejes principales, reduciendo así el par requerido en las articulaciones. Una buena distribución de peso incrementa la estabilidad y mejora la eficiencia energética del manipulador.
+  \item Simplicidad: evalúa el grado de complejidad en el diseño, ensamblaje y operación del mecanismo. Un sistema más simple resulta más accesible para estudiantes y usuarios inexpertos, reduciendo la curva de aprendizaje y los posibles errores durante el montaje o uso.
+  \item Costo: considera tanto el precio inicial de adquisición de los actuadores como el de los componentes asociados (accesorios, controladores, sensores, etc.). Este criterio es clave para mantener la accesibilidad del brazo robótico en entornos educativos.
+  \item Reparabilidad: analiza la facilidad para reemplazar piezas dañadas o desgastadas, así como la disponibilidad de repuestos en el mercado. Una buena reparabilidad asegura la continuidad en el uso y la sostenibilidad a largo plazo del prototipo.
+  \item Durabilidad: se refiere a la resistencia del sistema de actuación frente al desgaste mecánico, la fatiga de materiales y el uso prolongado. Los mecanismos más duraderos requieren menos mantenimiento y ofrecen mayor confiabilidad.
+  \item Capacidad de carga: mide la fuerza máxima que el sistema puede ejercer en el efector final, lo cual determina el rango de piezas u objetos que el brazo robótico puede manipular. En el contexto didáctico, se prioriza un equilibrio entre capacidad de carga y ligereza del diseño.
+  \item Velocidad: hace referencia al tiempo de respuesta y a la rapidez con la que el actuador puede ejecutar un movimiento. Una mayor velocidad contribuye a realizar demostraciones más dinámicas y a simular con mayor realismo procesos industriales.
+  \item Precisión: evalúa la exactitud con la que el sistema puede alcanzar y mantener una posición deseada. Este atributo es fundamental para la enseñanza de conceptos de control, automatización y cinemática, ya que un mayor nivel de precisión permite ejecutar trayectorias repetibles y confiables.
 \end{itemize}
 
 
@@ -124,7 +137,7 @@ Todas las soluciones involucran un brazo robótico de 4 articulaciones controlad
 \caption{Evaluación comparativa de mecanismos de actuación}
 \begin{tabular}{lccccc}
 \toprule
-\textbf{Atributo} & \textbf{Peso} & \textbf{Servom.} & \textbf{Eslabones} & \textbf{Actuadores lin.} & \textbf{Pistones hidr.} \\
+\textbf{Atributo} &\textbf{Peso} &\textbf{Servom.} &\textbf{Eslabones} &\textbf{Actuadores lin.} &\textbf{Pistones hidr.} \\
 \midrule
 Distribución de peso & 1 & 6  & 8  & 9 & 10 \\
 Simplicidad          & 3 & 10 & 6  & 5 & 4  \\
@@ -140,42 +153,109 @@ Precisión            & 1 & 8  & 7  & 6 & 5  \\
 \end{tabular}
 \end{table}
 
+Tomando en cuenta los criterios especificados con sus respectivos pesos asignados, se llega a la conclusión que un diseño con servomotores articulado es el más adecuado para llevar a cabo los objetivos planteados.
 
-\subsubsection*{Decisión técnica}
-Tomando en cuenta los atributos con sus respectivos pesos se llega a la conclusión que el modelo de servomotores articulado es el más adecuado para implementar. Este 
 \paragraph{Lineamientos de diseño adoptados}
 \begin{itemize}
-  \item Ubicar los actuadores lo más cerca posible de los ejes principales o de la base para minimizar el par requerido.
-  \item Emplear eslabones/bielas para accionar articulaciones alejadas, manteniendo baja la masa en el efector.
-  \item Limitar configuraciones que generen grandes brazos de palanca y añadir topes/curvas de velocidad para proteger a los servos.
-  \item Mantener la \emph{modularidad} e \emph{intercambiabilidad} del efector (electroimán/garra) y el diseño paramétrico para distintos espesores de MDF.\@
+  \item Enfocar el diseño en la simplicidad de montaje, reduciendo la cantidad de componentes.
+  \item Reducir cantidad de elementos propensos a desgaste/fallas, planeando adecuadamente el movimiento y las interacciones físicas entre los materiales del dispositivo.  
+  \item Tomar consideración de las tolerancias de fabricación en elementos deslizantes.
+  \item Mantener la modularidad e intercambiabilidad del efector (electroimán/garra) y el diseño paramétrico para distintos espesores de MDF.\@
 \end{itemize}
 
-En síntesis, el resultado es un diseño híbrido control directo con servos potentes y una arquitectura mecánica inspirada en sistemas lineales/hidráulicos que traslada masa hacia la estructura fija. 
-Esto simplifica la implementación y el mantenimiento, a la vez que mejora la eficiencia mecánica y la repetibilidad del prototipo.
+Los lineamientos de diseño se centran en garantizar un montaje sencillo y confiable, minimizando la cantidad de componentes y puntos de desgaste. Se consideraron las tolerancias de fabricación en elementos móviles, y se mantuvo un enfoque modular y paramétrico que permite la intercambiabilidad del efector y la adaptación a distintos espesores de MDF.\@
+
+\subsection{Sustento técnico de la solución conceptual}
+\subsubsection{Actuadores}
+Al comparar el MG996R con el SG90 se nota enseguida que están pensados para usos muy diferentes. El MG996R es mucho más fuerte: puede llegar a un par de hasta 11 kgf·cm, mientras que el SG90 apenas alcanza 1.8 kgf·cm. Esa diferencia hace que el primero sea ideal para mover piezas más pesadas o para darle solidez a un brazo robótico, mientras que el segundo queda limitado a proyectos pequeños y livianos.
+
+En tamaño y peso también se distinguen bastante. El SG90 es muy compacto, con solo 9 gramos, frente a los 55 gramos del MG996R. Esa ligereza lo vuelve práctico cuando no hay mucho espacio o cuando se busca mantener la estructura lo más liviana posible, aunque lógicamente no tiene la misma capacidad de carga. En cuanto a velocidad, el SG90 responde un poco más rápido (0.1 s/60° frente a 0.17 s/60° a 4.8 V en el MG996R), pero esta diferencia no suele ser decisiva si lo que se necesita es fuerza y confiabilidad más que rapidez.
+
+Otra diferencia clave está en los materiales. El MG996R usa engranajes metálicos y un sistema de doble rodamiento de bolas, lo que le da más precisión y resistencia al desgaste. En cambio, el SG90 usa engranajes plásticos, que son más frágiles y tienden a deteriorarse con el uso. Eso sí, esta robustez del MG996R viene con un costo: su consumo de corriente es bastante más alto (puede llegar a 2.5 A en stall), mientras que el SG90 consume mucho menos y puede funcionar sin problemas con fuentes pequeñas.
+
+En resumen, el MG996R es la mejor opción cuando se busca un servo confiable, fuerte y duradero para un brazo robótico educativo que tenga que manipular piezas con cierta carga. El SG90, en cambio, es más adecuado para proyectos sencillos o demostrativos, donde lo que importa es que sea barato, liviano y fácil de integrar. (\cite{TowerProMG996R})
+\subsubsection{Material estructural}
+El diseño del brazo robótico se elaboró principalmente en MDF (tablero de fibras de densidad media) porque combina varias ventajas que lo hacen ideal para un prototipo educativo. En primer lugar, es un material económico y de fácil acceso en el mercado, lo cual permite mantener bajo el costo del proyecto sin sacrificar demasiada calidad. Esto es clave en un contexto didáctico, donde la idea es que el brazo sea replicable por estudiantes o instituciones sin necesidad de una gran inversión.
+
+Otra razón importante es que el MDF se trabaja muy bien con corte láser, lo que facilita la fabricación de piezas precisas y repetibles. Gracias a esto, el diseño puede ser paramétrico, adaptándose a distintos espesores de placa sin necesidad de cambios drásticos. Además, el MDF ofrece una buena rigidez estructural para soportar los esfuerzos típicos de un brazo robótico de bajo peso, a la vez que es lo suficientemente ligero como para no sobrecargar los servomotores.
+
+Al mismo tiempo, se decidió incorporar piezas en impresión 3D en zonas específicas, como acoples para articulaciones o soportes que simplifiquen el montaje. Esto no solo mejora la facilidad de ensamblaje frente a un diseño que dependa exclusivamente de tornillos y tuercas, sino que también aporta mayor precisión en uniones críticas y permite formas más complejas que serían difíciles de obtener solo con MDF.\@
+
+De esta manera, la combinación de MDF y piezas impresas en 3D ofrece un equilibrio interesante: por un lado, bajo costo y facilidad de fabricación; por otro, versatilidad y optimización en el ensamblaje. En conjunto, se obtiene un prototipo didáctico robusto, accesible y fácil de replicar, sin dejar de lado la posibilidad de mejorar su ergonomía y durabilidad con componentes personalizados.
+\subsubsection{Ecuaciones y parámetros relevantes}
+\paragraph{Par y torque}
+\begin{equation}
+  \bm{\tau}  = \bm{F} \cdot \bm{r}
+\end{equation}
+
+\begin{itemize}
+  \item $\bm{\tau} \rightarrow$ torque (kgf·cm o N·m)
+  \item $\bm{F} \rightarrow$ fuerza en (kgf o N)
+  \item $\bm{r} \rightarrow$ distancia del eje al punto de aplicación de la fuerza  (cm o m)
+\end{itemize}
+
+\paragraph{Potencia eléctrica del servo}
+\begin{equation}
+  P_{{servo}} = V \cdot I
+\end{equation}
+
+\begin{itemize}
+  \item $P_{{servo}} \rightarrow$ potencia consumida por el servo (W)
+  \item $V \rightarrow$ voltaje de alimentación (V)
+  \item $I \rightarrow$ corriente consumida por el servo (A)
+\end{itemize}
+
+\paragraph{Consumo total del sistema}
+\begin{equation}
+  I_{{total}} = \sum I_{{servos}} + I_{{electroiman}} + I_{{microcontrolador}}
+\end{equation}
+
+\begin{itemize}
+  \item $I_{{total}} \rightarrow$ corriente total necesaria (A)
+  \item $I_{{servos}} \rightarrow$ corriente de cada servo (A)
+  \item $I_{{electroiman}} \rightarrow$ corriente del electroimán (A)
+  \item $I_{{microcontrolador}} \rightarrow$ corriente del microcontrolador (A)
+\end{itemize}
+
+\paragraph{Control por PWM}
+\begin{equation}
+  \theta = \frac{t_{{high}} - t_{{\min}}}{t_{{\max}} - t_{{\min}}} \cdot (\theta_{{\max}} - \theta_{{\min}}) + \theta_{{\min}}
+\end{equation}
+
+\begin{itemize}
+  \item $\theta \rightarrow$ ángulo del servo (°)
+  \item $t_{{high}} \rightarrow$ duración del pulso de control (s)
+  \item $t_{{\min}}, t_{{\max}} \rightarrow$ tiempos de pulso correspondientes a los extremos del ángulo (s)
+  \item $\theta_{{\min}}, \theta_{{\max}} \rightarrow$ ángulos extremos del servo (°)
+\end{itemize}
+
+\paragraph{Momento de inercia de las piezas rotantes}
+\begin{equation}
+  I = \sum m_i \cdot r_i^2
+\end{equation}
+
+\begin{itemize}
+  \item $I \rightarrow$ momento de inercia (kg·cm² o kg·m²)
+  \item $m_i \rightarrow$ masa de cada componente (kg)
+  \item $r_i \rightarrow$ distancia al eje de rotación (cm o m)
+\end{itemize}
+
+\paragraph{Fuerza del electroimán}
+\begin{equation}
+  F_{{em}} = \frac{{(\mu \cdot N \cdot I)}^2 \cdot A}{2 \cdot g^2}
+\end{equation}
+
+\begin{itemize}
+  \item $F_{{em}} \rightarrow$ fuerza de atracción del electroimán (N)
+  \item $\mu \rightarrow$ permeabilidad del núcleo (H/m)
+  \item $N \rightarrow$ número de vueltas de la bobina
+  \item $I \rightarrow$ corriente aplicada (A)
+  \item $A \rightarrow$ área del núcleo (m²)
+  \item $g \rightarrow$ distancia entre el núcleo y la pieza ferromagnética (m)
+\end{itemize}
 
 
-\section{Alcance}
+\subsubsection{Aspectos electrónicos}
+El sistema electrónico del brazo robótico se centra en garantizar control preciso, seguridad y facilidad de mantenimiento. El Arduino Uno, basado en el microcontrolador ATmega328P, actúa como controlador principal, ejecutando el firmware y generando señales PWM para los servomotores, además de leer entradas provenientes de potenciómetros y pulsadores. Cada servomotor MG996R cuenta con un fusible individual que protege al dispositivo frente a sobrecorrientes, asegurando su integridad durante la operación. 
 
-\subsection{Alcance del proyecto}
-El proyecto comprende el diseño, construcción y validación de un brazo robótico didáctico a escala. La arquitectura mecánica contempla cuatro grados de libertad (sin contar el efector), con una estructura paramétrica diseñada para corte láser en MDF de espesores entre 3.2 y 10 mm, pero adaptable también a materiales como acrílico o metal. La base será fija y deberá estar contenida dentro de un volumen de 50 $\times$ 50 $\times$ 50 cm.
-
-El sistema contará con efectores intercambiables, entre ellos un electroimán para la manipulación de piezas ferromagnéticas y una garra mecánica para piezas no magnéticas. Ambos estarán diseñados con un mecanismo de cambio rápido que permita alternar entre uno y otro sin dificultad.
-
-La actuación del brazo se logrará mediante servomotores MG996R, con uno por cada articulación principal. Para optimizar el rendimiento, se implementará una transmisión por eslabones que mantenga la mayor parte de la masa cercana a los ejes de giro.
-
-En cuanto al control y la electrónica, se utilizará un microcontrolador (ESP32 o ATmega328P), un driver MOSFET como el IRFZ44N (o equivalente) para gobernar el electroimán, así como finales de carrera para homing y elementos de señalización visual y sonora mediante LEDs y un buzzer de estado.
-
-El software incluirá un firmware desarrollado en C/C++ y una interfaz gráfica en Python, implementada en Tkinter o PyQt. Esta ofrecerá un modo manual y un modo automático, además de control ON/OFF del electroimán y una cinemática inversa planar básica para la manipulación de piezas.
-
-La alimentación del sistema se resolverá con una fuente capaz de abastecer tanto la lógica como la potencia, incorporando convertidores adecuados para los servos y el electroimán.
-
-Finalmente, en el componente de documentación y docencia, se elaborará un manual de armado, una guía docente y un conjunto mínimo de cinco prácticas de laboratorio orientadas a la enseñanza y experimentación con el brazo robótico.
-
-
-\subsection{Criterios de aceptación}
-El dispositivo debe ser capaz de ejecutar trayectorias punto a punto tanto en modo manual como en modo automático. Asimismo, deberá alcanzar una tasa de éxito superior al 90 \% en las tareas de agarre y manipulación de objetos, garantizando un desempeño confiable durante su operación.
-
-De igual forma, contará con una rutina de referencia operativa que asegure la correcta inicialización del sistema, un mecanismo de paro de emergencia y límites mecánicos verificados para preservar la seguridad del equipo y del entorno.
-
-Finalmente, el proyecto se entregará con un prototipo completamente ensamblado, acompañado del firmware correspondiente, la interfaz gráfica de usuario, un manual de usuario detallado y una guía docente que incluya cinco prácticas evaluables para su aplicación en el ámbito académico.
+El electroimán se controla mediante un MOSFET (IRFZ44N o equivalente), lo que permite conmutar la corriente de manera eficiente y confiable. La alimentación general del sistema se provee mediante fuentes de 5 a 6 V, capaces de abastecer tanto la lógica del microcontrolador como la potencia requerida por los servos y el electroimán. Los potenciómetros y pulsadores permiten la operación manual y la calibración de las articulaciones, mientras que las resistencias cumplen funciones de limitación de corriente, protección de entradas analógicas y LEDs indicativos de estado.
