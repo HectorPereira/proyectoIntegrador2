@@ -126,7 +126,7 @@ class ArmControlApp(tk.Tk):
         self.bind("<Control-Delete>", lambda e: self._vaciar_lista())
         self.bind("<Control-n>", lambda e: self._nueva_grabacion())
 
-        # Cargar imágenes si existen
+        # Cargar imágenes si existen (desde código, sin botón)
         try:
             if os.path.exists(self.logo_path):
                 self._cargar_logo(self.logo_path)
@@ -227,8 +227,7 @@ class ArmControlApp(tk.Tk):
         self.arm_canvas.grid(row=0, column=0, pady=5, sticky="n")
         self.arm_canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
 
-        ttk.Button(center, text="Cargar imagen del brazo...", command=self._cargar_brazo_dialog)\
-            .grid(row=1, column=0, sticky="w")
+        # (Se eliminó el botón "Cargar imagen del brazo...")
 
         ttk.Label(center, text="Posiciones guardadas").grid(row=3, column=0, sticky="w", pady=(10,3))
         list_frame = ttk.Frame(center)
@@ -309,7 +308,6 @@ class ArmControlApp(tk.Tk):
 
     def _toggle_conexion_arm(self):
         if self.serial_arm.connected:
-            # detener lector y cerrar
             self._reader_stop = True
             self.serial_arm.close()
             self.btn_connect_arm.config(text="Conectar")
@@ -324,7 +322,6 @@ class ArmControlApp(tk.Tk):
             self.serial_arm.connect(port, self.baud_arm_var.get())
             self.btn_connect_arm.config(text="Desconectar")
             self._set_status()
-            # arrancar hilo lector (POT y otros mensajes)
             self._reader_stop = False
             threading.Thread(target=self._reader_loop, daemon=True).start()
         except Exception as e:
@@ -427,7 +424,8 @@ class ArmControlApp(tk.Tk):
             while self._recording:
                 p = self._pos_actual()
                 txt = f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}"
-                self.after(0, lambda t=txt: self.lista.insert(tk.END, t))
+                # Insertar arriba (índice 0)
+                self.after(0, lambda t=txt: self.lista.insert(0, t))
                 time.sleep(interval_ms / 1000.0)
         finally:
             self.after(0, lambda: self.btn_record.config(text="Grabar posición (Iniciar)"))
@@ -462,13 +460,21 @@ class ArmControlApp(tk.Tk):
         self.lista.delete(sel[0])
         self._set_status_text("Posición borrada.")
 
+    # ---------- FIX: parser robusto para leer lista ----------
     def _leer_lista(self) -> List[Posicion]:
         out = []
         for i in range(self.lista.size()):
-            txt = self.lista.get(i)
-            parts = txt.replace(" MAG=", ",").split(",")
+            raw = self.lista.get(i)
+            # Limpieza robusta: quitamos "MAG=", espacios y comas duplicadas
+            s = raw.replace("MAG=", "").replace(" ", "")
+            parts = [p for p in s.split(",") if p != ""]
             if len(parts) >= 5:
-                out.append(Posicion.from_list(parts[:5]))
+                try:
+                    m1, m2, m3, m4, mag = map(int, parts[:5])
+                    out.append(Posicion(m1, m2, m3, m4, mag))
+                except ValueError:
+                    # Si hay una línea inválida, la ignoramos
+                    continue
         return out
 
     def _ejecutar_movimientos(self):
@@ -479,6 +485,10 @@ class ArmControlApp(tk.Tk):
         if not secuencia:
             self._set_status_text("No hay posiciones guardadas.")
             return
+
+        # Ejecutar en orden cronológico (primero las más viejas)
+        secuencia = list(reversed(secuencia))
+
         delay_ms = max(0, int(self.delay_var.get()))
         self.ejecutando = True
         threading.Thread(target=self._run_sequence, args=(secuencia, delay_ms), daemon=True).start()
@@ -534,16 +544,23 @@ class ArmControlApp(tk.Tk):
 
     # ---- Guardar / Cargar ----
     def _guardar_json(self):
-        data = [p.to_list() for p in self._leer_lista()]
-        if not data:
-            self._set_status_text("No hay posiciones para guardar.")
-            return
-        path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON","*.json")], initialfile="posiciones.json")
-        if not path:
-            return
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        self._set_status_text(f"Guardado: {path}")
+        try:
+            data = [p.to_list() for p in self._leer_lista()]
+            if not data:
+                self._set_status_text("No hay posiciones para guardar.")
+                return
+            path = filedialog.asksaveasfilename(
+                defaultextension=".json",
+                filetypes=[("JSON","*.json")],
+                initialfile="posiciones.json"
+            )
+            if not path:
+                return
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            self._set_status_text(f"Guardado: {path}")
+        except Exception as e:
+            messagebox.showerror("JSON", f"No se pudo guardar:\n{e}")
 
     def _cargar_json(self):
         path = filedialog.askopenfilename(filetypes=[("JSON","*.json")])
@@ -555,7 +572,8 @@ class ArmControlApp(tk.Tk):
             self.lista.delete(0, tk.END)
             for lst in data:
                 p = Posicion.from_list(lst)
-                self.lista.insert(tk.END, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
+                # Insertar arriba (índice 0) para mantener lo más nuevo arriba
+                self.lista.insert(0, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
             self._set_status_text(f"Cargado: {path}")
         except Exception as e:
             messagebox.showerror("JSON", f"No se pudo cargar:\n{e}")
@@ -580,13 +598,6 @@ class ArmControlApp(tk.Tk):
             self._logo_label.image = self._logo_tk
         except Exception as e:
             messagebox.showerror("Logo", f"No se pudo cargar la imagen:\n{e}")
-
-    def _cargar_brazo_dialog(self):
-        path = filedialog.askopenfilename(filetypes=[('Imágenes','*.png;*.jpg;*.jpeg;*.gif;*.bmp')])
-        if not path:
-            return
-        self.arm_img_path = path
-        self._cargar_brazo(path)
 
     def _cargar_brazo(self, path: str, max_w: int = 360, max_h: int = 360):
         try:
