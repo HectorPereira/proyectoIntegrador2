@@ -121,6 +121,11 @@ class ArmControlApp(tk.Tk):
 
         self._build_ui()
 
+        # Atajos de teclado
+        self.bind("<Delete>", lambda e: self._borrar_posicion())
+        self.bind("<Control-Delete>", lambda e: self._vaciar_lista())
+        self.bind("<Control-n>", lambda e: self._nueva_grabacion())
+
         # Cargar imágenes si existen
         try:
             if os.path.exists(self.logo_path):
@@ -142,7 +147,7 @@ class ArmControlApp(tk.Tk):
         # ==== Columna izquierda ====
         left = ttk.Frame(self, padding=10)
         left.grid(row=0, column=0, sticky="nsw")
-        for i in range(30):
+        for i in range(40):
             left.rowconfigure(i, weight=0)
 
         # --- Conexión brazo (único puerto) ---
@@ -196,14 +201,20 @@ class ArmControlApp(tk.Tk):
         ttk.Button(left, text="Borrar posición", command=self._borrar_posicion).grid(row=12, column=0, columnspan=2, sticky="we", pady=3)
         ttk.Button(left, text="Ejecutar movimientos", command=self._ejecutar_movimientos).grid(row=13, column=0, columnspan=2, sticky="we", pady=3)
 
-        ttk.Label(left, text="Delay entre pasos (ms)").grid(row=14, column=0, columnspan=2, sticky="w", pady=(10,3))
+        # 👉 NUEVOS BOTONES
+        ttk.Button(left, text="Vaciar lista", command=self._vaciar_lista)\
+            .grid(row=14, column=0, columnspan=2, sticky="we", pady=(6,3))
+        ttk.Button(left, text="Nueva grabación", command=self._nueva_grabacion)\
+            .grid(row=15, column=0, columnspan=2, sticky="we", pady=3)
+
+        ttk.Label(left, text="Delay entre pasos (ms)").grid(row=16, column=0, columnspan=2, sticky="w", pady=(10,3))
         self.delay_var = tk.IntVar(value=600)
-        ttk.Entry(left, textvariable=self.delay_var, width=14).grid(row=15, column=0, columnspan=2, sticky="we")
+        ttk.Entry(left, textvariable=self.delay_var, width=14).grid(row=17, column=0, columnspan=2, sticky="we")
 
-        ttk.Separator(left).grid(row=16, column=0, columnspan=2, sticky="we", pady=10)
+        ttk.Separator(left).grid(row=18, column=0, columnspan=2, sticky="we", pady=10)
 
-        ttk.Button(left, text="Guardar lista (JSON)", command=self._guardar_json).grid(row=17, column=0, columnspan=2, sticky="we", pady=3)
-        ttk.Button(left, text="Cargar lista (JSON)", command=self._cargar_json).grid(row=18, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Guardar lista (JSON)", command=self._guardar_json).grid(row=19, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Cargar lista (JSON)", command=self._cargar_json).grid(row=20, column=0, columnspan=2, sticky="we", pady=3)
 
         # ==== Centro: imagen + lista ====
         center = ttk.Frame(self, padding=10)
@@ -227,6 +238,24 @@ class ArmControlApp(tk.Tk):
         sb = ttk.Scrollbar(list_frame, orient="vertical", command=self.lista.yview)
         sb.pack(side="right", fill="y")
         self.lista.configure(yscrollcommand=sb.set)
+
+        # Menú contextual en la lista
+        self._list_menu = tk.Menu(self, tearoff=0)
+        self._list_menu.add_command(label="Borrar seleccionada", command=self._borrar_posicion)
+        self._list_menu.add_command(label="Vaciar lista", command=self._vaciar_lista)
+        self._list_menu.add_separator()
+        self._list_menu.add_command(label="Exportar JSON", command=self._guardar_json)
+
+        def _popup_list_menu(event):
+            try:
+                idx = self.lista.nearest(event.y)
+                self.lista.selection_clear(0, tk.END)
+                self.lista.selection_set(idx)
+            except Exception:
+                pass
+            self._list_menu.tk_popup(event.x_root, event.y_root)
+
+        self.lista.bind("<Button-3>", _popup_list_menu)  # clic derecho
 
         # ==== Derecha: sliders + electroimán + branding ====
         right = ttk.Frame(self, padding=10)
@@ -344,8 +373,7 @@ class ArmControlApp(tk.Tk):
 
                 continue  # POT ya manejado; no lo mostramos en estado
 
-            # Otros mensajes del firmware (si querés mostrarlos, podríamos loguearlos)
-            # Por ahora, solo actualizamos un estado corto:
+            # Otros mensajes del firmware
             self.after(0, lambda t=line: self._set_status_text(f"RX: {t}"))
 
         # si sale del loop
@@ -403,6 +431,28 @@ class ArmControlApp(tk.Tk):
                 time.sleep(interval_ms / 1000.0)
         finally:
             self.after(0, lambda: self.btn_record.config(text="Grabar posición (Iniciar)"))
+
+    # ---- NUEVO: Vaciar lista ----
+    def _vaciar_lista(self):
+        if self.lista.size() == 0:
+            self._set_status_text("La lista ya está vacía.")
+            return
+        if not messagebox.askyesno("Vaciar lista", "¿Seguro que querés borrar TODAS las posiciones?"):
+            return
+        self.lista.delete(0, tk.END)
+        self._set_status_text("Lista vaciada.")
+
+    # ---- NUEVO: Nueva grabación ----
+    def _nueva_grabacion(self):
+        if self.lista.size() > 0:
+            if not messagebox.askyesno("Nueva grabación", "Se vaciará la lista actual. ¿Continuar?"):
+                return
+            self.lista.delete(0, tk.END)
+        if not self._recording:
+            self._toggle_recording()
+            self._set_status_text("Nueva grabación: lista vacía y grabando…")
+        else:
+            self._set_status_text("Ya estás grabando; lista vacía.")
 
     def _borrar_posicion(self):
         sel = self.lista.curselection()
