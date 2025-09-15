@@ -1,5 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage[T1]{fontenc}
+\usepackage{comment}
+\usepackage{bm}
 \usepackage{booktabs}
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
@@ -34,6 +36,9 @@
 \restoregeometry{}
 \clearpage   % página limpia con márgenes restaurados
 
+\tableofcontents
+
+\newpage
 
 \input{0_introduccion}
 
@@ -45,7 +50,7 @@
 
 \input{4_conclusiones}
             
-\bibliographystyle{IEEEtran}
+\bibliographystyle{alpha} 
 \nocite{*}
 \bibliography{5_referencias}
 
