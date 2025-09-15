@@ -1,608 +1,601 @@
-# main.py
-# App GUI: Control de brazo (4 DOF) por Serial/Bluetooth
-# Organización en 3 columnas. Python 3.13 + Tkinter. Requiere: pip install pyserial
-
 import os
 import json
-import time
-import queue
 import threading
-from datetime import datetime
+import time
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from dataclasses import dataclass
+from typing import List, Optional
 
-# ---- PySerial ----
+# ---- Imágenes (Pillow opcional para reescalar) ----
+try:
+    from PIL import Image, ImageTk
+    PIL_AVAILABLE = True
+except Exception:
+    PIL_AVAILABLE = False
+
+# ---- Serie (pyserial) ----
 try:
     import serial
-    import serial.tools.list_ports as list_ports
+    import serial.tools.list_ports
 except Exception:
     serial = None
-    list_ports = None
 
-APP_TITLE = "App Brazo - 4 DOF"
-CONFIG_FILE = "config.json"
-DEFAULT_BAUD = 230400
-DOF_NAMES = ["Base", "Hombro", "Codo", "Muñeca"]  # 4 DOF
-CMD_PREFIX = "J"  # Formato: J,base,hombro,codo,muñeca\n
-RATE_LIMIT_MS = 25  # limitador de envío en vivo para no spamear el puerto
 
-def now():
-    return datetime.now().strftime("%H:%M:%S")
+# ------------------------- DATOS -------------------------
+@dataclass
+class Posicion:
+    m1: int
+    m2: int
+    m3: int
+    m4: int
+    mag: int  # 0/1
 
-def clamp_int(v, lo=0, hi=180):
-    try:
-        n = int(v)
-    except:
-        n = lo
-    return max(lo, min(hi, n))
+    def to_list(self):
+        return [self.m1, self.m2, self.m3, self.m4, self.mag]
 
-def load_config():
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
+    @staticmethod
+    def from_list(lst):
+        return Posicion(int(lst[0]), int(lst[1]), int(lst[2]), int(lst[3]), int(lst[4]))
 
-def save_config(cfg: dict):
-    try:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(cfg, f, indent=2, ensure_ascii=False)
-    except Exception:
-        pass
 
-# ---------------- Serial Manager ----------------
+# ------------------------- SERIAL -------------------------
+class SerialClient:
+    """Cliente serie simple para enviar/recibir líneas ASCII."""
+    def __init__(self):
+        self.ser: Optional[object] = None  # tipado laxo para no depender de pyserial en tiempo de análisis
 
-class SerialManager:
-    def __init__(self, on_line=None, on_status=None):
-        self.ser = None
-        self.on_line = on_line
-        self.on_status = on_status
-        self.running = False
-        self.reader = None
-
-    def list_ports(self):
-        if list_ports is None:
-            return []
-        return [p.device for p in list_ports.comports()]
-
-    def open(self, port, baud):
+    def ports(self):
         if serial is None:
-            raise RuntimeError("PySerial no está instalado. Ejecuta: pip install pyserial")
+            return []
+        return [p.device for p in serial.tools.list_ports.comports()]
+
+    def connect(self, port: str, baud: int = 230400, timeout: float = 0.1):
+        if serial is None:
+            raise RuntimeError("pyserial no está instalado. Ejecuta: pip install pyserial")
         self.close()
-        try:
-            self.ser = serial.Serial(port=port, baudrate=int(baud), timeout=0.05)
-            self.running = True
-            self.reader = threading.Thread(target=self._reader_loop, daemon=True)
-            self.reader.start()
-            if self.on_status:
-                self.on_status(f"[{now()}] Conectado a {port} @ {baud}\n")
-        except Exception as e:
-            self.ser = None
-            raise
-
-    def _reader_loop(self):
-        buf = bytearray()
-        while self.running and self.ser and self.ser.is_open:
-            try:
-                chunk = self.ser.read(256)
-                if chunk:
-                    buf.extend(chunk)
-                    while b"\n" in buf:
-                        line, _, rest = buf.partition(b"\n")
-                        buf = bytearray(rest)
-                        try:
-                            text = line.decode("utf-8", errors="replace").strip()
-                        except Exception:
-                            text = repr(line)
-                        if self.on_line:
-                            self.on_line(text)
-                else:
-                    time.sleep(0.01)
-            except Exception as e:
-                if self.on_status:
-                    self.on_status(f"[{now()}] Error de lectura: {e}\n")
-                break
-
-    def write_line(self, s: str):
-        if not self.ser or not self.ser.is_open:
-            raise RuntimeError("Puerto no conectado")
-        if not s.endswith("\n"):
-            s += "\n"
-        self.ser.write(s.encode("utf-8"))
+        self.ser = serial.Serial(port=port, baudrate=baud, timeout=timeout)
 
     def close(self):
-        self.running = False
-        try:
-            if self.ser and self.ser.is_open:
-                self.ser.flush()
-        except Exception:
-            pass
-        try:
-            if self.ser:
-                self.ser.close()
-        except Exception:
-            pass
+        if self.ser and self.ser.is_open:
+            self.ser.close()
         self.ser = None
 
-# ---------------- App UI ----------------
+    @property
+    def connected(self) -> bool:
+        return self.ser is not None and self.ser.is_open
 
-class App(tk.Tk):
+    # escritura
+    def send_line(self, text: str):
+        if not self.connected:
+            return
+        self.ser.write(text.encode("ascii", errors="ignore"))
+
+    def send_set(self, p: Posicion):
+        self.send_line(f"SET {p.m1} {p.m2} {p.m3} {p.m4} {p.mag}\n")
+
+    def send_immediate(self, m1, m2, m3, m4, mag):
+        self.send_line(f"SET {m1} {m2} {m3} {m4} {mag}\n")
+
+    # lectura (línea por línea)
+    def readline(self) -> Optional[str]:
+        if not self.connected:
+            return None
+        try:
+            line = self.ser.readline().decode("ascii", errors="ignore")
+            return line if line else None
+        except Exception:
+            return None
+
+
+# ------------------------- APP -------------------------
+class ArmControlApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(APP_TITLE)
-        self.geometry("1100x680")
-        self.minsize(1000, 620)
+        self.title("Control de Brazo Robot")
+        self.geometry("1160x720")
+
+        # Estado serie
+        self.serial_arm = SerialClient()      # Puerto hacia el brazo REAL (SET ...)
+        self.serial_mini = SerialClient()     # Puerto desde el MINIbrazo (POT ...)
+        self.ejecutando = False               # flag para reproducción de secuencia
+        self._updating_from_telemetry = False # evita eco al mover sliders por telemetría
+
+        # Marca temporal de última telemetría (para highlight)
+        self._last_telemetry_ts = 0.0
+
+        # HOME por defecto (se puede redefinir)
+        self.home = Posicion(512, 512, 512, 512, 0)
+
+        # Rutas fijas que me pasaste
+        self.assets_dir   = r"D:\UTEC\Semestre_4\PIC_2\SOFTWARE CONTROL\brazo_app\imagenes_recursos"
+        self.logo_path    = os.path.join(self.assets_dir, "utec_logo.png")  # LOGO FIJO
+        self.arm_img_path = os.path.join(self.assets_dir, "brazo.png")
+
+        # Autores
+        self.authors = [
+            "Hector Pereira",
+            "Priscila Rossi",
+            "Mateo Lecuna",
+        ]
+
+        self._build_ui()
+
+        # Cargar logo e imagen del brazo si existen
+        try:
+            if os.path.exists(self.logo_path):
+                self._cargar_logo(self.logo_path)
+        except Exception:
+            pass
+        try:
+            if os.path.exists(self.arm_img_path):
+                self._cargar_brazo(self.arm_img_path)
+        except Exception:
+            pass
+
+    # ---------------- UI ----------------
+    def _build_ui(self):
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
+
+        # ==== Panel izquierdo (conexiones y acciones) ====
+        left = ttk.Frame(self, padding=10)
+        left.grid(row=0, column=0, sticky="nsw")
+        for i in range(25):
+            left.rowconfigure(i, weight=0)
+
+        # --- Conexión brazo real ---
+        ttk.Label(left, text="Puerto (Brazo real)").grid(row=0, column=0, sticky="w")
+        self.port_arm_var = tk.StringVar()
+        self.port_arm_combo = ttk.Combobox(left, textvariable=self.port_arm_var, width=14, state="readonly")
+        self.port_arm_combo["values"] = self.serial_arm.ports()
+        self.port_arm_combo.grid(row=1, column=0, sticky="w", pady=(0,4))
+        ttk.Button(left, text="Actualizar", command=self._refrescar_puertos).grid(row=1, column=1, padx=5, sticky="w")
+
+        ttk.Label(left, text="Baud (Brazo)").grid(row=2, column=0, sticky="w")
+        self.baud_arm_var = tk.IntVar(value=230400)
+        ttk.Entry(left, textvariable=self.baud_arm_var, width=14).grid(row=3, column=0, sticky="w", pady=(0,6))
+
+        self.btn_connect_arm = ttk.Button(left, text="Conectar brazo", command=self._toggle_conexion_arm)
+        self.btn_connect_arm.grid(row=4, column=0, columnspan=2, sticky="we", pady=4)
+
+        ttk.Separator(left).grid(row=5, column=0, columnspan=2, sticky="we", pady=8)
+
+        # --- Conexión minibrazo (telemetría) ---
+        ttk.Label(left, text="Puerto (Mini brazo)").grid(row=6, column=0, sticky="w")
+        self.port_mini_var = tk.StringVar()
+        self.port_mini_combo = ttk.Combobox(left, textvariable=self.port_mini_var, width=14, state="readonly")
+        self.port_mini_combo["values"] = self.serial_mini.ports()
+        self.port_mini_combo.grid(row=7, column=0, sticky="w", pady=(0,4))
+        ttk.Button(left, text="Actualizar", command=self._refrescar_puertos).grid(row=7, column=1, padx=5, sticky="w")
+
+        ttk.Label(left, text="Baud (Mini)").grid(row=8, column=0, sticky="w")
+        self.baud_mini_var = tk.IntVar(value=115200)  # si usás BT, 9600; si usás USB Nano, 115200
+        ttk.Entry(left, textvariable=self.baud_mini_var, width=14).grid(row=9, column=0, sticky="w", pady=(0,6))
+
+        self.btn_connect_mini = ttk.Button(left, text="Conectar mini", command=self._toggle_conexion_mini)
+        self.btn_connect_mini.grid(row=10, column=0, columnspan=2, sticky="we", pady=4)
+
+        ttk.Separator(left).grid(row=11, column=0, columnspan=2, sticky="we", pady=10)
+
+        # Acciones de posiciones
+        ttk.Button(left, text="Grabar posición", command=self._grabar_posicion).grid(row=12, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Borrar posición", command=self._borrar_posicion).grid(row=13, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Ejecutar movimientos", command=self._ejecutar_movimientos).grid(row=14, column=0, columnspan=2, sticky="we", pady=3)
+
+        ttk.Label(left, text="Delay entre pasos (ms)").grid(row=15, column=0, columnspan=2, sticky="w", pady=(10,3))
+        self.delay_var = tk.IntVar(value=600)
+        ttk.Entry(left, textvariable=self.delay_var, width=14).grid(row=16, column=0, columnspan=2, sticky="we")
+
+        ttk.Separator(left).grid(row=17, column=0, columnspan=2, sticky="we", pady=10)
+
+        ttk.Button(left, text="Guardar lista (JSON)", command=self._guardar_json).grid(row=18, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Cargar lista (JSON)", command=self._cargar_json).grid(row=19, column=0, columnspan=2, sticky="we", pady=3)
+
+        # ==== Centro: imagen del brazo + teleop + lista ====
+        center = ttk.Frame(self, padding=10)
+        center.grid(row=0, column=1, sticky="nsew")
+        center.columnconfigure(0, weight=1)
+        center.rowconfigure(4, weight=1)
+
+        # Canvas de imagen del brazo
+        self.arm_canvas = tk.Canvas(center, width=360, height=360, bg="#f4f4f4",
+                                    highlightthickness=1, highlightbackground="#888")
+        self.arm_canvas.grid(row=0, column=0, pady=5, sticky="n")
+        self.arm_canvas_text = self.arm_canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
+
+        # Botón para cambiar imagen del brazo (opcional)
+        ttk.Button(center, text="Cargar imagen del brazo...", command=self._cargar_brazo_dialog)\
+            .grid(row=1, column=0, sticky="w")
+
+        # Teleop toggle + seguridad
+        teleop_frame = ttk.Frame(center)
+        teleop_frame.grid(row=2, column=0, sticky="we", pady=(8,4))
+        self.teleop_var = tk.IntVar(value=0)
+        ttk.Checkbutton(teleop_frame, text="Teleop ON/OFF (Minibrazo → Brazo)",
+                        variable=self.teleop_var).pack(side="left", padx=(0,10))
+        ttk.Button(teleop_frame, text="HOME", command=self._ir_home).pack(side="left", padx=4)
+        ttk.Button(teleop_frame, text="Definir HOME", command=self._definir_home).pack(side="left", padx=4)
+        ttk.Button(teleop_frame, text="STOP", command=self._stop_seguro).pack(side="left", padx=4)
+
+        ttk.Label(center, text="Posiciones guardadas").grid(row=3, column=0, sticky="w", pady=(10,3))
+        list_frame = ttk.Frame(center)
+        list_frame.grid(row=4, column=0, sticky="nsew")
+        self.lista = tk.Listbox(list_frame, height=12)
+        self.lista.pack(side="left", fill="both", expand=True)
+        sb = ttk.Scrollbar(list_frame, orient="vertical", command=self.lista.yview)
+        sb.pack(side="right", fill="y")
+        self.lista.configure(yscrollcommand=sb.set)
+
+        # ==== Derecha: sliders + electroimán + branding ====
+        right = ttk.Frame(self, padding=10)
+        right.grid(row=0, column=2, sticky="nsew")
+        right.columnconfigure(1, weight=1)
+
+        self.sl_vars = [tk.IntVar(value=0) for _ in range(4)]
+        labels = ["Motor 1", "Motor 2", "Motor 3", "Motor 4"]
+        self.value_labels = []
+        for i, lbl in enumerate(labels):
+            ttk.Label(right, text=f"{lbl} (0–1023)").grid(row=i*2, column=0, sticky="w")
+            s = ttk.Scale(right, from_=0, to=1023, orient="horizontal",
+                          variable=self.sl_vars[i], command=lambda _=None, i=i: self._on_slider(i))
+            s.grid(row=i*2, column=1, sticky="we", padx=6)
+            val = ttk.Label(right, text="0", width=6, anchor="e")
+            val.grid(row=i*2, column=2, padx=4)
+            self.value_labels.append(val)
+
+        ttk.Separator(right).grid(row=8, column=0, columnspan=3, sticky="we", pady=10)
+
+        # Electroimán
+        self.mag_var = tk.IntVar(value=0)
+        ttk.Checkbutton(right, text="Electroimán ON", variable=self.mag_var,
+                        command=self._on_change_send).grid(row=9, column=0, columnspan=2, sticky="w")
+
+        # Enviar en vivo (manual)
+        self.live_var = tk.IntVar(value=1)
+        ttk.Checkbutton(right, text="Enviar en vivo al mover sliders",
+                        variable=self.live_var).grid(row=10, column=0, columnspan=2, sticky="w")
+
+        # ---- Branding (logo fijo + autores) ----
+        ttk.Separator(right).grid(row=11, column=0, columnspan=3, sticky="we", pady=10)
+        brand = ttk.LabelFrame(right, text="Proyecto / Autores")
+        brand.grid(row=12, column=0, columnspan=3, sticky="nsew")
+        brand.columnconfigure(0, weight=1)
+
+        # Logo fijo (tk.Label con imagen)
+        self._logo_label = tk.Label(brand)
+        self._logo_label.grid(row=0, column=0, sticky="n", pady=(8,6))
+
+        # Autores (sin emails)
+        self._authors_frame = ttk.Frame(brand)
+        self._authors_frame.grid(row=1, column=0, sticky="we", padx=6, pady=(2,10))
+        self._refrescar_autores_ui()
+
+        # ---- Indicador de telemetría y estilos de highlight ----
+        style = ttk.Style(self)
+        style.configure("MiniValue.TLabel", foreground="#0a7d2f", font=("Segoe UI", 9, "bold"))
+
+        # Indicador “Mini activo”
+        self.mini_indicator = ttk.Label(self, text="● Mini inactivo")
+        self.mini_indicator.grid(row=98, column=2, sticky="e", padx=10, pady=(0,5))
 
         # Estado
-        self.cfg = load_config()
-        self.serial = SerialManager(on_line=self.on_serial_line, on_status=self.log_append)
-        self.connected = False
-        self.send_live = tk.BooleanVar(value=bool(self.cfg.get("send_live", True)))
-        self.port = tk.StringVar(value=self.cfg.get("port", ""))
-        self.baud = tk.StringVar(value=str(self.cfg.get("baud", DEFAULT_BAUD)))
-        self.pose_vars = [tk.IntVar(value=90) for _ in DOF_NAMES]
-        self.poses = self.cfg.get("poses", [])  # lista de {"name": str, "vals": [..]}
-        self.last_send_ts = 0.0
-        self._send_scheduled = False
+        self.status = ttk.Label(self, text="Brazo: desconectado | Mini: desconectado", anchor="w")
+        self.status.grid(row=99, column=0, columnspan=3, sticky="we", padx=10, pady=5)
 
-        # UI
-        self._build_styles()
-        self._build_layout()
+        # Arranca el ciclo de highlight
+        self._highlight_tick()
 
-        # Rellenar puertos al inicio
-        self.after(300, self.refresh_ports)
+    # ---------------- Conexiones ----------------
+    def _refrescar_puertos(self):
+        self.port_arm_combo["values"] = self.serial_arm.ports()
+        self.port_mini_combo["values"] = self.serial_mini.ports()
 
-        # Recuperar última pose
-        last_pose = self.cfg.get("last_pose")
-        if isinstance(last_pose, list) and len(last_pose) == len(self.pose_vars):
-            for v, n in zip(self.pose_vars, last_pose):
-                v.set(clamp_int(n))
-
-        self.protocol("WM_DELETE_WINDOW", self.on_close)
-
-    # ---------- UI building ----------
-    def _build_styles(self):
-        style = ttk.Style(self)
-        try:
-            self.tk.call("tk", "scaling", 1.0)
-        except Exception:
-            pass
-        style.configure("Danger.TButton", foreground="#ffffff")
-        style.map("Danger.TButton",
-                  background=[("!disabled", "#c0392b"), ("pressed", "#922b21"), ("active", "#a93226")])
-        style.configure("Good.TLabel", foreground="#1e8449")
-        style.configure("Bad.TLabel", foreground="#cb4335")
-
-    def _build_layout(self):
-        root = ttk.Frame(self, padding=8)
-        root.pack(fill=tk.BOTH, expand=True)
-
-        # Tres columnas
-        left = ttk.Frame(root)
-        mid = ttk.Frame(root)
-        right = ttk.Frame(root)
-        left.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 6))
-        mid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=6)
-        right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(6, 0))
-
-        # -------- Columna 1: Conexión & Estado --------
-        conn = ttk.LabelFrame(left, text="Conexión", padding=8)
-        conn.pack(fill=tk.X)
-
-        ttk.Label(conn, text="Puerto:").pack(anchor="w")
-        self.port_cb = ttk.Combobox(conn, textvariable=self.port, width=22, state="readonly")
-        self.port_cb.pack(fill=tk.X, pady=(0, 4))
-        ttk.Button(conn, text="Actualizar puertos", command=self.refresh_ports).pack(fill=tk.X, pady=2)
-
-        ttk.Label(conn, text="Baudrate:").pack(anchor="w", pady=(6, 0))
-        self.baud_entry = ttk.Entry(conn, textvariable=self.baud, width=10)
-        self.baud_entry.pack(fill=tk.X, pady=(0, 8))
-
-        self.state_lbl = ttk.Label(conn, text="🔴 Desconectado", style="Bad.TLabel")
-        self.state_lbl.pack(anchor="w", pady=(0, 6))
-
-        self.btn_connect = ttk.Button(conn, text="Conectar", command=self.toggle_connect)
-        self.btn_connect.pack(fill=tk.X, pady=2)
-
-        self.chk_live = ttk.Checkbutton(conn, text="Enviar en vivo", variable=self.send_live,
-                                        command=self._save_send_live)
-        self.chk_live.pack(anchor="w", pady=(8, 0))
-
-        quick = ttk.LabelFrame(left, text="Comandos rápidos", padding=8)
-        quick.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(quick, text="HOME", command=self.cmd_home).pack(fill=tk.X, pady=2)
-        ttk.Button(quick, text="STOP", style="Danger.TButton", command=self.cmd_stop).pack(fill=tk.X, pady=2)
-
-        fb = ttk.LabelFrame(left, text="Feedback (RX)", padding=8)
-        fb.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
-        self.fb_vars = [tk.StringVar(value="-") for _ in DOF_NAMES]
-        for name, var in zip(DOF_NAMES, self.fb_vars):
-            row = ttk.Frame(fb)
-            row.pack(fill=tk.X, pady=2)
-            ttk.Label(row, text=f"{name}:").pack(side=tk.LEFT)
-            ttk.Label(row, textvariable=var).pack(side=tk.LEFT, padx=(6, 0))
-
-        # -------- Columna 2: Sliders (4 DOF) + poses --------
-        sliders = ttk.LabelFrame(mid, text="Articulaciones (0–180°)", padding=8)
-        sliders.pack(fill=tk.BOTH, expand=True)
-
-        self.slider_widgets = []
-        for i, name in enumerate(DOF_NAMES):
-            row = ttk.Frame(sliders)
-            row.pack(fill=tk.X, pady=10)
-
-            ttk.Label(row, text=f"{name}", width=14).pack(side=tk.LEFT)
-
-            s = ttk.Scale(row, from_=0, to=180, orient=tk.HORIZONTAL,
-                          command=lambda _e=None, idx=i: self._on_slider(idx))
-            s.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=6)
-            s.set(self.pose_vars[i].get())
-            self.slider_widgets.append(s)
-
-            val = ttk.Entry(row, width=5, justify="center")
-            val.insert(0, str(self.pose_vars[i].get()))
-            val.pack(side=tk.LEFT, padx=6)
-            val.bind("<Return>", lambda e, idx=i, ent=val: self._on_entry_val(idx, ent))
-
-            btns = ttk.Frame(row)
-            btns.pack(side=tk.LEFT)
-            ttk.Button(btns, text="-5", width=3, command=lambda idx=i: self._bump(idx, -5)).pack(side=tk.LEFT, padx=1)
-            ttk.Button(btns, text="-1", width=3, command=lambda idx=i: self._bump(idx, -1)).pack(side=tk.LEFT, padx=1)
-            ttk.Button(btns, text="+1", width=3, command=lambda idx=i: self._bump(idx, +1)).pack(side=tk.LEFT, padx=1)
-            ttk.Button(btns, text="+5", width=3, command=lambda idx=i: self._bump(idx, +5)).pack(side=tk.LEFT, padx=1)
-            ttk.Button(btns, text="90", width=3, command=lambda idx=i: self._set_center(idx)).pack(side=tk.LEFT, padx=6)
-
-        # Acciones de pose
-        pose_box = ttk.LabelFrame(mid, text="Poses", padding=8)
-        pose_box.pack(fill=tk.X, pady=(8, 0))
-        rowp = ttk.Frame(pose_box)
-        rowp.pack(fill=tk.X)
-        ttk.Button(rowp, text="Enviar Pose", command=self.send_pose).pack(side=tk.LEFT, padx=2)
-        ttk.Button(rowp, text="Guardar Pose", command=self.save_pose_dialog).pack(side=tk.LEFT, padx=2)
-        ttk.Button(rowp, text="Cargar Pose", command=self.load_pose_dialog).pack(side=tk.LEFT, padx=2)
-        ttk.Button(rowp, text="Exportar", command=self.export_poses).pack(side=tk.LEFT, padx=6)
-        ttk.Button(rowp, text="Importar", command=self.import_poses).pack(side=tk.LEFT, padx=2)
-
-        # -------- Columna 3: Consola & comando crudo --------
-        right_box = ttk.LabelFrame(right, text="Consola", padding=8)
-        right_box.pack(fill=tk.BOTH, expand=True)
-
-        self.console = tk.Text(right_box, height=20, wrap="word")
-        self.console.pack(fill=tk.BOTH, expand=True)
-        self.console.configure(state="disabled")
-
-        tools = ttk.Frame(right_box)
-        tools.pack(fill=tk.X, pady=(6, 0))
-        ttk.Button(tools, text="Limpiar", command=self.console_clear).pack(side=tk.LEFT, padx=2)
-        ttk.Button(tools, text="Guardar log", command=self.console_save).pack(side=tk.LEFT, padx=2)
-
-        raw = ttk.LabelFrame(right, text="Comando crudo (TX)", padding=8)
-        raw.pack(fill=tk.X, pady=(8, 0))
-        self.raw_entry = ttk.Entry(raw)
-        self.raw_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 6))
-        ttk.Button(raw, text="Enviar", command=self.send_raw).pack(side=tk.LEFT)
-
-    # ---------- Helpers UI ----------
-    def console_write(self, txt: str):
-        self.console.configure(state="normal")
-        self.console.insert("end", txt)
-        self.console.see("end")
-        self.console.configure(state="disabled")
-
-    def log_append(self, line: str):
-        self.console_write(line)
-
-    def console_clear(self):
-        self.console.configure(state="normal")
-        self.console.delete("1.0", "end")
-        self.console.configure(state="disabled")
-
-    def console_save(self):
-        fn = filedialog.asksaveasfilename(defaultextension=".txt",
-                                          filetypes=[("Text", "*.txt"), ("All", "*.*")])
-        if not fn:
+    def _toggle_conexion_arm(self):
+        if self.serial_arm.connected:
+            self.serial_arm.close()
+            self.btn_connect_arm.config(text="Conectar brazo")
+            self._set_status()
             return
-        content = self.console.get("1.0", "end")
-        try:
-            with open(fn, "w", encoding="utf-8") as f:
-                f.write(content)
-            messagebox.showinfo("Consola", f"Guardado en:\n{fn}")
-        except Exception as e:
-            messagebox.showerror("Consola", f"No se pudo guardar:\n{e}")
-
-    # ---------- Puertos ----------
-    def refresh_ports(self):
-        ports = self.serial.list_ports()
-        self.port_cb["values"] = ports
-        # autoselect si coincide con último
-        if self.port.get() and self.port.get() in ports:
-            self.port_cb.set(self.port.get())
-        elif ports:
-            self.port_cb.set(ports[0])
-
-    def toggle_connect(self):
-        if self.connected:
-            self.serial.close()
-            self.connected = False
-            self.state_lbl.config(text="🔴 Desconectado", style="Bad.TLabel")
-            self.btn_connect.config(text="Conectar")
-            self.log_append(f"[{now()}] Desconectado\n")
-            return
-        # Conectar
-        port = self.port.get().strip()
-        baud = self.baud.get().strip()
+        port = self.port_arm_var.get()
         if not port:
-            messagebox.showwarning("Serial", "Elegí un puerto.")
+            messagebox.showwarning("Serie", "Elegí un puerto del brazo.")
             return
         try:
-            self.serial.open(port, baud)
-            self.connected = True
-            self.state_lbl.config(text=f"🟢 Conectado ({port})", style="Good.TLabel")
-            self.btn_connect.config(text="Desconectar")
-            # persistir
-            self.cfg["port"] = port
-            self.cfg["baud"] = int(baud)
-            save_config(self.cfg)
+            self.serial_arm.connect(port, self.baud_arm_var.get())
+            self.btn_connect_arm.config(text="Desconectar brazo")
+            self._set_status()
         except Exception as e:
-            messagebox.showerror("Serial", f"No se pudo conectar:\n{e}")
+            messagebox.showerror("Serie", f"No se pudo conectar al brazo:\n{e}")
 
-    # ---------- RX ----------
-    def on_serial_line(self, line: str):
-        self.log_append(f"[{now()}] ← {line}\n")
-        # Si firmware manda "FB,x,y,z,w" actualiza feedback
-        if line.startswith("FB,"):
-            parts = line.split(",")
-            vals = parts[1:]
-            for i in range(min(len(vals), len(self.fb_vars))):
-                self.fb_vars[i].set(vals[i])
-
-    # ---------- TX ----------
-    def _fmt_pose_cmd(self, vals):
-        # J,base,hombro,codo,muñeca\n
-        parts = [CMD_PREFIX] + [str(clamp_int(v)) for v in vals]
-        return ",".join(parts) + "\n"
-
-    def send_pose(self):
-        if not self.connected:
-            messagebox.showinfo("TX", "No estás conectado.")
+    def _toggle_conexion_mini(self):
+        if self.serial_mini.connected:
+            self._stop_telemetry_thread = True
+            self.serial_mini.close()
+            self.btn_connect_mini.config(text="Conectar mini")
+            self._set_status()
             return
-        vals = [v.get() for v in self.pose_vars]
-        cmd = self._fmt_pose_cmd(vals).strip()
-        try:
-            self.serial.write_line(cmd)
-            self.log_append(f"[{now()}] → {cmd}\n")
-        except Exception as e:
-            messagebox.showerror("TX", f"Error al enviar:\n{e}")
-
-    def send_raw(self):
-        if not self.connected:
-            messagebox.showinfo("TX", "No estás conectado.")
-            return
-        txt = self.raw_entry.get().strip()
-        if not txt:
+        port = self.port_mini_var.get()
+        if not port:
+            messagebox.showwarning("Serie", "Elegí un puerto del minibrazo.")
             return
         try:
-            self.serial.write_line(txt)
-            self.log_append(f"[{now()}] → {txt}\n")
+            self.serial_mini.connect(port, self.baud_mini_var.get())
+            self.btn_connect_mini.config(text="Desconectar mini")
+            self._set_status()
+            # arrancar hilo de telemetría
+            self._stop_telemetry_thread = False
+            t = threading.Thread(target=self._telemetry_loop, daemon=True)
+            t.start()
         except Exception as e:
-            messagebox.showerror("TX", f"Error al enviar:\n{e}")
+            messagebox.showerror("Serie", f"No se pudo conectar al minibrazo:\n{e}")
 
-    def cmd_home(self):
-        if not self.connected:
-            messagebox.showinfo("HOME", "No estás conectado.")
-            return
-        try:
-            self.serial.write_line("H")
-            self.log_append(f"[{now()}] → H\n")
-        except Exception as e:
-            messagebox.showerror("HOME", f"Error:\n{e}")
+    # ---------------- Telemetría (POT ...) ----------------
+    def _telemetry_loop(self):
+        """
+        Lee líneas tipo: 'POT m1 m2 m3 m4' desde el minibrazo.
+        Si Teleop está ON, actualiza sliders y reenvía SET al brazo.
+        """
+        while self.serial_mini.connected and not getattr(self, "_stop_telemetry_thread", False):
+            line = self.serial_mini.readline()
+            if not line:
+                continue
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            if len(parts) == 5 and parts[0] == "POT":
+                try:
+                    m1, m2, m3, m4 = map(int, parts[1:5])
+                except ValueError:
+                    continue
 
-    def cmd_stop(self):
-        if not self.connected:
-            messagebox.showinfo("STOP", "No estás conectado.")
-            return
-        try:
-            self.serial.write_line("S")
-            self.log_append(f"[{now()}] → S\n")
-        except Exception as e:
-            messagebox.showerror("STOP", f"Error:\n{e}")
+                # marca telemetría reciente (para highlight/indicador)
+                self._last_telemetry_ts = time.time()
 
-    # ---------- Sliders ----------
+                # Actualizar sliders desde telemetría (sin eco)
+                self._updating_from_telemetry = True
+                try:
+                    prev_live = self.live_var.get()
+                    self.live_var.set(0)
+
+                    self.sl_vars[0].set(m1); self.sl_vars[1].set(m2)
+                    self.sl_vars[2].set(m3); self.sl_vars[3].set(m4)
+                    for i in range(4):
+                        self.value_labels[i].config(text=str(int(self.sl_vars[i].get())))
+                    self.update_idletasks()
+
+                    # Teleop: reenviar al brazo real
+                    if self.teleop_var.get() == 1:
+                        p = self._pos_actual()
+                        p.m1, p.m2, p.m3, p.m4 = m1, m2, m3, m4
+                        self.serial_arm.send_set(p)
+
+                    self.live_var.set(prev_live)
+                finally:
+                    self._updating_from_telemetry = False
+
+        return
+
+    # ---------------- Handlers UI ----------------
     def _on_slider(self, idx: int):
-        # sincroniza Entry y Var
-        val = int(self.slider_widgets[idx].get())
-        self.pose_vars[idx].set(val)
-        # actualizar Entry asociado (buscamos el Entry a la derecha del slider)
-        row = self.slider_widgets[idx].master
-        for child in row.winfo_children():
-            if isinstance(child, ttk.Entry):
-                child.delete(0, tk.END)
-                child.insert(0, str(val))
-                break
+        val = int(self.sl_vars[idx].get())
+        self.value_labels[idx].config(text=str(val))
+        # si lo moviste a mano, apagamos highlight (volverá a encender con la próxima telemetría)
+        if not self._updating_from_telemetry:
+            self._last_telemetry_ts = 0.0
+        if self._updating_from_telemetry:
+            return  # no eco
+        if self.live_var.get():
+            self._on_change_send()
 
-        if self.send_live.get():
-            self._schedule_live_send()
+    def _on_change_send(self):
+        p = self._pos_actual()
+        self.serial_arm.send_immediate(p.m1, p.m2, p.m3, p.m4, p.mag)
 
-        # guardar última pose (para persistencia)
-        self.cfg["last_pose"] = [v.get() for v in self.pose_vars]
-        save_config(self.cfg)
+    def _pos_actual(self) -> Posicion:
+        return Posicion(
+            int(self.sl_vars[0].get()),
+            int(self.sl_vars[1].get()),
+            int(self.sl_vars[2].get()),
+            int(self.sl_vars[3].get()),
+            int(self.mag_var.get()),
+        )
 
-    def _on_entry_val(self, idx: int, entry: ttk.Entry):
-        v = clamp_int(entry.get())
-        self.pose_vars[idx].set(v)
-        self.slider_widgets[idx].set(v)
-        entry.delete(0, tk.END)
-        entry.insert(0, str(v))
-        if self.send_live.get():
-            self._schedule_live_send()
-        self.cfg["last_pose"] = [vv.get() for vv in self.pose_vars]
-        save_config(self.cfg)
+    def _grabar_posicion(self):
+        p = self._pos_actual()
+        self.lista.insert(tk.END, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
+        self._set_status_text("Posición grabada.")
 
-    def _bump(self, idx: int, delta: int):
-        v = clamp_int(self.pose_vars[idx].get() + delta)
-        self.pose_vars[idx].set(v)
-        self.slider_widgets[idx].set(v)
-        # actualizar entry
-        row = self.slider_widgets[idx].master
-        for child in row.winfo_children():
-            if isinstance(child, ttk.Entry):
-                child.delete(0, tk.END)
-                child.insert(0, str(v))
-                break
-        if self.send_live.get():
-            self._schedule_live_send()
-        self.cfg["last_pose"] = [vv.get() for vv in self.pose_vars]
-        save_config(self.cfg)
-
-    def _set_center(self, idx: int):
-        self.pose_vars[idx].set(90)
-        self.slider_widgets[idx].set(90)
-        # actualizar entry
-        row = self.slider_widgets[idx].master
-        for child in row.winfo_children():
-            if isinstance(child, ttk.Entry):
-                child.delete(0, tk.END)
-                child.insert(0, "90")
-                break
-        if self.send_live.get():
-            self._schedule_live_send()
-        self.cfg["last_pose"] = [vv.get() for vv in self.pose_vars]
-        save_config(self.cfg)
-
-    # rate-limit del envío en vivo
-    def _schedule_live_send(self):
-        if self._send_scheduled:
+    def _borrar_posicion(self):
+        sel = self.lista.curselection()
+        if not sel:
+            self._set_status_text("Elegí una posición para borrar.")
             return
-        self._send_scheduled = True
-        def later():
-            try:
-                # respetar RATE_LIMIT_MS
-                dt = (time.time() - self.last_send_ts) * 1000.0
-                if dt < RATE_LIMIT_MS:
-                    time.sleep((RATE_LIMIT_MS - dt) / 1000.0)
-                if self.connected and self.send_live.get():
-                    vals = [v.get() for v in self.pose_vars]
-                    cmd = self._fmt_pose_cmd(vals).strip()
-                    try:
-                        self.serial.write_line(cmd)
-                        self.log_append(f"[{now()}] → {cmd}\n")
-                        self.last_send_ts = time.time()
-                    except Exception as e:
-                        self.log_append(f"[{now()}] Error TX en vivo: {e}\n")
-            finally:
-                self._send_scheduled = False
-        threading.Thread(target=later, daemon=True).start()
+        self.lista.delete(sel[0])
+        self._set_status_text("Posición borrada.")
 
-    # ---------- Poses ----------
-    def save_pose_dialog(self):
-        name = tk.simpledialog.askstring("Guardar Pose", "Nombre de la pose:")
-        if not name:
+    def _leer_lista(self) -> List[Posicion]:
+        out = []
+        for i in range(self.lista.size()):
+            txt = self.lista.get(i)
+            parts = txt.replace(" MAG=", ",").split(",")
+            if len(parts) >= 5:
+                out.append(Posicion.from_list(parts[:5]))
+        return out
+
+    def _ejecutar_movimientos(self):
+        if self.ejecutando:
+            self._set_status_text("Ya se está ejecutando.")
             return
-        vals = [v.get() for v in self.pose_vars]
-        self.poses.append({"name": name, "vals": vals})
-        self.cfg["poses"] = self.poses
-        save_config(self.cfg)
-        self.log_append(f"[{now()}] Pose guardada: {name} {vals}\n")
-
-    def load_pose_dialog(self):
-        if not self.poses:
-            messagebox.showinfo("Cargar Pose", "No hay poses guardadas.")
+        secuencia = self._leer_lista()
+        if not secuencia:
+            self._set_status_text("No hay posiciones guardadas.")
             return
-        # diálogo simple
-        win = tk.Toplevel(self)
-        win.title("Cargar Pose")
-        win.transient(self)
-        win.grab_set()
-        lb = tk.Listbox(win, height=min(10, len(self.poses)), width=40)
-        for i, p in enumerate(self.poses):
-            lb.insert("end", f"{i+1:02d} - {p['name']}  {p['vals']}")
-        lb.pack(padx=8, pady=8, fill=tk.BOTH, expand=True)
+        delay_ms = max(0, int(self.delay_var.get()))
+        self.ejecutando = True
+        t = threading.Thread(target=self._run_sequence, args=(secuencia, delay_ms), daemon=True)
+        t.start()
 
-        def do_load():
-            sel = lb.curselection()
-            if not sel:
-                return
-            p = self.poses[sel[0]]
-            vals = p["vals"]
-            for i, v in enumerate(vals[:len(self.pose_vars)]):
-                vv = clamp_int(v)
-                self.pose_vars[i].set(vv)
-                self.slider_widgets[i].set(vv)
-            # actualizar entries
-            for i in range(len(self.pose_vars)):
-                row = self.slider_widgets[i].master
-                for child in row.winfo_children():
-                    if isinstance(child, ttk.Entry):
-                        child.delete(0, tk.END)
-                        child.insert(0, str(self.pose_vars[i].get()))
-                        break
-            if self.send_live.get():
-                self._schedule_live_send()
-            win.destroy()
-
-        ttk.Button(win, text="Cargar", command=do_load).pack(pady=(0, 8))
-
-    def export_poses(self):
-        if not self.poses:
-            messagebox.showinfo("Exportar", "No hay poses guardadas.")
-            return
-        fn = filedialog.asksaveasfilename(defaultextension=".json",
-                                          filetypes=[("JSON", "*.json"), ("All", "*.*")])
-        if not fn:
-            return
+    def _run_sequence(self, secuencia: List[Posicion], delay_ms: int):
         try:
-            with open(fn, "w", encoding="utf-8") as f:
-                json.dump(self.poses, f, indent=2, ensure_ascii=False)
-            messagebox.showinfo("Exportar", f"Poses exportadas a:\n{fn}")
+            for p in secuencia:
+                self._updating_from_telemetry = True
+                self.sl_vars[0].set(p.m1); self.sl_vars[1].set(p.m2)
+                self.sl_vars[2].set(p.m3); self.sl_vars[3].set(p.m4)
+                self.mag_var.set(p.mag)
+                for i in range(4):
+                    self.value_labels[i].config(text=str(int(self.sl_vars[i].get())))
+                self.update_idletasks()
+                self._updating_from_telemetry = False
+
+                self.serial_arm.send_set(p)
+                time.sleep(delay_ms / 1000.0)
+            self._set_status_text("Secuencia finalizada.")
         except Exception as e:
-            messagebox.showerror("Exportar", f"No se pudo exportar:\n{e}")
+            self._set_status_text(f"Error durante la ejecución: {e}")
+        finally:
+            self.ejecutando = False
 
-    def import_poses(self):
-        fn = filedialog.askopenfilename(filetypes=[("JSON", "*.json"), ("All", "*.*")])
-        if not fn:
+    # ---- HOME / STOP ----
+    def _ir_home(self):
+        self.teleop_var.set(0)
+        self._apply_pose(self.home)
+        self.serial_arm.send_set(self.home)
+        self._set_status_text("HOME enviado.")
+
+    def _definir_home(self):
+        self.home = self._pos_actual()
+        self._set_status_text(f"HOME definido: {self.home.m1},{self.home.m2},{self.home.m3},{self.home.m4}, MAG={self.home.mag}")
+
+    def _stop_seguro(self):
+        self.teleop_var.set(0)
+        self._apply_pose(self.home)
+        self.serial_arm.send_set(self.home)
+        self._set_status_text("STOP: teleop OFF y HOME enviado.")
+
+    def _apply_pose(self, p: Posicion):
+        self._updating_from_telemetry = True
+        try:
+            self.sl_vars[0].set(p.m1); self.sl_vars[1].set(p.m2)
+            self.sl_vars[2].set(p.m3); self.sl_vars[3].set(p.m4)
+            self.mag_var.set(p.mag)
+            for i in range(4):
+                self.value_labels[i].config(text=str(int(self.sl_vars[i].get())))
+            self.update_idletasks()
+        finally:
+            self._updating_from_telemetry = False
+
+    # ---- Guardar / Cargar ----
+    def _guardar_json(self):
+        data = [p.to_list() for p in self._leer_lista()]
+        if not data:
+            self._set_status_text("No hay posiciones para guardar.")
+            return
+        path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON","*.json")], initialfile="posiciones.json")
+        if not path:
+            return
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        self._set_status_text(f"Guardado: {path}")
+
+    def _cargar_json(self):
+        path = filedialog.askopenfilename(filetypes=[("JSON","*.json")])
+        if not path:
             return
         try:
-            with open(fn, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            if not isinstance(data, list):
-                raise ValueError("Formato inválido (se esperaba lista)")
-            # Validar contenido básico
-            cleaned = []
-            for item in data:
-                if isinstance(item, dict) and "name" in item and "vals" in item:
-                    cleaned.append({"name": str(item["name"]),
-                                    "vals": [clamp_int(v) for v in item["vals"]]})
-            self.poses = cleaned
-            self.cfg["poses"] = self.poses
-            save_config(self.cfg)
-            messagebox.showinfo("Importar", f"Se importaron {len(self.poses)} poses.")
+            self.lista.delete(0, tk.END)
+            for lst in data:
+                p = Posicion.from_list(lst)
+                self.lista.insert(tk.END, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
+            self._set_status_text(f"Cargado: {path}")
         except Exception as e:
-            messagebox.showerror("Importar", f"No se pudo importar:\n{e}")
+            messagebox.showerror("JSON", f"No se pudo cargar:\n{e}")
 
-    # ---------- Persistencia ----------
-    def _save_send_live(self):
-        self.cfg["send_live"] = bool(self.send_live.get())
-        save_config(self.cfg)
+    # ---- Branding / Imágenes ----
+    def _refrescar_autores_ui(self):
+        for w in self._authors_frame.winfo_children():
+            w.destroy()
+        ttk.Label(self._authors_frame, text="Autores:", font=("Arial", 10, "bold")).grid(row=0, column=0, sticky="w", pady=(0,4))
+        for i, name in enumerate(self.authors, start=1):
+            ttk.Label(self._authors_frame, text=f"• {name}").grid(row=i, column=0, sticky="w")
 
-    # ---------- Cierre ----------
-    def on_close(self):
-        # guardar último estado
-        self.cfg["last_pose"] = [v.get() for v in self.pose_vars]
-        self.cfg["port"] = self.port.get()
+    def _cargar_logo(self, path: str, max_w: int = 260, max_h: int = 120):
         try:
-            self.cfg["baud"] = int(self.baud.get())
-        except Exception:
-            self.cfg["baud"] = DEFAULT_BAUD
-        save_config(self.cfg)
-        try:
-            self.serial.close()
-        except Exception:
-            pass
-        self.destroy()
+            if PIL_AVAILABLE:
+                img = Image.open(path)
+                img.thumbnail((max_w, max_h), Image.LANCZOS)
+                self._logo_tk = ImageTk.PhotoImage(img)
+            else:
+                self._logo_tk = tk.PhotoImage(file=path)
+            self._logo_label.configure(image=self._logo_tk)
+            self._logo_label.image = self._logo_tk  # evitar GC
+        except Exception as e:
+            messagebox.showerror("Logo", f"No se pudo cargar la imagen:\n{e}")
 
-# ---------------- Main ----------------
+    def _cargar_brazo_dialog(self):
+        path = filedialog.askopenfilename(filetypes=[('Imágenes','*.png;*.jpg;*.jpeg;*.gif;*.bmp')])
+        if not path:
+            return
+        self.arm_img_path = path
+        self._cargar_brazo(path)
+
+    def _cargar_brazo(self, path: str, max_w: int = 360, max_h: int = 360):
+        """Carga la imagen del brazo y la dibuja centrada en el canvas."""
+        try:
+            if PIL_AVAILABLE:
+                img = Image.open(path)
+                img.thumbnail((max_w, max_h), Image.LANCZOS)
+                self._arm_img_tk = ImageTk.PhotoImage(img)
+            else:
+                self._arm_img_tk = tk.PhotoImage(file=path)
+
+            self.arm_canvas.delete("all")
+            self.arm_canvas.create_image(max_w // 2, max_h // 2, image=self._arm_img_tk)
+            self.arm_canvas.image = self._arm_img_tk  # evitar GC
+        except Exception as e:
+            messagebox.showerror("Imagen del brazo", f"No se pudo cargar '{path}':\n{e}")
+
+    # ---- Highlight de telemetría ----
+    def _set_values_style(self, style_name: Optional[str]):
+        for lbl in self.value_labels:
+            if style_name:
+                lbl.configure(style=style_name)
+            else:
+                lbl.configure(style="")  # default
+
+    def _highlight_tick(self):
+        now = time.time()
+        recent = (now - self._last_telemetry_ts) < 0.5
+        if recent:
+            self._set_values_style("MiniValue.TLabel")
+            try:
+                self.mini_indicator.configure(text="● Mini activo", foreground="#0a7d2f")
+            except Exception:
+                pass
+        else:
+            self._set_values_style(None)
+            try:
+                self.mini_indicator.configure(text="● Mini inactivo", foreground="#444")
+            except Exception:
+                pass
+        self.after(200, self._highlight_tick)
+
+    # ---- Estado ----
+    def _set_status(self):
+        arm = "conectado" if self.serial_arm.connected else "desconectado"
+        mini = "conectado" if self.serial_mini.connected else "desconectado"
+        self.status.config(text=f"Brazo: {arm} | Mini: {mini}")
+
+    def _set_status_text(self, text: str):
+        arm = "conectado" if self.serial_arm.connected else "desconectado"
+        mini = "conectado" if self.serial_mini.connected else "desconectado"
+        self.status.config(text=f"{text}  |  Brazo: {arm} | Mini: {mini}")
+
+
 if __name__ == "__main__":
-    app = App()
+    app = ArmControlApp()
     app.mainloop()

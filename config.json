@@ -1,0 +1,11 @@
+{
+  "last_pose": [
+    90,
+    90,
+    90,
+    90
+  ],
+  "send_live": true,
+  "port": "",
+  "baud": 230400
+}
