@@ -6,7 +6,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from dataclasses import dataclass
 from typing import List, Optional
-from typing import Optional, Any
 
 # ---- Imágenes (Pillow opcional para reescalar) ----
 try:
@@ -42,9 +41,9 @@ class Posicion:
 
 # ------------------------- SERIAL -------------------------
 class SerialClient:
-    """Cliente serie simple para enviar/recibir líneas ASCII."""
+    """Cliente serie simple para enviar/recibir líneas ASCII (un solo puerto: brazo + POT)."""
     def __init__(self):
-        self.ser: Optional[Any] = None
+        self.ser: Optional[object] = None
 
     def ports(self):
         if serial is None:
@@ -66,19 +65,19 @@ class SerialClient:
     def connected(self) -> bool:
         return self.ser is not None and self.ser.is_open
 
-    # escritura
     def send_line(self, text: str):
         if not self.connected:
             return
+        if not text.endswith("\n"):
+            text += "\n"
         self.ser.write(text.encode("ascii", errors="ignore"))
 
     def send_set(self, p: Posicion):
-        self.send_line(f"SET {p.m1} {p.m2} {p.m3} {p.m4} {p.mag}\n")
+        self.send_line(f"SET {p.m1} {p.m2} {p.m3} {p.m4} {p.mag}")
 
     def send_immediate(self, m1, m2, m3, m4, mag):
-        self.send_line(f"SET {m1} {m2} {m3} {m4} {mag}\n")
+        self.send_line(f"SET {m1} {m2} {m3} {m4} {mag}")
 
-    # lectura (línea por línea)
     def readline(self) -> Optional[str]:
         if not self.connected:
             return None
@@ -94,32 +93,40 @@ class ArmControlApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Control de Brazo Robot")
-        self.geometry("1160x700")
+        self.geometry("1180x740")
 
-        # Estado serie
-        self.serial_arm = SerialClient()      # Puerto hacia el brazo REAL (SET ...)
-        self.serial_mini = SerialClient()     # Puerto desde el MINIbrazo (POT ...)
-        self.ejecutando = False               # flag para reproducción de secuencia
-        self._updating_from_telemetry = False # evita eco al mover sliders por telemetría
+        # Serie (un solo puerto)
+        self.serial_arm = SerialClient()
 
-        # HOME por defecto (se puede redefinir)
+        # Flags
+        self._reader_stop = False
+        self._updating_from_telemetry = False
+        self.ejecutando = False
+        self._recording = False
+        self._recording_thread: Optional[threading.Thread] = None
+
+        # Telemetría POT reciente (para indicador)
+        self._last_pot_ts = 0.0
+
+        # HOME por defecto
         self.home = Posicion(512, 512, 512, 512, 0)
 
         # Rutas fijas que me pasaste
         self.assets_dir   = r"D:\UTEC\Semestre_4\PIC_2\SOFTWARE CONTROL\brazo_app\imagenes_recursos"
-        self.logo_path    = os.path.join(self.assets_dir, "utec_logo.png")  # LOGO FIJO
+        self.logo_path    = os.path.join(self.assets_dir, "utec_logo.png")
         self.arm_img_path = os.path.join(self.assets_dir, "brazo.png")
 
         # Autores
-        self.authors = [
-            "Hector Pereira",
-            "Priscila Rossi",
-            "Mateo Lecuna",
-        ]
+        self.authors = ["Hector Pereira", "Priscila Rossi", "Mateo Lecuna"]
 
         self._build_ui()
 
-        # Cargar logo e imagen del brazo si existen
+        # Atajos de teclado
+        self.bind("<Delete>", lambda e: self._borrar_posicion())
+        self.bind("<Control-Delete>", lambda e: self._vaciar_lista())
+        self.bind("<Control-n>", lambda e: self._nueva_grabacion())
+
+        # Cargar imágenes si existen (desde código, sin botón)
         try:
             if os.path.exists(self.logo_path):
                 self._cargar_logo(self.logo_path)
@@ -137,81 +144,90 @@ class ArmControlApp(tk.Tk):
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
 
-        # ==== Panel izquierdo (conexiones y acciones) ====
+        # ==== Columna izquierda ====
         left = ttk.Frame(self, padding=10)
         left.grid(row=0, column=0, sticky="nsw")
-        for i in range(20):
+        for i in range(40):
             left.rowconfigure(i, weight=0)
 
-        # --- Conexión brazo real ---
-        ttk.Label(left, text="Puerto (Brazo real)").grid(row=0, column=0, sticky="w")
+        # --- Conexión brazo (único puerto) ---
+        ttk.Label(left, text="Puerto (Brazo / POT)").grid(row=0, column=0, sticky="w")
         self.port_arm_var = tk.StringVar()
         self.port_arm_combo = ttk.Combobox(left, textvariable=self.port_arm_var, width=14, state="readonly")
         self.port_arm_combo["values"] = self.serial_arm.ports()
         self.port_arm_combo.grid(row=1, column=0, sticky="w", pady=(0,4))
         ttk.Button(left, text="Actualizar", command=self._refrescar_puertos).grid(row=1, column=1, padx=5, sticky="w")
 
-        ttk.Label(left, text="Baud (Brazo)").grid(row=2, column=0, sticky="w")
+        ttk.Label(left, text="Baud").grid(row=2, column=0, sticky="w")
         self.baud_arm_var = tk.IntVar(value=230400)
         ttk.Entry(left, textvariable=self.baud_arm_var, width=14).grid(row=3, column=0, sticky="w", pady=(0,6))
 
-        self.btn_connect_arm = ttk.Button(left, text="Conectar brazo", command=self._toggle_conexion_arm)
+        self.btn_connect_arm = ttk.Button(left, text="Conectar", command=self._toggle_conexion_arm)
         self.btn_connect_arm.grid(row=4, column=0, columnspan=2, sticky="we", pady=4)
 
         ttk.Separator(left).grid(row=5, column=0, columnspan=2, sticky="we", pady=8)
 
-        # --- Conexión minibrazo (telemetría) ---
-        ttk.Label(left, text="Puerto (Mini brazo)").grid(row=6, column=0, sticky="w")
-        self.port_mini_var = tk.StringVar()
-        self.port_mini_combo = ttk.Combobox(left, textvariable=self.port_mini_var, width=14, state="readonly")
-        self.port_mini_combo["values"] = self.serial_mini.ports()
-        self.port_mini_combo.grid(row=7, column=0, sticky="w", pady=(0,4))
-        ttk.Button(left, text="Actualizar", command=self._refrescar_puertos).grid(row=7, column=1, padx=5, sticky="w")
+        # --- Minibrazo por el mismo puerto: Escuchar POT + indicador ---
+        pot_row = ttk.Frame(left)
+        pot_row.grid(row=6, column=0, columnspan=2, sticky="we")
+        self.listen_pot_var = tk.IntVar(value=1)
+        ttk.Checkbutton(pot_row, text="Escuchar minibrazo (POT)", variable=self.listen_pot_var)\
+            .pack(side="left")
+        self.pot_indicator = ttk.Label(pot_row, text="●", foreground="#666666")  # gris por defecto
+        self.pot_indicator.pack(side="left", padx=8)
 
-        ttk.Label(left, text="Baud (Mini)").grid(row=8, column=0, sticky="w")
-        self.baud_mini_var = tk.IntVar(value=9600)  # típico HC-05 de fábrica
-        ttk.Entry(left, textvariable=self.baud_mini_var, width=14).grid(row=9, column=0, sticky="w", pady=(0,6))
+        # Teleop + seguridad
+        teleop_frame = ttk.Frame(left)
+        teleop_frame.grid(row=7, column=0, columnspan=2, sticky="we", pady=(8,4))
+        self.teleop_var = tk.IntVar(value=0)
+        ttk.Checkbutton(teleop_frame, text="Teleop ON/OFF (POT → SET)", variable=self.teleop_var)\
+            .pack(side="left", padx=(0,10))
+        ttk.Button(teleop_frame, text="HOME", command=self._ir_home).pack(side="left", padx=4)
+        ttk.Button(teleop_frame, text="Definir HOME", command=self._definir_home).pack(side="left", padx=4)
+        ttk.Button(teleop_frame, text="STOP", command=self._stop_seguro).pack(side="left", padx=4)
 
-        self.btn_connect_mini = ttk.Button(left, text="Conectar mini", command=self._toggle_conexion_mini)
-        self.btn_connect_mini.grid(row=10, column=0, columnspan=2, sticky="we", pady=4)
+        ttk.Separator(left).grid(row=8, column=0, columnspan=2, sticky="we", pady=8)
 
-        ttk.Separator(left).grid(row=11, column=0, columnspan=2, sticky="we", pady=10)
+        # --- Grabación continua (toggle) ---
+        record_row = ttk.Frame(left)
+        record_row.grid(row=9, column=0, columnspan=2, sticky="we", pady=(0,3))
+        self.btn_record = ttk.Button(record_row, text="Grabar posición (Iniciar)", command=self._toggle_recording)
+        self.btn_record.pack(side="left", fill="x", expand=True)
 
-        # Acciones de posiciones
-        ttk.Button(left, text="Grabar posición", command=self._grabar_posicion).grid(row=12, column=0, columnspan=2, sticky="we", pady=3)
-        ttk.Button(left, text="Borrar posición", command=self._borrar_posicion).grid(row=13, column=0, columnspan=2, sticky="we", pady=3)
-        ttk.Button(left, text="Ejecutar movimientos", command=self._ejecutar_movimientos).grid(row=14, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Label(left, text="Intervalo de muestreo (ms)").grid(row=10, column=0, columnspan=2, sticky="w", pady=(6,3))
+        self.sample_interval_var = tk.IntVar(value=100)
+        ttk.Entry(left, textvariable=self.sample_interval_var, width=14).grid(row=11, column=0, columnspan=2, sticky="we")
 
-        ttk.Label(left, text="Delay entre pasos (ms)").grid(row=15, column=0, columnspan=2, sticky="w", pady=(10,3))
+        ttk.Button(left, text="Borrar posición", command=self._borrar_posicion).grid(row=12, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Ejecutar movimientos", command=self._ejecutar_movimientos).grid(row=13, column=0, columnspan=2, sticky="we", pady=3)
+
+        # 👉 NUEVOS BOTONES
+        ttk.Button(left, text="Vaciar lista", command=self._vaciar_lista)\
+            .grid(row=14, column=0, columnspan=2, sticky="we", pady=(6,3))
+        ttk.Button(left, text="Nueva grabación", command=self._nueva_grabacion)\
+            .grid(row=15, column=0, columnspan=2, sticky="we", pady=3)
+
+        ttk.Label(left, text="Delay entre pasos (ms)").grid(row=16, column=0, columnspan=2, sticky="w", pady=(10,3))
         self.delay_var = tk.IntVar(value=600)
-        ttk.Entry(left, textvariable=self.delay_var, width=14).grid(row=16, column=0, columnspan=2, sticky="we")
+        ttk.Entry(left, textvariable=self.delay_var, width=14).grid(row=17, column=0, columnspan=2, sticky="we")
 
-        ttk.Separator(left).grid(row=17, column=0, columnspan=2, sticky="we", pady=10)
+        ttk.Separator(left).grid(row=18, column=0, columnspan=2, sticky="we", pady=10)
 
-        ttk.Button(left, text="Guardar lista (JSON)", command=self._guardar_json).grid(row=18, column=0, columnspan=2, sticky="we", pady=3)
-        ttk.Button(left, text="Cargar lista (JSON)", command=self._cargar_json).grid(row=19, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Guardar lista (JSON)", command=self._guardar_json).grid(row=19, column=0, columnspan=2, sticky="we", pady=3)
+        ttk.Button(left, text="Cargar lista (JSON)", command=self._cargar_json).grid(row=20, column=0, columnspan=2, sticky="we", pady=3)
 
-        # ==== Centro: imagen del brazo + teleop + lista ====
+        # ==== Centro: imagen + lista ====
         center = ttk.Frame(self, padding=10)
         center.grid(row=0, column=1, sticky="nsew")
         center.columnconfigure(0, weight=1)
         center.rowconfigure(4, weight=1)
 
-        # Canvas de imagen del brazo
         self.arm_canvas = tk.Canvas(center, width=360, height=360, bg="#f4f4f4",
                                     highlightthickness=1, highlightbackground="#888")
         self.arm_canvas.grid(row=0, column=0, pady=5, sticky="n")
-        self.arm_canvas_text = self.arm_canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
+        self.arm_canvas.create_text(180, 180, text="IMAGEN DEL BRAZO", font=("Arial", 14))
 
-        # Teleop toggle + seguridad
-        teleop_frame = ttk.Frame(center)
-        teleop_frame.grid(row=2, column=0, sticky="we", pady=(8,4))
-        self.teleop_var = tk.IntVar(value=0)
-        ttk.Checkbutton(teleop_frame, text="Teleop ON/OFF (Minibrazo → Brazo)",
-                        variable=self.teleop_var).pack(side="left", padx=(0,10))
-        ttk.Button(teleop_frame, text="HOME", command=self._ir_home).pack(side="left", padx=4)
-        ttk.Button(teleop_frame, text="Definir HOME", command=self._definir_home).pack(side="left", padx=4)
-        ttk.Button(teleop_frame, text="STOP", command=self._stop_seguro).pack(side="left", padx=4)
+        # (Se eliminó el botón "Cargar imagen del brazo...")
 
         ttk.Label(center, text="Posiciones guardadas").grid(row=3, column=0, sticky="w", pady=(10,3))
         list_frame = ttk.Frame(center)
@@ -221,6 +237,24 @@ class ArmControlApp(tk.Tk):
         sb = ttk.Scrollbar(list_frame, orient="vertical", command=self.lista.yview)
         sb.pack(side="right", fill="y")
         self.lista.configure(yscrollcommand=sb.set)
+
+        # Menú contextual en la lista
+        self._list_menu = tk.Menu(self, tearoff=0)
+        self._list_menu.add_command(label="Borrar seleccionada", command=self._borrar_posicion)
+        self._list_menu.add_command(label="Vaciar lista", command=self._vaciar_lista)
+        self._list_menu.add_separator()
+        self._list_menu.add_command(label="Exportar JSON", command=self._guardar_json)
+
+        def _popup_list_menu(event):
+            try:
+                idx = self.lista.nearest(event.y)
+                self.lista.selection_clear(0, tk.END)
+                self.lista.selection_set(idx)
+            except Exception:
+                pass
+            self._list_menu.tk_popup(event.x_root, event.y_root)
+
+        self.lista.bind("<Button-3>", _popup_list_menu)  # clic derecho
 
         # ==== Derecha: sliders + electroimán + branding ====
         right = ttk.Frame(self, padding=10)
@@ -241,129 +275,114 @@ class ArmControlApp(tk.Tk):
 
         ttk.Separator(right).grid(row=8, column=0, columnspan=3, sticky="we", pady=10)
 
-        # Electroimán
         self.mag_var = tk.IntVar(value=0)
         ttk.Checkbutton(right, text="Electroimán ON", variable=self.mag_var,
                         command=self._on_change_send).grid(row=9, column=0, columnspan=2, sticky="w")
 
-        # Enviar en vivo (manual)
         self.live_var = tk.IntVar(value=1)
         ttk.Checkbutton(right, text="Enviar en vivo al mover sliders",
                         variable=self.live_var).grid(row=10, column=0, columnspan=2, sticky="w")
 
-        # ---- Branding (logo fijo + autores) ----
         ttk.Separator(right).grid(row=11, column=0, columnspan=3, sticky="we", pady=10)
         brand = ttk.LabelFrame(right, text="Proyecto / Autores")
         brand.grid(row=12, column=0, columnspan=3, sticky="nsew")
         brand.columnconfigure(0, weight=1)
 
-        # Logo fijo (tk.Label con imagen)
         self._logo_label = tk.Label(brand)
         self._logo_label.grid(row=0, column=0, sticky="n", pady=(8,6))
 
-        # Autores (sin emails)
         self._authors_frame = ttk.Frame(brand)
         self._authors_frame.grid(row=1, column=0, sticky="we", padx=6, pady=(2,10))
         self._refrescar_autores_ui()
 
-        # Estado
-        self.status = ttk.Label(self, text="Brazo: desconectado | Mini: desconectado", anchor="w")
+        # Indicador de actividad POT (verde si llega en <500ms, gris si no)
+        self.after(200, self._pot_indicator_tick)
+
+        # Estado inferior
+        self.status = ttk.Label(self, text="Brazo: desconectado", anchor="w")
         self.status.grid(row=99, column=0, columnspan=3, sticky="we", padx=10, pady=5)
 
-    # ---------------- Conexiones ----------------
+    # ---------------- Conexión única ----------------
     def _refrescar_puertos(self):
         self.port_arm_combo["values"] = self.serial_arm.ports()
-        self.port_mini_combo["values"] = self.serial_mini.ports()
 
     def _toggle_conexion_arm(self):
         if self.serial_arm.connected:
+            self._reader_stop = True
             self.serial_arm.close()
-            self.btn_connect_arm.config(text="Conectar brazo")
+            self.btn_connect_arm.config(text="Conectar")
             self._set_status()
             return
+
         port = self.port_arm_var.get()
         if not port:
-            messagebox.showwarning("Serie", "Elegí un puerto del brazo.")
+            messagebox.showwarning("Serie", "Elegí un puerto.")
             return
         try:
             self.serial_arm.connect(port, self.baud_arm_var.get())
-            self.btn_connect_arm.config(text="Desconectar brazo")
+            self.btn_connect_arm.config(text="Desconectar")
             self._set_status()
+            self._reader_stop = False
+            threading.Thread(target=self._reader_loop, daemon=True).start()
         except Exception as e:
-            messagebox.showerror("Serie", f"No se pudo conectar al brazo:\n{e}")
+            messagebox.showerror("Serie", f"No se pudo conectar:\n{e}")
 
-    def _toggle_conexion_mini(self):
-        if self.serial_mini.connected:
-            self._stop_telemetry_thread = True
-            self.serial_mini.close()
-            self.btn_connect_mini.config(text="Conectar mini")
-            self._set_status()
-            return
-        port = self.port_mini_var.get()
-        if not port:
-            messagebox.showwarning("Serie", "Elegí un puerto del minibrazo.")
-            return
-        try:
-            self.serial_mini.connect(port, self.baud_mini_var.get())
-            self.btn_connect_mini.config(text="Desconectar mini")
-            self._set_status()
-            # arrancar hilo de telemetría
-            self._stop_telemetry_thread = False
-            t = threading.Thread(target=self._telemetry_loop, daemon=True)
-            t.start()
-        except Exception as e:
-            messagebox.showerror("Serie", f"No se pudo conectar al minibrazo:\n{e}")
-
-    # ---------------- Telemetría (POT ...) ----------------
-    def _telemetry_loop(self):
-        """
-        Lee líneas tipo: 'POT m1 m2 m3 m4' desde el minibrazo.
-        Si Teleop está ON, actualiza sliders y reenvía SET al brazo.
-        """
-        while self.serial_mini.connected and not getattr(self, "_stop_telemetry_thread", False):
-            line = self.serial_mini.readline()
+    def _reader_loop(self):
+        while self.serial_arm.connected and not self._reader_stop:
+            line = self.serial_arm.readline()
             if not line:
                 continue
             line = line.strip()
             if not line:
                 continue
-            parts = line.split()
-            if len(parts) == 5 and parts[0] == "POT":
-                try:
-                    m1, m2, m3, m4 = map(int, parts[1:5])
-                except ValueError:
-                    continue
 
-                # Actualizar sliders desde telemetría (sin eco)
-                self._updating_from_telemetry = True
-                try:
-                    prev_live = self.live_var.get()
-                    self.live_var.set(0)
+            # Manejo de POT si está habilitado
+            if self.listen_pot_var.get() == 1 and line.startswith("POT"):
+                parts = line.split()
+                if len(parts) == 5:
+                    try:
+                        m1, m2, m3, m4 = map(int, parts[1:5])
+                    except ValueError:
+                        continue
 
-                    self.sl_vars[0].set(m1); self.sl_vars[1].set(m2)
-                    self.sl_vars[2].set(m3); self.sl_vars[3].set(m4)
-                    for i in range(4):
-                        self.value_labels[i].config(text=str(int(self.sl_vars[i].get())))
-                    self.update_idletasks()
+                    # marca actividad
+                    self._last_pot_ts = time.time()
 
-                    # Teleop: reenviar al brazo real
-                    if self.teleop_var.get() == 1:
-                        p = self._pos_actual()
-                        p.m1, p.m2, p.m3, p.m4 = m1, m2, m3, m4
-                        self.serial_arm.send_set(p)
+                    # Actualiza sliders desde POT (sin eco)
+                    def apply_pot():
+                        self._updating_from_telemetry = True
+                        try:
+                            prev_live = self.live_var.get()
+                            self.live_var.set(0)
+                            self.sl_vars[0].set(m1); self.sl_vars[1].set(m2)
+                            self.sl_vars[2].set(m3); self.sl_vars[3].set(m4)
+                            for i in range(4):
+                                self.value_labels[i].config(text=str(int(self.sl_vars[i].get())))
+                            # Teleop → reenviar SET al brazo
+                            if self.teleop_var.get() == 1:
+                                p = self._pos_actual()
+                                p.m1, p.m2, p.m3, p.m4 = m1, m2, m3, m4
+                                self.serial_arm.send_set(p)
+                            self.live_var.set(prev_live)
+                        finally:
+                            self._updating_from_telemetry = False
+                    self.after(0, apply_pot)
 
-                    self.live_var.set(prev_live)
-                finally:
-                    self._updating_from_telemetry = False
+                continue  # POT ya manejado; no lo mostramos en estado
 
-        return
+            # Otros mensajes del firmware
+            self.after(0, lambda t=line: self._set_status_text(f"RX: {t}"))
+
+        # si sale del loop
+        if not self.serial_arm.connected:
+            self.after(0, self._set_status)
 
     # ---------------- Handlers UI ----------------
     def _on_slider(self, idx: int):
         val = int(self.sl_vars[idx].get())
         self.value_labels[idx].config(text=str(val))
         if self._updating_from_telemetry:
-            return  # no eco
+            return
         if self.live_var.get():
             self._on_change_send()
 
@@ -380,10 +399,58 @@ class ArmControlApp(tk.Tk):
             int(self.mag_var.get()),
         )
 
-    def _grabar_posicion(self):
-        p = self._pos_actual()
-        self.lista.insert(tk.END, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
-        self._set_status_text("Posición grabada.")
+    # ---------------- Grabación continua (toggle) ----------------
+    def _toggle_recording(self):
+        if not self._recording:
+            try:
+                interval_ms = max(1, int(self.sample_interval_var.get()))
+            except Exception:
+                interval_ms = 100
+                self.sample_interval_var.set(interval_ms)
+
+            self._recording = True
+            self.btn_record.config(text="Detener grabación")
+            t = threading.Thread(target=self._recording_loop, args=(interval_ms,), daemon=True)
+            self._recording_thread = t
+            t.start()
+            self._set_status_text("Grabación iniciada.")
+        else:
+            self._recording = False
+            self.btn_record.config(text="Grabar posición (Iniciar)")
+            self._set_status_text("Grabación detenida.")
+
+    def _recording_loop(self, interval_ms: int):
+        try:
+            while self._recording:
+                p = self._pos_actual()
+                txt = f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}"
+                # Insertar arriba (índice 0)
+                self.after(0, lambda t=txt: self.lista.insert(0, t))
+                time.sleep(interval_ms / 1000.0)
+        finally:
+            self.after(0, lambda: self.btn_record.config(text="Grabar posición (Iniciar)"))
+
+    # ---- NUEVO: Vaciar lista ----
+    def _vaciar_lista(self):
+        if self.lista.size() == 0:
+            self._set_status_text("La lista ya está vacía.")
+            return
+        if not messagebox.askyesno("Vaciar lista", "¿Seguro que querés borrar TODAS las posiciones?"):
+            return
+        self.lista.delete(0, tk.END)
+        self._set_status_text("Lista vaciada.")
+
+    # ---- NUEVO: Nueva grabación ----
+    def _nueva_grabacion(self):
+        if self.lista.size() > 0:
+            if not messagebox.askyesno("Nueva grabación", "Se vaciará la lista actual. ¿Continuar?"):
+                return
+            self.lista.delete(0, tk.END)
+        if not self._recording:
+            self._toggle_recording()
+            self._set_status_text("Nueva grabación: lista vacía y grabando…")
+        else:
+            self._set_status_text("Ya estás grabando; lista vacía.")
 
     def _borrar_posicion(self):
         sel = self.lista.curselection()
@@ -393,13 +460,21 @@ class ArmControlApp(tk.Tk):
         self.lista.delete(sel[0])
         self._set_status_text("Posición borrada.")
 
+    # ---------- FIX: parser robusto para leer lista ----------
     def _leer_lista(self) -> List[Posicion]:
         out = []
         for i in range(self.lista.size()):
-            txt = self.lista.get(i)
-            parts = txt.replace(" MAG=", ",").split(",")
+            raw = self.lista.get(i)
+            # Limpieza robusta: quitamos "MAG=", espacios y comas duplicadas
+            s = raw.replace("MAG=", "").replace(" ", "")
+            parts = [p for p in s.split(",") if p != ""]
             if len(parts) >= 5:
-                out.append(Posicion.from_list(parts[:5]))
+                try:
+                    m1, m2, m3, m4, mag = map(int, parts[:5])
+                    out.append(Posicion(m1, m2, m3, m4, mag))
+                except ValueError:
+                    # Si hay una línea inválida, la ignoramos
+                    continue
         return out
 
     def _ejecutar_movimientos(self):
@@ -410,10 +485,13 @@ class ArmControlApp(tk.Tk):
         if not secuencia:
             self._set_status_text("No hay posiciones guardadas.")
             return
+
+        # Ejecutar en orden cronológico (primero las más viejas)
+        secuencia = list(reversed(secuencia))
+
         delay_ms = max(0, int(self.delay_var.get()))
         self.ejecutando = True
-        t = threading.Thread(target=self._run_sequence, args=(secuencia, delay_ms), daemon=True)
-        t.start()
+        threading.Thread(target=self._run_sequence, args=(secuencia, delay_ms), daemon=True).start()
 
     def _run_sequence(self, secuencia: List[Posicion], delay_ms: int):
         try:
@@ -466,16 +544,23 @@ class ArmControlApp(tk.Tk):
 
     # ---- Guardar / Cargar ----
     def _guardar_json(self):
-        data = [p.to_list() for p in self._leer_lista()]
-        if not data:
-            self._set_status_text("No hay posiciones para guardar.")
-            return
-        path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON","*.json")], initialfile="posiciones.json")
-        if not path:
-            return
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        self._set_status_text(f"Guardado: {path}")
+        try:
+            data = [p.to_list() for p in self._leer_lista()]
+            if not data:
+                self._set_status_text("No hay posiciones para guardar.")
+                return
+            path = filedialog.asksaveasfilename(
+                defaultextension=".json",
+                filetypes=[("JSON","*.json")],
+                initialfile="posiciones.json"
+            )
+            if not path:
+                return
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            self._set_status_text(f"Guardado: {path}")
+        except Exception as e:
+            messagebox.showerror("JSON", f"No se pudo guardar:\n{e}")
 
     def _cargar_json(self):
         path = filedialog.askopenfilename(filetypes=[("JSON","*.json")])
@@ -487,7 +572,8 @@ class ArmControlApp(tk.Tk):
             self.lista.delete(0, tk.END)
             for lst in data:
                 p = Posicion.from_list(lst)
-                self.lista.insert(tk.END, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
+                # Insertar arriba (índice 0) para mantener lo más nuevo arriba
+                self.lista.insert(0, f"{p.m1},{p.m2},{p.m3},{p.m4}, MAG={p.mag}")
             self._set_status_text(f"Cargado: {path}")
         except Exception as e:
             messagebox.showerror("JSON", f"No se pudo cargar:\n{e}")
@@ -509,19 +595,11 @@ class ArmControlApp(tk.Tk):
             else:
                 self._logo_tk = tk.PhotoImage(file=path)
             self._logo_label.configure(image=self._logo_tk)
-            self._logo_label.image = self._logo_tk  # evitar GC
+            self._logo_label.image = self._logo_tk
         except Exception as e:
             messagebox.showerror("Logo", f"No se pudo cargar la imagen:\n{e}")
 
-    def _cargar_brazo_dialog(self):
-        path = filedialog.askopenfilename(filetypes=[('Imágenes','*.png;*.jpg;*.jpeg;*.gif;*.bmp')])
-        if not path:
-            return
-        self.arm_img_path = path
-        self._cargar_brazo(path)
-
     def _cargar_brazo(self, path: str, max_w: int = 360, max_h: int = 360):
-        """Carga la imagen del brazo y la dibuja centrada en el canvas."""
         try:
             if PIL_AVAILABLE:
                 img = Image.open(path)
@@ -532,20 +610,30 @@ class ArmControlApp(tk.Tk):
 
             self.arm_canvas.delete("all")
             self.arm_canvas.create_image(max_w // 2, max_h // 2, image=self._arm_img_tk)
-            self.arm_canvas.image = self._arm_img_tk  # evitar GC
+            self.arm_canvas.image = self._arm_img_tk
         except Exception as e:
             messagebox.showerror("Imagen del brazo", f"No se pudo cargar '{path}':\n{e}")
+
+    # ---- Indicador POT (actividad reciente) ----
+    def _pot_indicator_tick(self):
+        recent = (time.time() - self._last_pot_ts) < 0.5
+        try:
+            if recent:
+                self.pot_indicator.configure(foreground="#1e8449")  # verde
+            else:
+                self.pot_indicator.configure(foreground="#666666")  # gris
+        except Exception:
+            pass
+        self.after(200, self._pot_indicator_tick)
 
     # ---- Estado ----
     def _set_status(self):
         arm = "conectado" if self.serial_arm.connected else "desconectado"
-        mini = "conectado" if self.serial_mini.connected else "desconectado"
-        self.status.config(text=f"Brazo: {arm} | Mini: {mini}")
+        self.status.config(text=f"Brazo: {arm}")
 
     def _set_status_text(self, text: str):
         arm = "conectado" if self.serial_arm.connected else "desconectado"
-        mini = "conectado" if self.serial_mini.connected else "desconectado"
-        self.status.config(text=f"{text}  |  Brazo: {arm} | Mini: {mini}")
+        self.status.config(text=f"{text}  |  Brazo: {arm}")
 
 
 if __name__ == "__main__":
