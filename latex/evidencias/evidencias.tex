@@ -1,9 +1,12 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 
 % Idioma y codificación
 \usepackage[spanish,es-tabla]{babel}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{siunitx}
+\sisetup{round-mode=places,round-precision=2,detect-all}
 
 % Formato y utilidades
 \usepackage[a4paper,margin=2.5cm]{geometry}
@@ -50,12 +53,15 @@
 
 \section{Metodología y cronograma}
 
+
+
 \section{Evidencias de diseño y fabricación}
 
+\subsection{Materiales y métodos}
 
 \begin{table}[H]
 \centering
-\caption{Evaluación comparativa de mecanismos de actuación}
+\caption{Matriz de selección: mecanismos de actuación}
 \begin{tabular}{lccccc}
 \toprule
 \textbf{Atributo} &\textbf{Peso} &\textbf{Servom.} &\textbf{Eslab.} &\textbf{Actuad. lin.} &\textbf{Pistones hidr.} \\
@@ -161,41 +167,188 @@ Expansión de E/S y temporizadores          & 1 & 8  & 7  & 9  \\
 \midrule
 \textbf{Total ponderado}                 &   & \textbf{133} & \textbf{132} & \textbf{112} \\
 \bottomrule
-\label{tab:matriz_micro}
 \end{tabular}
 \end{table}
-
-
-
-\subsection{Materiales y métodos}
-
-
 
 
 \subsection{Galgas y tolerancias}
 % Descripción de pruebas y cómo se midió. Incluir figuras si corresponde.
 
-\subsection{Articulaciones y prototipos}
+Recolección de mediciones a partir de 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[height=\textwidth, angle=90]{../anexos/Pruebas/Galgas.jpg}
+  \caption{Galgas para medición de tolerancias. Fuente: elaboración própia}\label{fig:galgas}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Galgas AR en PLA (agujero redondo, \si{mm})}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real  & 9.0  & 9.1  & 9.2  & 9.3  & 9.4  & 9.5  & 9.6   & 9.7   & 9.8   & 9.9   & 10.0   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 2) AC – PLA (agujero cuadrado, PLA) ====
+\begin{table}[H]
+\centering
+\caption{Galgas AC en PLA (agujero cuadrado, \si{mm})}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.4  & 9.5  & 9.6  & 9.7  & 9.8  & 9.9   & 10.0   & 10.1   & 10.2   & 10.3   & 10.4   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 3) PR – PLA (perno redondo, PLA) ====
+\begin{table}[H]
+\centering
+\caption{Galgas PR en PLA (perno redondo, \si{mm})}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.3  & 9.4  & 9.5  & 9.6  & 9.7  & 9.8   & 9.9   & 10.0   & 10.1   & 10.2   & 10.3   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 4) PC – PLA (perno cuadrado, PLA) ====
+\begin{table}[H]
+\centering
+\caption{Galgas PC en PLA (perno cuadrado, \si{mm})}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.7  & 9.8  & 9.9  & 10.0  & 10.1  & 10.2   & 10.3   & 10.4   & 10.5   & 10.6   & 10.7   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 5) AR – MDF (agujero redondo, MDF) ====
+\begin{table}[H]
+\centering
+\caption{Galgas AR en MDF (agujero redondo, \si{mm})}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 6) AC – MDF (agujero cuadrado, MDF) ====
+\begin{table}[H]
+\centering
+\caption{Galgas AC en MDF (agujero cuadrado, \si{mm})}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Diseños y prototipos}
 % Versiones, cambios y fotos de las piezas.
+\subsubsection{Modelo anterior}
 
-\section{Electrónica}
-% Esquema, distribución de potencia, cableado. Fotos/figuras opcionales.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/inspiraciones/11diseñoEslabones.png}
+  \caption{Version anterior diseñada con eslabones y efector de garra. Fuente: elaboración própia}
+\end{figure}
 
-\section{Programación}
-% Modos de operación, pruebas básicas, logs o capturas.
+Modelo descartado diseñado utilizando eslabones.
 
-\section{Pruebas y resultados}
-% Qué se probó, evidencias fotográficas o capturas.
+\subsubsection{Articulación}
+Utilizando las tolerancias obtenidas a partir de las galgas. Se realizan diseños y prototipos para una articulación desmontable. 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Articulacion/V2.png}
+  \caption{Sistema de articulación desmontable. Fuente: elaboración própia}
+\end{figure}
 
-\section{Documentación generada}
-% Manuales, planos, listas, enlaces a repositorio.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Articulacion/Perno V2.png}
+  \caption{Corte transversal perno --- versión original. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Pruebas/Prueba articulacion.jpg}
+  \caption{Prueba de articulación con descartes de MDF. Fuente: elaboración própia}
+\end{figure}
+
+Una vez realizadas pruebas con el modelo inicial se observa un desgaste considerable en superficies con fricción PLA + MDF. Se decide incorporar otra interfaz de PLA en el diseño del pivote de la articulación para evitar el contacto PLA con el MDF. También se observa que el seguro se sale con facilidad al momento de aplicar fuerzas laterales a la articulación, por lo que se cambia el diseño de perno sólido por un diseño de perno y seguro calzante.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Articulacion/Perno V3.png}
+  \caption{Corte transversal perno --- versión mejorada. Fuente: elaboración própia}
+\end{figure}
+
+En este diseño se evita el contacto de superficies de PLA y MDF entre sí, y se mejora la sujeción del seguro al perno al utilizar un tope regulable (amarillo) el cual se encastra a presión, ajustándo la fuerza de apriete de la articulación en el proceso. Este ajuste es único, luego es el seguro quien se encarga del montaje y desmontaje de la articulación.
+
+
+\subsubsection{Electroimán}
+
+Se diseña y realiza el proceso de maquinado manual para la carcasa del electroimán. Se compra un segmento de barra de acero en Dinapoli para luego trabajar el material en un torno manual.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Torno/Plano.jpg}
+  \caption{Plano de pieza a fabricar. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Torno/Maquinado.jpg}
+  \caption{Maquinado de pieza en torno manual. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/Torno/Pieza final.jpg}
+  \caption{Resultado obtenido. Fuente: elaboración própia}
+\end{figure}
+
+La pieza se deja intecionalmente a sobremedida a fin de luego de continuar con el proceso de prototipado volver a maquinar el material para llevarlo hasta las medidas adecuadas.
+
+\section{Electrónica y programación}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{../anexos/software/Pruebas de integración.png}
+  \caption{Pruebas de integración entre código y componentes. Fuente: elaboración própia}
+\end{figure}
+
+
+
 
 \section{Conclusiones}
 % Hallazgos clave y posibles mejoras.
 
 \appendix
 \section{Inspiraciones y referencias de mercado}
-% Enlaces o capturas. Referido en el cuerpo principal.
+
 
 
 \end{document}
