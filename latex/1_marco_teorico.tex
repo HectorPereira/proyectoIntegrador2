@@ -206,6 +206,7 @@ Ahora bien, el MDF presenta limitaciones en contactos móviles: con fricción so
 La comparación cuantitativa se resume en la matriz de selección (véase Tabla~\ref{tab:matriz_materiales}), ponderando criterios como tiempo de fabricación, costo, facilidad de retrabajo, precisión/tolerancias, comportamiento a la fricción, rigidez estructural, peso y complejidad de ensamblaje. 
 
 
+
 \begin{table}[H]
 \centering
 \caption{Matriz de selección: MDF vs Impresión 3D vs Híbrido (MDF+PLA)}
@@ -231,6 +232,39 @@ Acabado / ajuste final               & 1 & 6 & 7 & 7 \\
 
 
 Con base en esa matriz, se adopta un enfoque \textbf{híbrido (MDF + interfaces PLA)}. La mayor parte de la carga estructural se resuelve con MDF, aprovechando su rapidez y economía en iteraciones; las \emph{interfaces de PLA} se emplean en articulaciones y superficies en contacto para asegurar durabilidad y estabilidad dimensional. Este esquema balancea costo y tiempos de fabricación con el desempeño mecánico requerido, y reduce riesgos de reprocesos largos propios de una solución 100\% impresa. Como consideraciones prácticas, se recomienda sellar el MDF para humedad, utilizar lubricante seco en contactos PLA–PLA, controlar la orientación de capas en piezas impresas y diseñar encastres reemplazables en las zonas de mayor desgaste.
+
+
+\subsubsection{Fuente de alimentación}
+
+Para la alimentación del brazo se evaluaron cuatro alternativas: PC (fuente ATX reciclada), una fuente conmutada de 5 V y 10 A tipo ``LED'', varias fuentes genéricas de 5 V y 2 A distribuidas por carga, y una fuente de laboratorio regulable. La fuente de PC ofrece alto margen de corriente en 5 V, protecciones integradas habituales y muy buena disponibilidad a bajo costo, a cambio de mayor volumen y la necesidad de habilitar PS\_ON, además de considerar el límite combinado 3.3 V + 5 V. La fuente LED es compacta y sencilla de cablear, pero suele tener menos margen ante picos simultáneos de servos y protecciones más básicas. La opción de múltiples fuentes genéricas permite aislar cargas, aunque complica el cableado, incrementa los puntos de falla y no comparte bien los picos intermitentes entre líneas separadas. La fuente de laboratorio ofrece excelente regulación y medición, pero no resulta práctica para un kit didáctico autónomo por costo, tamaño y dependencia de un equipo externo.
+
+La comparación cuantitativa se resume en la matriz de selección (véase Tabla~\ref{tab:matriz_fuente}), donde se ponderan corriente y picos, disponibilidad y costo, integración, regulación y rizado, protecciones, portabilidad, EMI, escalabilidad y confiabilidad en una escala de 1 a 10.
+
+
+\begin{table}[H]
+\centering
+\caption{Matriz de selección de fuente de poder}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Atributo} & \textbf{Peso} & \textbf{PC} & \textbf{LED} & \textbf{Genéricas} & \textbf{Fuente de lab.} \\
+\midrule
+Corriente continua y picos         & 3 & 9 & 7 & 6 & 8 \\
+Disponibilidad + costo             & 2 & 10 & 7 & 8 & 3 \\
+Facilidad de integración/ensamble  & 2 & 6 & 9 & 4 & 5 \\
+Regulación y rizado                & 2 & 8 & 6 & 7 & 9 \\
+Protecciones (OCP/OVP/OTP, etc.)   & 2 & 9 & 6 & 7 & 9 \\
+Portabilidad / formato             & 1 & 5 & 7 & 6 & 3 \\
+Ruido eléctrico/EMI                & 1 & 7 & 6 & 6 & 8 \\
+Escalabilidad (margen futuro)      & 2 & 9 & 6 & 5 & 7 \\
+Confiabilidad global               & 2 & 8 & 7 & 5 & 8 \\
+\midrule
+\textbf{Total ponderado}           &   & \textbf{139} & \textbf{116} & \textbf{102} & \textbf{117} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Con base en esa matriz (PC = 139, LED = 116, Genéricas = 102, Fuente de lab. = 117), se elige la fuente ATX de PC porque ofrece el mejor equilibrio entre margen de corriente para picos de servos, protecciones, escalabilidad y disponibilidad/costo para un kit educativo. Como guía de implementación: no usar la línea +5VSB, puentear PS\_ON a masa para encendido, distribuir 5 V con fusibles por rama, colocar capacitores de reserva cerca de los servos y realizar conexión de masa en estrella para reducir caídas y ruido.
+
 
 \subsubsection{Ecuaciones y parámetros relevantes}
 \paragraph{Par y torque}
