@@ -1,0 +1,157 @@
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include <stdbool.h>
+
+/* ==== Pines ==== */
+#define LED_ROJO   PD4
+#define LED_VERDE  PD5
+#define LED_AZUL   PD7
+#define BUZZER     PD3
+#define ELECTRO    PB0
+
+#define SERVO1_PIN PB1  // D9
+#define SERVO2_PIN PB2  // D10
+#define SERVO3_PIN PD6  // D6
+#define SERVO4_PIN PD7  // D7
+
+#define SERVO_MIN_US 1000
+#define SERVO_MAX_US 2000
+#define DEAD_ZONE 2  // grados
+
+/* ==== Variables globales ==== */
+volatile uint16_t servo3_pulse = 1500;
+volatile uint16_t servo4_pulse = 1500;
+
+bool modoManual = true;
+
+/* ===== UART ===== */
+void uart_init(unsigned int ubrr) {
+	UBRR0H = (unsigned char)(ubrr>>8);
+	UBRR0L = (unsigned char)ubrr;
+	UCSR0B = (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0);
+	UCSR0C = (1<<UCSZ01) | (1<<UCSZ00);
+}
+void uart_send(char c){
+	while(!(UCSR0A & (1<<UDRE0)));
+	UDR0 = c;
+}
+volatile char rx_char = 0;
+ISR(USART_RX_vect){
+	rx_char = UDR0;
+	if(rx_char == 'm') modoManual = true;
+	if(rx_char == 'a') modoManual = false;
+}
+
+/* ===== ADC ===== */
+void adc_init(){
+	ADMUX = (1<<REFS0); // AVcc
+	ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
+}
+uint16_t adc_read(uint8_t ch){
+	ADMUX = (ADMUX & 0xF0) | (ch & 0x0F);
+	ADCSRA |= (1<<ADSC);
+	while(ADCSRA & (1<<ADSC));
+	return ADC;
+}
+
+/* ===== Servos ===== */
+void servo12_init(){
+	ICR1 = 39999;
+	TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);
+	TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS11);
+	DDRB |= (1<<SERVO1_PIN)|(1<<SERVO2_PIN);
+}
+void servo1_set(uint8_t angle){ OCR1A = (SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2; }
+void servo2_set(uint8_t angle){ OCR1B = (SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2; }
+
+void servo34_init(){
+	DDRD |= (1<<SERVO3_PIN)|(1<<SERVO4_PIN);
+	TCCR2A = (1<<COM2A1)|(1<<COM2B1)|(1<<WGM21)|(1<<WGM20);
+	TCCR2B = (1<<CS21);
+}
+void servo3_set(uint8_t angle){ OCR2A = ((SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2)/8; }
+void servo4_set(uint8_t angle){ OCR2B = ((SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2)/8; }
+
+/* ===== Buzzer ===== */
+void beep(uint8_t n){
+	for(uint8_t i=0;i<n;i++){
+		PORTD |= (1<<BUZZER);
+		_delay_ms(200);
+		PORTD &= ~(1<<BUZZER);
+		_delay_ms(150);
+	}
+}
+
+/* ===== LEDs ===== */
+void leds_off(){ PORTD &= ~((1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL)); }
+
+/* ===== MAIN ===== */
+int main(void){
+	DDRD |= (1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL)|(1<<BUZZER)|(1<<SERVO3_PIN)|(1<<SERVO4_PIN);
+	DDRB |= (1<<SERVO1_PIN)|(1<<SERVO2_PIN)|(1<<ELECTRO);
+	adc_init();
+	servo12_init();
+	servo34_init();
+	uart_init(103); // 9600 baudios
+	sei();
+	
+	uint8_t last_angle[4] = {0,0,0,0};
+	
+	while(1){
+		uint16_t pot[4];
+		pot[0] = adc_read(0);
+		pot[1] = adc_read(1);
+		pot[2] = adc_read(2);
+		pot[3] = adc_read(3);
+		uint8_t angle[4];
+		for(uint8_t i=0;i<4;i++) angle[i] = (pot[i]*180UL)/1023;
+		
+		if(modoManual){
+			// punto muerto
+			for(uint8_t i=0;i<4;i++){
+				if(abs(angle[i]-last_angle[i])<DEAD_ZONE) angle[i] = last_angle[i];
+			}
+			servo1_set(angle[0]);
+			servo2_set(angle[1]);
+			servo3_set(angle[2]);
+			servo4_set(angle[3]);
+			
+			// LEDs
+			if(angle[0]!=last_angle[0] |
+      | angle[1]!=last_angle[1] |
+      | angle[2]!=last_angle[2] |
+      | angle[3]!=last_angle[3])
+			PORTD |= (1<<LED_VERDE);
+			else
+			PORTD &= ~(1<<LED_VERDE);
+			
+			if(angle[3]!=last_angle[3]) PORTD |= (1<<LED_AZUL);
+			else PORTD &= ~(1<<LED_AZUL);
+			
+			last_angle[0]=angle[0];
+      last_angle[1]=angle[1]; 
+      last_angle[2]=angle[2];
+      last_angle[3]=angle[3];
+			
+			} else {
+			// Modo automático ejemplo
+			static uint8_t step = 0;
+			static uint16_t t = 0;
+			if(++t>200){ 
+				t=0;
+
+				uint8_t autoSteps[4][4]={{0,0,0,0},{45,45,45,45},{90,90,90,90},{180,180,180,180}};
+				servo1_set(autoSteps[step][0]);
+				servo2_set(autoSteps[step][1]);
+				servo3_set(autoSteps[step][2]);
+				servo4_set(autoSteps[step][3]);
+				PORTD |= (1<<LED_VERDE);
+				if(autoSteps[step][3]>0) beep(2); 
+				if(++step>=4) step=0;
+			}
+		}
+		_delay_ms(10);
+	}
+}
