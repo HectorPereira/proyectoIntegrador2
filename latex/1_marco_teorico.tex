@@ -143,11 +143,11 @@ Simplicidad          & 3 & 10 & 6  & 5 & 4  \\
 Costo                & 3 & 9  & 8  & 7 & 7  \\
 Reparabilidad        & 2 & 9  & 7  & 6 & 5  \\
 Durabilidad          & 2 & 8  & 5  & 4 & 3  \\
-Cap.`\'de carga      & 2 & 7  & 7  & 8 & 9  \\
+Cap. de carga      & 2 & 7  & 7  & 8 & 9  \\
 Velocidad            & 1 & 8  & 8  & 5 & 4  \\
 Precisión            & 1 & 8  & 7  & 6 & 5  \\
 \midrule
-\textbf{Total}       &    & 127 & 103 & 92 & 86 \\
+\textbf{Total ponderado}       &    & 127 & 103 & 92 & 86 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -165,22 +165,73 @@ Tomando en cuenta los criterios especificados con sus respectivos pesos asignado
 Los lineamientos de diseño se centran en garantizar un montaje sencillo y confiable, minimizando la cantidad de componentes y puntos de desgaste. Se consideraron las tolerancias de fabricación en elementos móviles, y se mantuvo un enfoque modular y paramétrico que permite la intercambiabilidad del efector y la adaptación a distintos espesores de MDF.\@
 
 \subsection{Sustento técnico de la solución conceptual}
+
 \subsubsection{Actuadores}
-Al comparar el MG996R con el SG90 se nota enseguida que están pensados para usos muy diferentes. El MG996R es mucho más fuerte: puede llegar a un par de hasta 11 kgf·cm, mientras que el SG90 apenas alcanza 1.8 kgf·cm. Esa diferencia hace que el primero sea ideal para mover piezas más pesadas o para darle solidez a un brazo robótico, mientras que el segundo queda limitado a proyectos pequeños y livianos.
+
+Al comparar el MG996R con el SG90 (\cite{oracid_mg996r_test} y \cite{MrProject_sg90_test}) se nota enseguida que están pensados para usos muy diferentes. El MG996R es mucho más fuerte: puede llegar a un par de hasta 10 kgf·cm, mientras que el SG90 apenas alcanza 0.7 kgf·cm. Esa diferencia hace que el primero sea ideal para mover piezas más pesadas o para darle solidez a un brazo robótico, mientras que el segundo queda limitado a proyectos pequeños y livianos.
 
 En tamaño y peso también se distinguen bastante. El SG90 es muy compacto, con solo 9 gramos, frente a los 55 gramos del MG996R. Esa ligereza lo vuelve práctico cuando no hay mucho espacio o cuando se busca mantener la estructura lo más liviana posible, aunque lógicamente no tiene la misma capacidad de carga. En cuanto a velocidad, el SG90 responde un poco más rápido (0.1 s/60° frente a 0.17 s/60° a 4.8 V en el MG996R), pero esta diferencia no suele ser decisiva si lo que se necesita es fuerza y confiabilidad más que rapidez.
 
 Otra diferencia clave está en los materiales. El MG996R usa engranajes metálicos y un sistema de doble rodamiento de bolas, lo que le da más precisión y resistencia al desgaste. En cambio, el SG90 usa engranajes plásticos, que son más frágiles y tienden a deteriorarse con el uso. Eso sí, esta robustez del MG996R viene con un costo: su consumo de corriente es bastante más alto (puede llegar a 2.5 A en stall), mientras que el SG90 consume mucho menos y puede funcionar sin problemas con fuentes pequeñas.
 
-En resumen, el MG996R es la mejor opción cuando se busca un servo confiable, fuerte y duradero para un brazo robótico educativo que tenga que manipular piezas con cierta carga. El SG90, en cambio, es más adecuado para proyectos sencillos o demostrativos, donde lo que importa es que sea barato, liviano y fácil de integrar. (\cite{TowerProMG996R})
-\subsubsection{Material estructural}
-El diseño del brazo robótico se elaboró principalmente en MDF (tablero de fibras de densidad media) porque combina varias ventajas que lo hacen ideal para un prototipo educativo. En primer lugar, es un material económico y de fácil acceso en el mercado, lo cual permite mantener bajo el costo del proyecto sin sacrificar demasiada calidad. Esto es clave en un contexto didáctico, donde la idea es que el brazo sea replicable por estudiantes o instituciones sin necesidad de una gran inversión.
+\begin{table}[H]
+\centering
+\caption{Matriz de selección entre servos MG996R y SG90}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Atributo} & \textbf{Peso} & \textbf{MG996R} & \textbf{SG90} \\
+\midrule
+Fuerza (torque)        & 4 & 10 & 3 \\
+Tamaño (dimensiones)   & 2 & 6  & 9 \\
+Peso (masa)            & 2 & 5  & 9 \\
+Precio                 & 2 & 7  & 9 \\
+Durabilidad / materiales & 3 & 9 & 5 \\
+Precisión              & 2 & 7  & 6 \\
+Velocidad (s/60°)      & 1 & 6  & 9 \\
+Corriente (menor=mejor) & 2 & 4  & 8 \\
+\midrule
+\textbf{Total ponderado} &   & \textbf{131} & \textbf{118} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Otra razón importante es que el MDF se trabaja muy bien con corte láser, lo que facilita la fabricación de piezas precisas y repetibles. Gracias a esto, el diseño puede ser paramétrico, adaptándose a distintos espesores de placa sin necesidad de cambios drásticos. Además, el MDF ofrece una buena rigidez estructural para soportar los esfuerzos típicos de un brazo robótico de bajo peso, a la vez que es lo suficientemente ligero como para no sobrecargar los servomotores.
+Basado en el resultado de la matriz de selección, el MG996R es la mejor opción cuando se busca un servo confiable, fuerte y duradero para un brazo robótico educativo que tenga que manipular piezas con cierta carga. El SG90, en cambio, es más adecuado para proyectos sencillos o demostrativos, donde lo que importa es que sea barato, liviano y fácil de integrar. (\cite{TowerProMG996R})
 
-Al mismo tiempo, se decidió incorporar piezas en impresión 3D en zonas específicas, como acoples para articulaciones o soportes que simplifiquen el montaje. Esto no solo mejora la facilidad de ensamblaje frente a un diseño que dependa exclusivamente de tornillos y tuercas, sino que también aporta mayor precisión en uniones críticas y permite formas más complejas que serían difíciles de obtener solo con MDF.\@
+\subsubsection{Estructura}
 
-De esta manera, la combinación de MDF y piezas impresas en 3D ofrece un equilibrio interesante: por un lado, bajo costo y facilidad de fabricación; por otro, versatilidad y optimización en el ensamblaje. En conjunto, se obtiene un prototipo didáctico robusto, accesible y fácil de replicar, sin dejar de lado la posibilidad de mejorar su ergonomía y durabilidad con componentes personalizados.
+Para la fabricación del brazo se evaluaron tres alternativas: (i) estructura íntegramente en MDF mediante corte láser, (ii) piezas 100\% impresas en 3D (PLA) y (iii) enfoque híbrido, utilizando MDF como material estructural principal e interfaces de PLA en zonas de fricción y articulaciones. En el contexto del taller, el MDF ofrece una ventaja clara en \emph{tiempo de iteración}: permite realizar ajustes dimensionales rápidos (re-cortes sucesivos) y validar encastres sin esperar horas de impresión \cite{xometry_laser_vs_3dp_2022}. Además, su costo por unidad de superficie es bajo y la documentación técnica del MDF como material de ingeniería está ampliamente consolidada \cite{usda_wood_handbook_2021}.
+
+Ahora bien, el MDF presenta limitaciones en contactos móviles: con fricción sostenida tiende a deshilacharse y perder tolerancia, lo que afecta la repetibilidad de las uniones; de hecho, la fricción en MDF no laminado se reporta relativamente alta frente a otras chapas y tableros \cite{kukla_woodresearch_2021_mdf_friction}. Allí el PLA aporta valor: permite generar \emph{interfaces} con mejor control de tolerancias, superficies de contacto más estables y geometrías que no son viables con corte láser (chaflanes, alojamientos, casquillos, topes, etc.), con evidencia tribológica específica sobre el comportamiento de PLA impreso (influencia de textura, parámetros de impresión y lubricación) \cite{asme_pla_friction_2022}.\footnote{En zonas PLA–PLA se recomienda lubricante seco y orientar las capas para minimizar desgaste.}
+
+La comparación cuantitativa se resume en la matriz de selección (véase Tabla~\ref{tab:matriz_materiales}), ponderando criterios como tiempo de fabricación, costo, facilidad de retrabajo, precisión/tolerancias, comportamiento a la fricción, rigidez estructural, peso y complejidad de ensamblaje. 
+
+
+\begin{table}[H]
+\centering
+\caption{Matriz de selección: MDF vs Impresión 3D vs Híbrido (MDF+PLA)}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Atributo} & \textbf{Peso} & \textbf{MDF} & \textbf{PLA} & \textbf{MDF+PLA} \\
+\midrule
+Tiempo de fabricación (menor=mejor) & 3 & 9 & 3 & 8 \\
+Costo de materiales (menor=mejor)   & 2 & 9 & 5 & 8 \\
+Facilidad de iteración/retrabajo    & 3 & 10 & 4 & 9 \\
+Precisión / tolerancias              & 2 & 6 & 8 & 8 \\
+Comportamiento a la fricción         & 3 & 3 & 8 & 8 \\
+Rigidez / resistencia estructural    & 3 & 7 & 6 & 8 \\
+Peso total (menor=mejor)             & 1 & 6 & 7 & 7 \\
+Complejidad de ensamblaje (menor=mejor) & 1 & 8 & 6 & 6 \\
+Disponibilidad de recursos (UTEC)    & 1 & 10 & 6 & 9 \\
+Acabado / ajuste final               & 1 & 6 & 7 & 7 \\
+\midrule
+\textbf{Total ponderado}             &    & \textbf{147} & \textbf{115} & \textbf{160} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+Con base en esa matriz, se adopta un enfoque \textbf{híbrido (MDF + interfaces PLA)}. La mayor parte de la carga estructural se resuelve con MDF, aprovechando su rapidez y economía en iteraciones; las \emph{interfaces de PLA} se emplean en articulaciones y superficies en contacto para asegurar durabilidad y estabilidad dimensional. Este esquema balancea costo y tiempos de fabricación con el desempeño mecánico requerido, y reduce riesgos de reprocesos largos propios de una solución 100\% impresa. Como consideraciones prácticas, se recomienda sellar el MDF para humedad, utilizar lubricante seco en contactos PLA–PLA, controlar la orientación de capas en piezas impresas y diseñar encastres reemplazables en las zonas de mayor desgaste.
+
 \subsubsection{Ecuaciones y parámetros relevantes}
 \paragraph{Par y torque}
 \begin{equation}
