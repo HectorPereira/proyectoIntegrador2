@@ -30,6 +30,22 @@ Finalmente, el proyecto se entregará con un prototipo completamente ensamblado,
   \caption{Diagrama de Gantt. Fuente: elaboración própia}\label{fig:diagrama_gantt}
 \end{figure}
 
+\subsubsection{Segmentación de proyecto}
+\begin{enumerate}
+  \item \textbf{Métodos de fabricación:} Definir el flujo de fabricación y los materiales del prototipo. Priorizar MDF cortado a láser para iteraciones rápidas y precisión 2D, y emplear PLA impreso en 3D en interfaces sometidas a fricción o geometrías no realizables a láser. Diseñar y fabricar galgas para validar tolerancias y encastres MDF–MDF, PLA–PLA y mixtos. Documentar parámetros de corte e impresión y criterios de aceptación dimensional.
+  
+  \item \textbf{Diseño y manufactura:} Modelar la estructura del brazo considerando distribución de masas, trayectorias y rigidez. Dimensionar y ubicar servomotores (MG996R y SG90), soportes, eslabones y topes mecánicos; definir uniones, casquillos y separadores. Fabricar base, articulaciones, manipulador (garra) y controlador espejo con sus accesorios. Verificar interferencias, holguras y repetibilidad; ajustar iterativamente las piezas hasta lograr el encastre objetivo.
+  
+  \item \textbf{Electrónica:} Integrar alimentación a 5 V, distribución de potencia y protección básica. Cablear Arduino UNO con servomotores, indicadores LED y buzzer; incorporar el controlador espejo como entrada de posición/estado. Trazar esquema eléctrico, asignar pines y preparar placa o protoboard de control. Validar corrientes de pico y caídas de tensión en carga.
+  
+  \item \textbf{Programación:} Desarrollar el firmware del Arduino con modos de operación manual, espejo y recorrido preprogramado. Implementar comunicación serial con la interfaz de usuario, temporización y filtrado básico de señales. Incluir homing o posiciones seguras, límites de movimiento y manejo de errores. Entregar archivo fuente versionado y un set mínimo de pruebas funcionales.
+  
+  \item \textbf{Documentación} Producir el paquete de entrega: manual de uso, manual de ensamblaje y planos de fabricación. Incluir diagrama eléctrico, lista de materiales, parámetros de corte/impresión, y guías de mantenimiento. Registrar decisiones de diseño, riesgos y recomendaciones para réplica en ámbito educativo. Versionar todos los documentos y figuras con sus fuentes.
+ 
+\end{enumerate}
+
+
+
 
 
 \begin{comment}

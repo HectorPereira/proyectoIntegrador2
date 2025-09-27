@@ -1,107 +1,14 @@
 \section{Fundamento técnico-conceptual}
 
 \subsection{Análisis de mercado}
-Se realiza un periodo de investigación donde se recopilan modelos ya existentes en el mercado actual para solventar la problemática proporcionada.
-
+Se realizó una investigación de soluciones existentes con el fin de identificar referentes, buenas prácticas de diseño y alcances realistas para un kit didáctico. Los modelos y enlaces tomados como referencia se listan en el apéndice~\ref{apendice:inspiraciones}.
 
 \subsubsection{GrabCAD}
-GrabCAD es una plataforma comunitaria donde ingenieros y diseñadores comparten modelos 3D, ensamblajes y recursos CAD.\@ Permite subir, buscar, previsualizar y descargar modelos en formatos comunes (p.\,ej.\ STEP/IGES, STL, SLDPRT), organizar colecciones y discutir mejoras en comentarios. Suele incluir descripciones, imágenes renderizadas y, en algunos casos, archivos auxiliares (planos o BOM).
+GrabCAD es una plataforma comunitaria donde profesionales y estudiantes comparten modelos 3D y ensamblajes CAD.\@ Permite publicar, buscar y descargar archivos en formatos habituales (STEP/IGES, STL, SLDPRT), así como previsualizar, documentar y comentar mejoras. En esta revisión se localizaron varios brazos robóticos con distintos esquemas de actuación, útiles para comparar arquitecturas mecánicas, distribución de masas, soluciones de juntas y estrategias de fabricación.
 
+\subsubsection{Robodacta}
+Robodacta es una empresa mexicana dedicada a kits de robótica educativa para distintos niveles.\@ Sus propuestas muestran un equilibrio práctico entre costo, montaje y funcionalidad, valioso como punto de referencia. Para los objetivos de este proyecto, sin embargo, su adopción directa presenta límites: la documentación y el software son principalmente propietarios, lo que reduce la posibilidad de adaptación y reutilización abierta, y la importación añade costos y tiempos que afectan la accesibilidad en el contexto local.
 
-\subsection{Inspiraciones}
-
-\begin{multicols}{2}
-% images
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/1actuadores.png}
-  \caption{Modelo con actuadores lineales~\cite{grabcad_robot_arm_6dof}.}\label{fig:insp.actuadores}
-\end{figure}
-
-Inspiración inicial tomada de GrabCAD para un modelo con actuadores actuadores lineales. Se observa como se posicionarían los actuadores dentro del modelo para lograr una mejor distribución de masa.
-
-\vspace{3em}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/2oruga.png}
-  \caption{Modelo hibrido/hidráulico~\cite{grabcad_robotic_arm_216}.}\label{fig:insp.oruga}
-\end{figure}
-
-Modelo mixto con servomotores y actuadores lineales encontrado en GrabCAD, primera consideración para el uso de eslabones y articulaciones. En este modelo se aprecia la restricción del movimiento de la acticulación final del manipulador.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/3orugaGarra.png}
-  \caption{Manipulador por garra y servomotor~\cite{grabcad_robotic_gripper_17}.}\label{fig:insp.orugaGarra}
-\end{figure}
-
-Modelo aparte del manipulador con el servomotor sg90 y la garra. A partir de este modelo se considera el uso de un servomotor más pequeño para aprovechar que el manipulador no requiere tanta fuerza de agarre y delegar los servomotores más potentes mg996r a realizar el movimiento de las articulaciones. 
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/4eslabones.png}
-  \caption{Sistema de eslabones~\cite{grabcad_sea_reach_robot_arm}.}\label{fig:insp.eslabones}
-\end{figure}
-
-Otra inspiración para implementar el uso de eslabones en el brazo robótico ya con el uso de servomotores mg996r (encontrado en GrabCAD)
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/5eslabones.png}
-  \caption{Sistema de eslabones con mayor libertad~\cite{youtube_robot_arm_link}.}\label{fig:insp.eslabones2}
-\end{figure}
-
-Una idea más general del posicionamiento de los eslabones porporcionado por el creador de contenido `thang010146' en YouTube. Este modeo cuenta con el grado de libertad faltante en modelos anteriores
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/6mdf.png}
-  \caption{Modelo en MDF~\cite{youtube_robot_arm_mdf}.}\label{fig:insp.mdf}
-\end{figure}
-
-Implemetación de un brazo robótico con especificaciones similares a las buscadas y haciendo uso de materiales como MDF y tornillos. Se descubre que el modelo pertenece a una empresa Mejicana llamada Robodacta, y que distribuyen este brazo como un kit de aprendizaje ensamblable.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/7plastico.png}
-  \caption{Modelo similar en plástico~\cite{mercadolibre_robot_arm}.}\label{fig:insp.plastico}
-\end{figure}
-
-Modelo muy similar al anterior, haciendo uso de materiales plásticos y tornillos, comercializado en Uruguay por Mercado Libre.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/8control.png}
-  \caption{Controlador espejo con potenciometros~\cite{youtube_robot_arm_control}}\label{fig:insp.control}
-\end{figure}
-Inspiración dedicada a la realización de un control `espejo' para comandar el brazo articulado, haciendo usod e potenciometros los cuales controlan el ángulo de cada articulación.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/9joystick.png}
-  \caption{Control por joystick~\cite{robodacta_mini_arm_joystick}}\label{fig:insp.joystick}
-\end{figure}
-
-Modelo original de Robodacta, el cual se encuentra publicado en su sitio web. Este cuenta con un control de joystick para comandar el brazo articulado.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/10impreso.png}
-  \caption{Modelo impreso con control espejo~\cite{youtube_robot_arm_mirror}}\label{fig:insp.impreso}
-\end{figure}
-
-Modelo impreso de código libre por el creador de contenido `Build Some Stuff' con un sistema de control espejo similar al mostrado anteriormente. Dispone de una serie de videos mostrando materiales, ensamblaje, software y uso del brazo articulado con su controlador. 
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.4\textwidth]{anexos/inspiraciones/11diseñoEslabones.png}
-  \caption{Diseño con eslabones y servomotores mg996r (Fuente: elaboración própia)}\label{fig:insp.eslabones.propio}
-\end{figure}
-
-Diseño própio descartado. Elaborado con servomotores mg996r y eslabones como prueba de concepto preliminar.
-\end{multicols}
 
 
 \subsection{Diseños considerados}
@@ -147,7 +54,7 @@ Cap. de carga      & 2 & 7  & 7  & 8 & 9  \\
 Velocidad            & 1 & 8  & 8  & 5 & 4  \\
 Precisión            & 1 & 8  & 7  & 6 & 5  \\
 \midrule
-\textbf{Total ponderado}       &    & 127 & 103 & 92 & 86 \\
+\textbf{Total ponderado}       &    & \textbf{127} & \textbf{103} & \textbf{92} & \textbf{86} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -179,7 +86,7 @@ Otra diferencia clave está en los materiales. El MG996R usa engranajes metálic
 \caption{Matriz de selección entre servos MG996R y SG90}
 \begin{tabular}{lccc}
 \toprule
-\textbf{Atributo} & \textbf{Peso} & \textbf{MG996R} & \textbf{SG90} \\
+\textbf{Atributo} & \textbf{Peso} & \textbf{Servo MG996R} & \textbf{Servo SG90} \\
 \midrule
 Fuerza (torque)        & 4 & 10 & 3 \\
 Tamaño (dimensiones)   & 2 & 6  & 9 \\
@@ -264,6 +171,47 @@ Confiabilidad global               & 2 & 8 & 7 & 5 & 8 \\
 \end{table}
 
 Con base en esa matriz (PC = 139, LED = 116, Genéricas = 102, Fuente de lab. = 117), se elige la fuente ATX de PC porque ofrece el mejor equilibrio entre margen de corriente para picos de servos, protecciones, escalabilidad y disponibilidad/costo para un kit educativo. Como guía de implementación: no usar la línea +5VSB, puentear PS\_ON a masa para encendido, distribuir 5 V con fusibles por rama, colocar capacitores de reserva cerca de los servos y realizar conexión de masa en estrella para reducir caídas y ruido.
+
+
+\subsubsection{Microcontrolador}
+
+Se consideraron tres controladores para el prototipo: Arduino UNO, Arduino NANO y ESP32. El Arduino UNO fue el más disponible en el taller y es el entorno con el que el equipo ya ha trabajado en otras asignaturas, lo que reduce tiempos de integración y riesgo de bloqueos. Su ecosistema es estable, la documentación y ejemplos son abundantes y la interfaz a 5 V simplifica el manejo de servomotores y periféricos típicos del proyecto (\cite{arduino_uno_rev3_docs}). 
+
+El Arduino NANO ofrece la misma plataforma ATmega328P en un formato más compacto. Mantiene la compatibilidad de librerías, el mapa de pines esencial y el mismo flujo de programación, con la ventaja de ocupar menos espacio en la base del brazo. A cambio, el conector y la disposición de pines pueden resultar menos cómodos en banco y, según versión, la disponibilidad en stock puede ser algo menor que la del UNO (\cite{arduino_nano_specs}).
+
+La ESP32 agrega mayor capacidad de cómputo y conectividad inalámbrica (Wi-Fi/BLE), pero requiere trabajar a 3.3 V lógicos, puede demandar adaptación de niveles para ciertos periféricos, y su curva de aprendizaje es más pronunciada para el equipo. Además, su disponibilidad local y costo por unidad resultan menos favorables en el contexto educativo planteado (\cite{espressif_esp32_series_ds}).
+
+La comparación cuantitativa de estos criterios se presenta en la matriz de selección (véase Tabla~\ref{tab:matriz_micro}).
+
+\begin{table}[H]
+\centering
+\caption{Matriz de selección de microcontrolador}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Atributo} & \textbf{Peso} & \textbf{UNO} & \textbf{NANO} & \textbf{ESP32} \\
+\midrule
+Disponibilidad en UTEC                     & 3 & 10 & 9  & 5  \\
+Integración con servos/5 V                 & 3 & 9  & 9  & 6  \\
+Ecosistema y soporte en curso              & 2 & 10 & 9  & 7  \\
+Costo                                      & 2 & 8  & 9  & 8  \\
+Tamaño                                     & 1 & 7  & 10 & 8  \\
+Rendimiento (CPU/RAM)                      & 1 & 6  & 6  & 10 \\
+Conectividad (UART extra/WiFi/BLE)         & 1 & 3  & 3  & 10 \\
+Consumo (menor = mejor)                    & 1 & 8  & 9  & 5  \\
+Robustez en banco (taller/educativo)       & 1 & 8  & 7  & 7  \\
+Expansión de E/S y temporizadores          & 1 & 8  & 7  & 9  \\
+\midrule
+\textbf{Total ponderado}                 &   & \textbf{133} & \textbf{132} & \textbf{112} \\
+\bottomrule
+\label{tab:matriz_micro}
+\end{tabular}
+\end{table}
+
+
+Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO. Es la opción más apropiada por disponibilidad, familiaridad, integración directa a 5 V, ecosistema y costo. El NANO queda como alternativa equivalente cuando el espacio sea crítico sin cambiar el entorno de trabajo. La ESP32 se considera para una revisión futura en la que la conectividad inalámbrica y el mayor rendimiento sean requisitos explícitos.
+
+
+
 
 
 \subsubsection{Ecuaciones y parámetros relevantes}
