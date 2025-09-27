@@ -15,7 +15,6 @@ La alimentación del sistema se resolverá con una fuente capaz de abastecer tan
 
 Finalmente, en el componente de documentación y docencia, se elaborará un manual de armado, una guía docente y un conjunto mínimo de cinco prácticas de laboratorio orientadas a la enseñanza y experimentación con el brazo robótico.
 
-
 \subsection{Criterios de aceptación}
 El dispositivo debe ser capaz de ejecutar trayectorias punto a punto tanto en modo manual como en modo automático. Asimismo, deberá alcanzar una tasa de éxito superior al 90 \% en las tareas de agarre y manipulación de objetos, garantizando un desempeño confiable durante su operación.
 
@@ -23,14 +22,7 @@ De igual forma, contará con una rutina de referencia operativa que asegure la c
 
 Finalmente, el proyecto se entregará con un prototipo completamente ensamblado, acompañado del firmware correspondiente, la interfaz gráfica de usuario, un manual de usuario detallado y una guía docente que incluya cinco prácticas evaluables para su aplicación en el ámbito académico.
 
-\subsection{Diagrama de Gantt}
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{anexos/Gantt.png}
-  \caption{Diagrama de Gantt. Fuente: elaboración própia}\label{fig:diagrama_gantt}
-\end{figure}
-
-\subsubsection{Segmentación de proyecto}
+\subsection{Segmentación de proyecto}
 \begin{enumerate}
   \item \textbf{Métodos de fabricación:} Definir el flujo de fabricación y los materiales del prototipo. Priorizar MDF cortado a láser para iteraciones rápidas y precisión 2D, y emplear PLA impreso en 3D en interfaces sometidas a fricción o geometrías no realizables a láser. Diseñar y fabricar galgas para validar tolerancias y encastres MDF–MDF, PLA–PLA y mixtos. Documentar parámetros de corte e impresión y criterios de aceptación dimensional.
   
@@ -44,57 +36,154 @@ Finalmente, el proyecto se entregará con un prototipo completamente ensamblado,
  
 \end{enumerate}
 
-
-
-
-
-\begin{comment}
-\subsection{Materiales}
-\begin{itemize}
-  \item \textbf{Estructura mecánica:} \begin{itemize}
-    \item MDF de 3.2 a 10 mm (cortado por láser).
-    \item Tornillería estándar (M3, tuercas, tornillos, y arandelas).
-    \item PLA (Impresión 3D)
-  \end{itemize}
-
-  \item \textbf{Actuadores:}
-  \begin{itemize}
-    \item 4 × Servomotores MG996R de 180° (uno por articulación).
-    \item Servomotor sg90 de 180° (garra)
-    \item Bobinado de alambre de cobre con cobertura para bobina.
-    \item Núcleo de bobina.
-  \end{itemize}
-
-  \item \textbf{Electrónica de control:}
-  \begin{itemize}
-    \item Plataforma de desarrollo Arduino UNO
-    \item Driver MOSFET para el electroimán.
-    \item Finales de carrera (para homing).
-    \item LEDs indicadores y buzzer de estado.
-    \item 4 x potenciometros
-    \item Fusible de protección 
-  \end{itemize}
-
-  \item \textbf{Fuente de alimentación:}
-  \begin{itemize}
-    \item Fuente de alimentación 5v 5A.
-  \end{itemize}
-\end{itemize}
-\subsection{Software de control}
-
+\subsubsection{Diagrama de Gantt}
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.8\textwidth]{anexos/software/ventanaApp.png}
-  \caption{Captura de pantalla de aplicación (Fuente: elaboración própia)}\label{fig:captura.ventanaApp}
+  \includegraphics[width=\textwidth]{anexos/Gantt.png}
+  \caption{Diagrama de Gantt. Fuente: elaboración própia}\label{fig:diagrama_gantt}
 \end{figure}
 
-Con el fin de complementar el diseño y la construcción del brazo robótico, se desarrolló una aplicación en Python que permite controlar el sistema de manera sencilla e intuitiva. El objetivo principal de esta aplicación es poder manejar el brazo desde la PC, ya sea mediante una conexión por cable o USB o por medio de un módulo bluetooth.
 
-Dentro de las funciones más importantes de la aplicación se destaca la posibilidad de utilizar mini brazo como mando. Este dispositivo cuenta con potenciometros en sus articulaciones, lo que permite manipular los parametros de la aplicación en tiempo real. De esta manera, al mover el mini brazo se reflejan los cambios directamente en el brazo real, logrando un control simultáneo y fácil de comprender.
 
-Otra de las características relevantes de la aplicación es el manejo de movimientos preguardados. El usuario puede realizar una secuencia de acciones paso a paso, ir guardando las posiciónes intermedias, y posteriormente reproducir ese movimientos de forma automática mediante la opción de `ejecutar movimientos'. Además, la aplicación permite guardar estas secuencias en un archivo `.json', y cargarlo nuevamente cuando sea necesario, lo cual facilita repetir rutinas sin necesidad de programar el brazo cada vez.
+\subsection{Materiales}
 
-En cuanto a la interfaz, la aplicación se organizó de manera clara en 3 columnas principales. En el panel de la izquierda se encuentran las opciones de conexión con los brazos, la selección de puertos de comunicación y la configuración de la velocidad de transmisión de datos. El panel central muestra la representación del brazo junto con controles básicos de operación, y finalmente, en el panel de la derecha se ubican los sliders para ajustar manualmente cada articulación, además del control del electroimán. Esta distribución busca que el usuario pueda identificar fácilmente las funciones disponibles y operar el brazo de manera cómoda.
+\begin{itemize}
+  \item Estructura mecánica
+  \begin{itemize}
+    \item MDF de 3.0–3.2\,mm, corte láser (placas para base, eslabones y soportes).
+    \item Piezas de interfaz impresas en 3D (PLA) para articulaciones, casquillos/espaciadores y topes.
+    \item Tornillería M3: tornillos (varias longitudes), tuercas, arandelas planas y de presión.
+    \item Adhesivos y acabado: cianoacrilato/epoxi según unión, sellador para MDF, lubricante seco para contactos PLA–PLA.
+    \item Bridas y organizadores de cableado (guías/ojales) para alivio de tensión.
+  \end{itemize}
 
-En resumen, la aplicación representa un avance importante dentro del proyecto, ya que no solo permite el control directo del brazo en tiempo real, sino que también posibilita la incorporación de un modelo físico de referencia (minibrazo) y la ejecución de secuencias guardadas, otorgando flexibilidad y versatilidad al sistema.
-\end{comment}
+  \item Actuadores
+  \begin{itemize}
+    \item 4\,$\times$ servomotores MG996R de 180° (una unidad por articulación principal).
+    \item 1\,$\times$ servomotor SG90 de 180° (garra).
+    \item Electroimán: bobina de alambre de cobre esmaltado (calibre acorde al diseño), núcleo de acero dulce y carcasa.
+  \end{itemize}
+
+  \item Electrónica de control
+  \begin{itemize}
+    \item Plataforma de desarrollo Arduino UNO Rev3.
+    \item Driver para electroimán: MOSFET canal N, resistencia de compuerta (100\,$\Omega$), resistor \emph{pull-down} (100\,k$\Omega$) y diodo de rueda libre (p.\,ej.\ 1N540x o Schottky) en la bobina.
+    \item Indicadores: LEDs con sus resistencias limitadoras (220–330\,$\Omega$) y buzzer 5\,V.
+    \item 4\,$\times$ potenciómetros lineales 10\,k$\Omega$ para el controlador espejo (con perillas y cables).
+    \item Distribución de potencia: borneras atornillables o conectores eléctricos, portafusibles y fusibles por rama de servos (3–5\,A típicos), condensadores electrolíticos de desacople (1000–2200\,\textmu F cerca de grupos de servos) y cerámicos locales.
+    \item Cableado de potencia y señal (sección acorde: p.\,ej.\ AWG18–20 para 5\,V de servos), funda termorretráctil e interruptor general.
+    \item Protoboard o placa perforada para interconexión y fijación de componentes.
+  \end{itemize}
+
+  \item Fuente de alimentación
+  \begin{itemize}
+    \item Fuente ATX de PC (uso del riel +5\,V). Adaptador/breakout a bornes, puenteo \texttt{PS\_ON} a GND para encendido y masa en estrella. 
+    \item Carga mínima/dummy load si fuera necesaria según el modelo, y protección por fusibles en las salidas hacia servos y lógica.
+    \item (Opcional para pruebas) fuente conmutada 5\,V–10\,A tipo “LED”.
+  \end{itemize}
+
+\end{itemize}
+
+\subsection{Tolerancias de fabricación}
+
+
+\begin{table}[H]
+\centering
+\caption{Galgas AR en PLA (agujero redondo, \si{mm})}
+\label{tab:ar_pla}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real  & 9.0  & 9.1  & 9.2  & 9.3  & 9.4  & 9.5  & 9.6   & 9.7   & 9.8   & 9.9   & 10.0   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 2) AC – PLA (agujero cuadrado, PLA) ====
+\begin{table}[H]
+\centering
+\caption{Galgas AC en PLA (agujero cuadrado, \si{mm})}
+\label{tab:ac_pla}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.4  & 9.5  & 9.6  & 9.7  & 9.8  & 9.9   & 10.0   & 10.1   & 10.2   & 10.3   & 10.4   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 3) PR – PLA (perno redondo, PLA) ====
+\begin{table}[H]
+\centering
+\caption{Galgas PR en PLA (perno redondo, \si{mm})}
+\label{tab:pr_pla}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.3  & 9.4  & 9.5  & 9.6  & 9.7  & 9.8   & 9.9   & 10.0   & 10.1   & 10.2   & 10.3   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 4) PC – PLA (perno cuadrado, PLA) ====
+\begin{table}[H]
+\centering
+\caption{Galgas PC en PLA (perno cuadrado, \si{mm})}
+\label{tab:pc_pla}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.7  & 9.8  & 9.9  & 10.0  & 10.1  & 10.2   & 10.3   & 10.4   & 10.5   & 10.6   & 10.7   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 5) AR – MDF (agujero redondo, MDF) ====
+\begin{table}[H]
+\centering
+\caption{Galgas AR en MDF (agujero redondo, \si{mm})}
+\label{tab:ar_mdf}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==== 6) AC – MDF (agujero cuadrado, MDF) ====
+\begin{table}[H]
+\centering
+\caption{Galgas AC en MDF (agujero cuadrado, \si{mm})}
+\label{tab:ac_mdf}
+\begin{tabular}{l*{11}{S[table-format=2.2]}}
+\toprule
+{Med.} & {9.5} & {9.6} & {9.7} & {9.8} & {9.9} & {10.0} & {10.1} & {10.2} & {10.3} & {10.4} & {10.5} \\
+\midrule
+Dis. & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+Real     & 9.5 & 9.6 & 9.7 & 9.8 & 9.9 & 10.0 & 10.1 & 10.2 & 10.3 & 10.4 & 10.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Basádo en pruebas de encaje utilizando las galgas fabricadas, los ajustes para impresión son:
+\begin{itemize}
+  \item \textbf{Ajuste apretado:} 0.15mm a 0.20mm
+  \item \textbf{Ajuste deslizante:} 0.25mm a 0.30mm
+  \item \textbf{Ajuste flojo:} 0.30mm en adelante
+\end{itemize}
+
+Para imprimir superficies con interferencia entre sí, se debe considerar la presencia de la costura de impresión. Al momento de diseñar se debe incluir un receso en superficies redondas para permitir que la costura no sobresalga al momento de la impresión, y perjudicar la interferencia deseada.
+
+El corte láser brinda una precisión prácticamente exacta en la capa superficial donde se encuentra el punto focal del láser. Se debe considerar que mientras el láser atraviesa el material, y la superficie de contacto con el láser se va alejando del punto de foco, se produce una apertura de aproximadamente 1.8 grados. Lo que se traduce en que si se diseña un agujero de 10mm, en la cara trasera habrán 10.2mm. 
+
