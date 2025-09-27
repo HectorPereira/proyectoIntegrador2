@@ -84,7 +84,17 @@ Finalmente, el proyecto se entregará con un prototipo completamente ensamblado,
 
 \end{itemize}
 
-\subsection{Tolerancias de fabricación}
+\subsection{Métodos de fabricación}
+\subsubsection{Tolerancias de fabricación}\label{Tolerancias}
+
+Se fabrican galgas con impresión 3D y corte láser para identificar tolerancias y ajustes durante el proceso de diseño y fabricación. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[height=\textwidth, angle=90]{anexos/Pruebas/Galgas.jpg}
+  \caption{Galgas para medición de tolerancias. Fuente: elaboración própia}\label{fig:galgas}
+\end{figure}
+
 
 
 \begin{table}[H]
@@ -186,4 +196,66 @@ Basádo en pruebas de encaje utilizando las galgas fabricadas, los ajustes para 
 Para imprimir superficies con interferencia entre sí, se debe considerar la presencia de la costura de impresión. Al momento de diseñar se debe incluir un receso en superficies redondas para permitir que la costura no sobresalga al momento de la impresión, y perjudicar la interferencia deseada.
 
 El corte láser brinda una precisión prácticamente exacta en la capa superficial donde se encuentra el punto focal del láser. Se debe considerar que mientras el láser atraviesa el material, y la superficie de contacto con el láser se va alejando del punto de foco, se produce una apertura de aproximadamente 1.8 grados. Lo que se traduce en que si se diseña un agujero de 10mm, en la cara trasera habrán 10.2mm. 
+
+\subsection{Diseño y fabricación}
+\subsubsection{Articulaciónes desmontables}
+
+Con base en los lineamientos de tolerancias del apartado~\ref{Tolerancias}, se diseñó y fabricó una articulación desmontable para el brazo robótico. El objetivo fue verificar encastres, juego angular y comportamiento frente a rozamiento en las superficies de contacto.
+
+Inicialmente se construyó con descartes de MDF cortados a láser y herrajes M3. La pieza se sometió a esfuerzos de fricción, corte y rotación para observar desgaste, holguras y deformaciones. El prototipo permitió validar el principio mecánico, pero evidenció pérdida de tolerancia en contactos MDF–MDF bajo uso repetido. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Articulacion/V2.png}
+  \caption{Sistema de articulación desmontable. Fuente: elaboración própia}\label{fig:articulacionV2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Articulacion/Perno V2.png}
+  \caption{Corte transversal perno --- versión original. Fuente: elaboración própia}\label{fig:corte_pernoV2}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Pruebas/Prueba articulacion.jpg}
+  \caption{Prueba de articulación con descartes de MDF. Fuente: elaboración própia}\label{fig:Prueba_articulacion}
+\end{figure}
+
+
+Posteriormente se reemplazaron las superficies de contacto por insertos impresos en PLA, configurando una interfaz PLA–PLA en las zonas con rozamiento. Se ajustaron tolerancias según las galgas obtenidas, reduciendo el juego en el conjunto ensamblado y mejorando la repetibilidad. Se documentaron espesores, holguras objetivo y par de apriete de tornillería para su reproducción. Véase figura \ref{fig:corte_pernoV3}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Articulacion/Perno V3.png}
+  \caption{Corte transversal perno --- versión mejorada. Fuente: elaboración própia}\label{fig:corte_pernoV3}
+\end{figure}
+
+Se identifican con verde las superficie de contacto que friccionan contra el perno azúl, las cualés tienen un ajuste deslizante con el perno. En amarillo se muestra la pieza que actúa como tope para el seguro del perno. En el modelo anterior se utilizaba una sola pieza que hacía esta función, pero al utilizar este tope (con un ajuste apretado) permite regular la fuerza de ajuste y juego de la articulación. Luego el seguro que se encuentra entre el tope y el perno, permite montar y desmontar la articulación de manera sencilla.
+
+\subsubsection{Electroimán}
+Para realizar la carcasa del electroimán se realiza uso de un torno manual. Hasta tener las medidas concretadas, se dejan un excedente en espesor y longitud para realizar pruebas durante el proceso de prototipado. Cuando se obtengan el resto de valores se dará lugar a una finalización de esta pieza por motivos de reducción de peso.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Torno/Plano.jpg}
+  \caption{Plano de pieza a fabricar. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Torno/Maquinado.jpg}
+  \caption{Maquinado de pieza en torno manual. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Torno/Pieza final.jpg}
+  \caption{Resultado obtenido. Fuente: elaboración própia}
+\end{figure}
+
+\subsubsection{Controlador espejo}
+
+
+\subsection{Código}
 
