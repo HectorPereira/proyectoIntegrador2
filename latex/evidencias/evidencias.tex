@@ -5,13 +5,14 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{csquotes}
+\usepackage{multicol}
 \usepackage{siunitx}
 \sisetup{round-mode=places,round-precision=2,detect-all}
 
 % Formato y utilidades
 \usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage{graphicx}
-\graphicspath{{anexos/}{figuras/}{imagenes/}{img/}}
+\graphicspath{{../anexos/}{figuras/}{imagenes/}{img/}}
 \usepackage{float}      % [H]
 \usepackage{hyperref}
 \usepackage{booktabs}
@@ -49,9 +50,15 @@
 \newpage
 
 \section{Resumen}
-% Breve descripción del objetivo y alcance. Qué contiene este documento.
+Se aplicaron matrices de selección para decidir: mecanismo de actuación (se favorecieron servomotores frente a actuadores lineales e hidráulicos), y, entre servos, la comparación MG996R vs SG90; además, materialidad (MDF, PLA o híbrido), fuente de poder y microcontrolador (UNO/NANO/ESP32).
 
 \section{Metodología y cronograma}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../anexos/Gantt.png}
+  \caption{Diagrama de Gantt. Fuente: elaboración própia}
+\end{figure}
 
 
 
@@ -332,6 +339,16 @@ Se diseña y realiza el proceso de maquinado manual para la carcasa del electroi
 
 La pieza se deja intecionalmente a sobremedida a fin de luego de continuar con el proceso de prototipado volver a maquinar el material para llevarlo hasta las medidas adecuadas.
 
+\subsubsection{Controlador espejo}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../anexos/Controlador Espejo/Notas controlador.jpg}
+  \caption{Proceso de diseño de controlador espejo. Fuente: elaboración própia}
+\end{figure}
+
+
+
 \section{Electrónica y programación}
 
 \begin{figure}[H]
@@ -340,14 +357,106 @@ La pieza se deja intecionalmente a sobremedida a fin de luego de continuar con e
   \caption{Pruebas de integración entre código y componentes. Fuente: elaboración própia}
 \end{figure}
 
+\newpage
 
 
 
-\section{Conclusiones}
-% Hallazgos clave y posibles mejoras.
 
 \appendix
 \section{Inspiraciones y referencias de mercado}
+
+\begin{multicols}{2}
+% images
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/1actuadores.png}
+  \caption{Modelo con actuadores lineales.}\label{fig:insp.actuadores}
+\end{figure}
+
+Inspiración inicial tomada de GrabCAD para un modelo con actuadores actuadores lineales. Se observa como se posicionarían los actuadores dentro del modelo para lograr una mejor distribución de masa.
+
+\vspace{3em}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/2oruga.png}
+  \caption{Modelo hibrido/hidráulico.}\label{fig:insp.oruga}
+\end{figure}
+
+Modelo mixto con servomotores y actuadores lineales encontrado en GrabCAD, primera consideración para el uso de eslabones y articulaciones. En este modelo se aprecia la restricción del movimiento de la acticulación final del manipulador.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/3orugaGarra.png}
+  \caption{Manipulador por garra y servomotor.}\label{fig:insp.orugaGarra}
+\end{figure}
+
+Modelo aparte del manipulador con el servomotor sg90 y la garra. A partir de este modelo se considera el uso de un servomotor más pequeño para aprovechar que el manipulador no requiere tanta fuerza de agarre y delegar los servomotores más potentes mg996r a realizar el movimiento de las articulaciones. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/4eslabones.png}
+  \caption{Sistema de eslabones.}\label{fig:insp.eslabones}
+\end{figure}
+
+Otra inspiración para implementar el uso de eslabones en el brazo robótico ya con el uso de servomotores mg996r (encontrado en GrabCAD)
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/5eslabones.png}
+  \caption{Sistema de eslabones con mayor libertad.}\label{fig:insp.eslabones2}
+\end{figure}
+
+Una idea más general del posicionamiento de los eslabones porporcionado por el creador de contenido `thang010146' en YouTube. Este modeo cuenta con el grado de libertad faltante en modelos anteriores
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/6mdf.png}
+  \caption{Modelo en MDF.}\label{fig:insp.mdf}
+\end{figure}
+
+Implemetación de un brazo robótico con especificaciones similares a las buscadas y haciendo uso de materiales como MDF y tornillos. Se descubre que el modelo pertenece a una empresa Mejicana llamada Robodacta, y que distribuyen este brazo como un kit de aprendizaje ensamblable.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/7plastico.png}
+  \caption{Modelo similar en plástico.}\label{fig:insp.plastico}
+\end{figure}
+
+Modelo muy similar al anterior, haciendo uso de materiales plásticos y tornillos, comercializado en Uruguay por Mercado Libre.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/8control.png}
+  \caption{Controlador espejo con potenciometros}\label{fig:insp.control}
+\end{figure}
+Inspiración dedicada a la realización de un control `espejo' para comandar el brazo articulado, haciendo usod e potenciometros los cuales controlan el ángulo de cada articulación.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/9joystick.png}
+  \caption{Control por joystick}\label{fig:insp.joystick}
+\end{figure}
+
+Modelo original de Robodacta, el cual se encuentra publicado en su sitio web. Este cuenta con un control de joystick para comandar el brazo articulado.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/10impreso.png}
+  \caption{Modelo impreso con control espejo}\label{fig:insp.impreso}
+\end{figure}
+
+Modelo impreso de código libre por el creador de contenido `Build Some Stuff' con un sistema de control espejo similar al mostrado anteriormente. Dispone de una serie de videos mostrando materiales, ensamblaje, software y uso del brazo articulado con su controlador. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\textwidth]{../anexos/inspiraciones/11diseñoEslabones.png}
+  \caption{Diseño con eslabones y servomotores mg996r (Fuente: elaboración própia)}\label{fig:insp.eslabones.propio}
+\end{figure}
+
+Diseño própio descartado. Elaborado con servomotores mg996r y eslabones como prueba de concepto preliminar.
+\end{multicols}
 
 
 
