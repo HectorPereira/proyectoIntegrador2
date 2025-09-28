@@ -77,6 +77,13 @@ Los lineamientos de diseño se centran en garantizar un montaje sencillo y confi
 
 Al comparar el MG996R con el SG90 (\cite{oracid_mg996r_test} y \cite{MrProject_sg90_test}) se nota enseguida que están pensados para usos muy diferentes. El MG996R es mucho más fuerte: puede llegar a un par de hasta 10 kgf·cm, mientras que el SG90 apenas alcanza 0.7 kgf·cm. Esa diferencia hace que el primero sea ideal para mover piezas más pesadas o para darle solidez a un brazo robótico, mientras que el segundo queda limitado a proyectos pequeños y livianos.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{anexos/Servomotores/servos.jpg}
+  \caption{Comparación de tamaños entre servomotores SG90, MG90S y MG996R. Fuente: elaboración própia}\label{fig:zaitronics_servos_image}
+\end{figure}
+
+
 En tamaño y peso también se distinguen bastante. El SG90 es muy compacto, con solo 9 gramos, frente a los 55 gramos del MG996R. Esa ligereza lo vuelve práctico cuando no hay mucho espacio o cuando se busca mantener la estructura lo más liviana posible, aunque lógicamente no tiene la misma capacidad de carga. En cuanto a velocidad, el SG90 responde un poco más rápido (0.1 s/60° frente a 0.17 s/60° a 4.8 V en el MG996R), pero esta diferencia no suele ser decisiva si lo que se necesita es fuerza y confiabilidad más que rapidez.
 
 Otra diferencia clave está en los materiales. El MG996R usa engranajes metálicos y un sistema de doble rodamiento de bolas, lo que le da más precisión y resistencia al desgaste. En cambio, el SG90 usa engranajes plásticos, que son más frágiles y tienden a deteriorarse con el uso. Eso sí, esta robustez del MG996R viene con un costo: su consumo de corriente es bastante más alto (puede llegar a 2.5 A en stall), mientras que el SG90 consume mucho menos y puede funcionar sin problemas con fuentes pequeñas.
@@ -102,7 +109,7 @@ Corriente (menor=mejor) & 2 & 4  & 8 \\
 \end{tabular}
 \end{table}
 
-Basado en el resultado de la matriz de selección, el MG996R es la mejor opción cuando se busca un servo confiable, fuerte y duradero para un brazo robótico educativo que tenga que manipular piezas con cierta carga. El SG90, en cambio, es más adecuado para proyectos sencillos o demostrativos, donde lo que importa es que sea barato, liviano y fácil de integrar. (\cite{TowerProMG996R})
+Basado en el resultado de la matriz de selección, el MG996R es la mejor opción cuando se busca un servo confiable, fuerte y duradero para un brazo robótico educativo que tenga que manipular piezas con cierta carga. El SG90, en cambio, es más adecuado para pruebas preliminares, proyectos sencillos o demostrativos, donde lo que importa es que sea barato, liviano y fácil de integrar. (\cite{TowerProMG996R})
 
 \subsubsection{Estructura}
 
@@ -210,14 +217,12 @@ Expansión de E/S y temporizadores          & 1 & 8  & 7  & 9  \\
 
 Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO. Es la opción más apropiada por disponibilidad, familiaridad, integración directa a 5 V, ecosistema y costo. El NANO queda como alternativa equivalente cuando el espacio sea crítico sin cambiar el entorno de trabajo. La ESP32 se considera para una revisión futura en la que la conectividad inalámbrica y el mayor rendimiento sean requisitos explícitos.
 
-
-
-
-
 \subsubsection{Ecuaciones y parámetros relevantes}
+
+
 \paragraph{Par y torque}
 \begin{equation}
-  \bm{\tau}  = \bm{F} \cdot \bm{r}
+  \boldsymbol{\tau} = \boldsymbol{r} \times \boldsymbol{F} \,.\,
 \end{equation}
 
 \begin{itemize}
@@ -226,9 +231,12 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
   \item $\bm{r} \rightarrow$ distancia del eje al punto de aplicación de la fuerza  (cm o m)
 \end{itemize}
 
+\cite{libretexts_torque_2023}
+
+
 \paragraph{Potencia eléctrica del servo}
 \begin{equation}
-  P_{{servo}} = V \cdot I
+  P_{\mathrm{servo}} = V\,I \,.\,
 \end{equation}
 
 \begin{itemize}
@@ -237,9 +245,11 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
   \item $I \rightarrow$ corriente consumida por el servo (A)
 \end{itemize}
 
+\cite{openstax_power_2020}
+
 \paragraph{Consumo total del sistema}
 \begin{equation}
-  I_{{total}} = \sum I_{{servos}} + I_{{electroiman}} + I_{{microcontrolador}}
+  I_{\mathrm{total}} = \sum I_{\mathrm{servos}} + I_{\mathrm{electroiman}} + I_{\mathrm{microcontrolador}} + I_{\mathrm{indicadores}} \,.\,
 \end{equation}
 
 \begin{itemize}
@@ -247,11 +257,14 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
   \item $I_{{servos}} \rightarrow$ corriente de cada servo (A)
   \item $I_{{electroiman}} \rightarrow$ corriente del electroimán (A)
   \item $I_{{microcontrolador}} \rightarrow$ corriente del microcontrolador (A)
+  \item $I_{{indicadores}} \rightarrow$ corriente consumida por com componentes indicadores(A)
 \end{itemize}
+
+\cite{openstax_kcl_2022}
 
 \paragraph{Control por PWM}
 \begin{equation}
-  \theta = \frac{t_{{high}} - t_{{\min}}}{t_{{\max}} - t_{{\min}}} \cdot (\theta_{{\max}} - \theta_{{\min}}) + \theta_{{\min}}
+  \theta = \frac{t_{\mathrm{high}}-t_{\min}}{\,t_{\max}-t_{\min}\,}\,(\theta_{\max}-\theta_{\min}) + \theta_{\min} \,.\,
 \end{equation}
 
 \begin{itemize}
@@ -261,9 +274,12 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
   \item $\theta_{{\min}}, \theta_{{\max}} \rightarrow$ ángulos extremos del servo (°)
 \end{itemize}
 
+\cite{wiki_lerp_2025,servocity_servofaq}
+
+
 \paragraph{Momento de inercia de las piezas rotantes}
 \begin{equation}
-  I = \sum m_i \cdot r_i^2
+  I = \sum_i m_i\,r_i^{2} \,.\,
 \end{equation}
 
 \begin{itemize}
@@ -272,9 +288,13 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
   \item $r_i \rightarrow$ distancia al eje de rotación (cm o m)
 \end{itemize}
 
+\cite{openstax_inertia_2016}
+
 \paragraph{Fuerza del electroimán}
 \begin{equation}
-  F_{{em}} = \frac{{(\mu \cdot N \cdot I)}^2 \cdot A}{2 \cdot g^2}
+  F_{\mathrm{em}} \approx \frac{B^{2}A}{2\mu_{0}} \;\;\text{con}\;\; B \simeq \mu_{0}\,\frac{N I}{g}
+  \;\Rightarrow\;
+  F_{\mathrm{em}} \approx \frac{(\mu_{0} N I)^{2} A}{2\,g^{2}} \,.\,
 \end{equation}
 
 \begin{itemize}
@@ -286,8 +306,48 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
   \item $g \rightarrow$ distancia entre el núcleo y la pieza ferromagnética (m)
 \end{itemize}
 
+\cite{wiki_magnetic_pressure_2025}
+
+\paragraph{Resistencia de un conductor de cobre}
+\begin{equation}
+  R = \rho\,\frac{\ell}{A} \,.\,
+\end{equation}
+
+\begin{itemize}
+  \item $R \rightarrow$ resistencia eléctrica del segmento ($\Omega$)
+  \item $\rho \rightarrow$ resistividad del material ($\Omega\!\cdot\!\mathrm{m}$); para cobre a $20\,^{\circ}\mathrm{C}$, $\rho \approx 1.68\times 10^{-8}\ \Omega\!\cdot\!\mathrm{m}$
+  \item $\ell \rightarrow$ longitud del conductor (m)
+  \item $A \rightarrow$ área de la sección transversal (m$^{2}$); para alambre circular, $A=\pi\!\left(\frac{d}{2}\right)^{2}$
+  \item $d \rightarrow$ diámetro del alambre (m) \emph{(si se usa la expresión de $A$)}
+\end{itemize}
+
+\cite{libretexts_resistivity_2025}
+
+\paragraph{Corrección por temperatura}
+\begin{equation}
+  R(T) = R_{0}\,\bigl[\,1+\alpha\,(T-T_{0})\,\bigr] \,.\,
+\end{equation}
+
+\begin{itemize}
+  \item $R(T) \rightarrow$ resistencia a la temperatura $T$ ($\Omega$)
+  \item $R_{0} \rightarrow$ resistencia a la temperatura de referencia $T_{0}$ ($\Omega$), típicamente $20\,^{\circ}\mathrm{C}$
+  \item $\alpha \rightarrow$ coeficiente de temperatura del cobre ($^{\circ}\mathrm{C}^{-1}$), $\alpha \approx 3.9\times 10^{-3}$
+  \item $T \rightarrow$ temperatura de operación ($^{\circ}\mathrm{C}$)
+  \item $T_{0} \rightarrow$ temperatura de referencia ($^{\circ}\mathrm{C}$)
+\end{itemize}
+
+\cite{hyperphysics_tcr_cu}
 
 \subsubsection{Aspectos electrónicos}
-El sistema electrónico del brazo robótico se centra en garantizar control preciso, seguridad y facilidad de mantenimiento. El Arduino Uno, basado en el microcontrolador ATmega328P, actúa como controlador principal, ejecutando el firmware y generando señales PWM para los servomotores, además de leer entradas provenientes de potenciómetros y pulsadores. Cada servomotor MG996R cuenta con un fusible individual que protege al dispositivo frente a sobrecorrientes, asegurando su integridad durante la operación. 
 
-El electroimán se controla mediante un MOSFET (IRFZ44N o equivalente), lo que permite conmutar la corriente de manera eficiente y confiable. La alimentación general del sistema se provee mediante fuentes de 5 a 6 V, capaces de abastecer tanto la lógica del microcontrolador como la potencia requerida por los servos y el electroimán. Los potenciómetros y pulsadores permiten la operación manual y la calibración de las articulaciones, mientras que las resistencias cumplen funciones de limitación de corriente, protección de entradas analógicas y LEDs indicativos de estado.
+El sistema electrónico se concibe para ofrecer control preciso, seguridad y facilidad de mantenimiento. El \emph{Arduino Uno} (ATmega328P) actúa como controlador principal: genera las señales PWM para los servomotores, adquiere las entradas de potenciómetros y pulsadores, y coordina los estados de operación y seguridad. Cada servo MG996R incorpora un fusible en su línea de alimentación para limitar daños ante sobrecorrientes. La distribución de masas separa los retornos de potencia (servos y electroimán) del retorno de lógica, reuniéndose en un punto estrella cercano a la fuente con el objetivo de minimizar caídas y ruido eléctrico.
+
+El electroimán se conmuta con un MOSFET N–canal en configuración de low–side switch (fuente común). Se emplea un IRFZ44N en encapsulado TO–220, cuyas magnitudes relevantes (tensión \newline \mbox{$V_{\mathrm{DS,max}}=55~\mathrm{V}$}, corriente continua admisible del orden de decenas de amperios a $25\,^{\circ}\mathrm{C}$ y resistencia de conducción especificada como \mbox{$R_{\mathrm{DS(on)}}\leq 22~\mathrm{m}\Omega$ a $V_{\mathrm{GS}}=10~\mathrm{V}$}) resultan holgadas para el uso previsto. Dado que la hoja de datos garantiza la baja $R_{\mathrm{DS(on)}}$ a \mbox{$V_{\mathrm{GS}}=10~\mathrm{V}$} y no a \mbox{$5~\mathrm{V}$}, el dispositivo no es estrictamente de compuerta lógica; sin embargo, a las corrientes que demanda nuestro electroimán su desempeño es adecuado, y se deja constancia de que una evolución razonable es sustituirlo por un modelo \emph{logic–level} (p.\,ej., IRLZ44N) para reducir pérdidas y elevar el margen térmico.
+
+La bobina del electroimán está realizada con $20~\mathrm{m}$ de alambre de cobre esmaltado de diámetro \mbox{$d=0{,}5~\mathrm{mm}$}. Su resistencia en frío se estima con
+\[
+R=\rho\,\frac{\ell}{A},\qquad \rho_{\mathrm{Cu}}\approx 1{,}68\times 10^{-8}\ \Omega\!\cdot\!\mathrm{m},\quad A=\pi\!\left(\frac{d}{2}\right)^{2},
+\]
+lo que arroja aproximadamente \mbox{$R\approx 1{,}68~\Omega$}. Alimentada a \mbox{$5~\mathrm{V}$}, la corriente esperada es \newline \mbox{$I_{\mathrm{bob}}\approx 5/1{,}68\simeq 3{,}0~\mathrm{A}$} y la disipación en la bobina \mbox{$P_{\mathrm{bob}}\approx I_{\mathrm{bob}}^{2}R\simeq 15~\mathrm{W}$}. Estas magnitudes aconsejan operación intermitente (control de \emph{duty–cycle}) o gestión térmica adicional para mantener temperaturas seguras en uso continuado.
+
+La interfaz de control se completa con una resistencia en serie en la compuerta del MOSFET (\mbox{$R_{g}\approx 100~\Omega$}) para limitar el régimen de carga de la compuerta y un \emph{pull–down} (\mbox{$R_{\mathrm{pd}}\approx 100~\mathrm{k}\Omega$}) que asegura el apagado en reposo. En paralelo con la bobina se dispone un diodo de rueda libre (\emph{flyback}) rápido o Schottky, dimensionado para la corriente de la bobina y con tensión inversa acorde, a fin de suprimir sobretensiones al corte. En la alimentación de $5~\mathrm{V}$ se ubican condensadores de \emph{bulk} cerca de las cargas (típicamente del orden de $470$–$1000~\mu\mathrm{F}$) y desacoples locales de $100~\mathrm{nF}$, con la finalidad de amortiguar picos debidos a los servomotores y al propio electroimán. Finalmente, el firmware incorpora medidas de protección como límites por \emph{software} en el tiempo de activación del electroimán, vigilancia por \emph{watchdog} y paro de emergencia, coherentes con la filosofía de diseño seguro del conjunto.
