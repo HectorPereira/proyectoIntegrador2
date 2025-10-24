@@ -2,156 +2,220 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#include <stdbool.h>
 
-/* ==== Pines ==== */
 #define LED_ROJO   PD4
 #define LED_VERDE  PD5
 #define LED_AZUL   PD7
 #define BUZZER     PD3
 #define ELECTRO    PB0
 
-#define SERVO1_PIN PB1  // D9
-#define SERVO2_PIN PB2  // D10
-#define SERVO3_PIN PD6  // D6
-#define SERVO4_PIN PD7  // D7
+#define SERVO_BASE_PIN    PB1   // D9  
+#define SERVO_HOMBRO_PIN  PB2   // D10 
+#define SERVO_CODO_PIN    PB3   // D11  
+#define SERVO_PINZA_PIN   PD6   // D6
 
-#define SERVO_MIN_US 1000
-#define SERVO_MAX_US 2000
-#define DEAD_ZONE 2  // grados
+#define MODE_PIN_PC4      PC4  
 
-/* ==== Variables globales ==== */
-volatile uint16_t servo3_pulse = 1500;
-volatile uint16_t servo4_pulse = 1500;
 
-bool modoManual = true;
+#define SERVO_MIN_US   1000
+#define SERVO_MAX_US   2000
+#define SERVO_MIN_DEG  0
+#define SERVO_MAX_DEG  180
 
-/* ===== UART ===== */
-void uart_init(unsigned int ubrr) {
-	UBRR0H = (unsigned char)(ubrr>>8);
-	UBRR0L = (unsigned char)ubrr;
-	UCSR0B = (1<<TXEN0) | (1<<RXEN0) | (1<<RXCIE0);
-	UCSR0C = (1<<UCSZ01) | (1<<UCSZ00);
+#define T2_PRESC_8_TICK_US   128UL                 
+#define SERVO_PERIOD_US      20000UL              
+#define T2_COUNTS_PER_PERIOD (SERVO_PERIOD_US / T2_PRESC_8_TICK_US) 
+static uint8_t vel_ms   = 20; 
+static uint8_t paso_ang = 1;   
+
+
+static uint8_t base_min=30,  base_max=150;
+static uint8_t hombro_min=40,hombro_max=140;
+static uint8_t codo_min=30,  codo_max=150;
+static uint8_t pinza_min=20, pinza_max=160;
+
+
+volatile uint8_t  servoCodoTicks  = (1500UL / T2_PRESC_8_TICK_US);  // ~12
+volatile uint8_t  servoPinzaTicks = (1500UL / T2_PRESC_8_TICK_US);  // ~12
+volatile uint16_t sw_counter = 0;
+
+/* ==== Helpers ==== */
+static inline uint16_t us_from_deg(uint8_t ang){
+    if (ang > 180) ang = 180;
+    return SERVO_MIN_US + ((uint32_t)ang * (SERVO_MAX_US - SERVO_MIN_US)) / 180;
 }
-void uart_send(char c){
-	while(!(UCSR0A & (1<<UDRE0)));
-	UDR0 = c;
+static inline uint8_t ticks_from_us(uint16_t us){
+    uint16_t t = us / T2_PRESC_8_TICK_US; 
+    if (t < 1)  t = 1;
+    return (uint8_t)t;
 }
-volatile char rx_char = 0;
-ISR(USART_RX_vect){
-	rx_char = UDR0;
-	if(rx_char == 'm') modoManual = true;
-	if(rx_char == 'a') modoManual = false;
-}
-
-/* ===== ADC ===== */
-void adc_init(){
-	ADMUX = (1<<REFS0); // AVcc
-	ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
-}
-uint16_t adc_read(uint8_t ch){
-	ADMUX = (ADMUX & 0xF0) | (ch & 0x0F);
-	ADCSRA |= (1<<ADSC);
-	while(ADCSRA & (1<<ADSC));
-	return ADC;
-}
-
-/* ===== Servos ===== */
-void servo12_init(){
-	ICR1 = 39999;
-	TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);
-	TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS11);
-	DDRB |= (1<<SERVO1_PIN)|(1<<SERVO2_PIN);
-}
-void servo1_set(uint8_t angle){ OCR1A = (SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2; }
-void servo2_set(uint8_t angle){ OCR1B = (SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2; }
-
-void servo34_init(){
-	DDRD |= (1<<SERVO3_PIN)|(1<<SERVO4_PIN);
-	TCCR2A = (1<<COM2A1)|(1<<COM2B1)|(1<<WGM21)|(1<<WGM20);
-	TCCR2B = (1<<CS21);
-}
-void servo3_set(uint8_t angle){ OCR2A = ((SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2)/8; }
-void servo4_set(uint8_t angle){ OCR2B = ((SERVO_MIN_US + angle*(SERVO_MAX_US-SERVO_MIN_US)/180)*2)/8; }
-
-/* ===== Buzzer ===== */
-void beep(uint8_t n){
-	for(uint8_t i=0;i<n;i++){
-		PORTD |= (1<<BUZZER);
-		_delay_ms(200);
-		PORTD &= ~(1<<BUZZER);
-		_delay_ms(150);
-	}
+static inline uint8_t mapPotToServo(uint16_t val) {
+    uint16_t ang = SERVO_MIN_DEG + ( (uint32_t)val * (SERVO_MAX_DEG - SERVO_MIN_DEG) ) / 1023;
+    if (ang < SERVO_MIN_DEG) ang = SERVO_MIN_DEG;
+    if (ang > SERVO_MAX_DEG) ang = SERVO_MAX_DEG;
+    return (uint8_t)ang;
 }
 
-/* ===== LEDs ===== */
-void leds_off(){ PORTD &= ~((1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL)); }
+/* ==== Servos HW (Timer1) ==== */
+void servo_hw12_init(void) {
+    ICR1   = 39999;                             
+    TCCR1A = (1<<COM1A1)|(1<<COM1B1)|(1<<WGM11);
+    TCCR1B = (1<<WGM13)|(1<<WGM12)|(1<<CS11);     // prescaler 8
+    DDRB  |= (1<<SERVO_BASE_PIN)|(1<<SERVO_HOMBRO_PIN);
+}
+void servo_base(uint8_t ang)   { OCR1A = us_from_deg(ang) * 2; } 
+void servo_hombro(uint8_t ang) { OCR1B = us_from_deg(ang) * 2; }
 
-/* ===== MAIN ===== */
-int main(void){
-	DDRD |= (1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL)|(1<<BUZZER)|(1<<SERVO3_PIN)|(1<<SERVO4_PIN);
-	DDRB |= (1<<SERVO1_PIN)|(1<<SERVO2_PIN)|(1<<ELECTRO);
+/* ==== Servos SW (Timer2) ==== */
+void servo_sw_init(void) {
+    DDRB |= (1<<SERVO_CODO_PIN);
+	DDRD |= (1<<SERVO_PINZA_PIN); // PD6 y PD2
+    TCCR2A = 0;
+    TCCR2B = (1<<CS21);   // prescaler 8
+    TIMSK2 = (1<<TOIE2);  
+}
+ISR(TIMER2_OVF_vect) {
+    sw_counter++;
+    if (sw_counter == 1) {
+        PORTB |= (1<<SERVO_CODO_PIN);
+		PORTD |= (1<<SERVO_PINZA_PIN);
+    }
+    if (sw_counter == servoCodoTicks)  { PORTB &= ~(1<<SERVO_CODO_PIN); }
+    if (sw_counter == servoPinzaTicks) { PORTD &= ~(1<<SERVO_PINZA_PIN); }
+    if (sw_counter >= T2_COUNTS_PER_PERIOD) sw_counter = 0;
+}
+void servo_codo(uint8_t ang)  { servoCodoTicks  = ticks_from_us(us_from_deg(ang)); }
+void servo_pinza(uint8_t ang) { servoPinzaTicks = ticks_from_us(us_from_deg(ang)); }
+
+/* ==== ADC ==== */
+void adc_init(void) {
+    ADMUX  = (1<<REFS0);                            
+    ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
+    DIDR0  = (1<<ADC0D)|(1<<ADC1D)|(1<<ADC2D)|(1<<ADC3D); 
+}
+uint16_t adc_read(uint8_t ch) {
+    ch &= 0x07;
+    ADMUX = (ADMUX & 0xF8) | ch;
+    ADCSRA |= (1<<ADSC);
+    while (ADCSRA & (1<<ADSC));
+    return ADC;
+}
+
+/* ==== Buzzer & LEDs ==== */
+static inline void leds_off(void) {
+    PORTD &= ~((1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL));
+}
+static inline void beep(uint8_t n) {
+    for (uint8_t i=0; i<n; i++){
+        PORTD |= (1<<BUZZER); _delay_ms(120);
+        PORTD &= ~(1<<BUZZER); _delay_ms(120);
+    }
+}
+
+/* ==== Modo (A4 como entrada con pull-up) ==== */
+void mode_init(void){
+    DDRC  &= ~(1<<MODE_PIN_PC4); 
+    PORTC |=  (1<<MODE_PIN_PC4); 
+}
+uint8_t is_manual_mode(void){
+    // A4 a GND => nivel bajo => MANUAL
+    return ( (PINC & (1<<MODE_PIN_PC4)) == 0 );
+}
+
+/* ==== Test ==== */
+void test_system(void) {
+    PORTD |= (1<<LED_ROJO);  _delay_ms(120); leds_off();
+    PORTD |= (1<<LED_VERDE); _delay_ms(120); leds_off();
+    PORTD |= (1<<LED_AZUL);  _delay_ms(120); leds_off();
+    beep(2);
+}
+
+static inline void delay_ms_var(uint16_t ms){
+	while (ms--) _delay_ms(1);   
+}
+
+/* ===================== MAIN ===================== */
+int main(void) {
+	// Salidas
+	DDRD |= (1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL)|(1<<BUZZER);
+	DDRB |= (1<<ELECTRO);
+
+	PORTD &= ~((1<<LED_ROJO)|(1<<LED_VERDE)|(1<<LED_AZUL)|(1<<BUZZER));
+	PORTB &= ~(1<<ELECTRO);
+
+	// Init periféricos
+	servo_hw12_init();
+	servo_sw_init();
 	adc_init();
-	servo12_init();
-	servo34_init();
-	uart_init(103); // 9600 baudios
+	mode_init();
 	sei();
-	
-	uint8_t last_angle[4] = {0,0,0,0};
-	
-	while(1){
-		uint16_t pot[4];
-		pot[0] = adc_read(0);
-		pot[1] = adc_read(1);
-		pot[2] = adc_read(2);
-		pot[3] = adc_read(3);
-		uint8_t angle[4];
-		for(uint8_t i=0;i<4;i++) angle[i] = (pot[i]*180UL)/1023;
-		
-		if(modoManual){
-			// punto muerto
-			for(uint8_t i=0;i<4;i++){
-				if(abs(angle[i]-last_angle[i])<DEAD_ZONE) angle[i] = last_angle[i];
-			}
-			servo1_set(angle[0]);
-			servo2_set(angle[1]);
-			servo3_set(angle[2]);
-			servo4_set(angle[3]);
-			
-			// LEDs
-			if(angle[0]!=last_angle[0] |
-      | angle[1]!=last_angle[1] |
-      | angle[2]!=last_angle[2] |
-      | angle[3]!=last_angle[3])
-			PORTD |= (1<<LED_VERDE);
-			else
-			PORTD &= ~(1<<LED_VERDE);
-			
-			if(angle[3]!=last_angle[3]) PORTD |= (1<<LED_AZUL);
-			else PORTD &= ~(1<<LED_AZUL);
-			
-			last_angle[0]=angle[0];
-      last_angle[1]=angle[1]; 
-      last_angle[2]=angle[2];
-      last_angle[3]=angle[3];
-			
-			} else {
-			// Modo automático ejemplo
-			static uint8_t step = 0;
-			static uint16_t t = 0;
-			if(++t>200){ 
-				t=0;
 
-				uint8_t autoSteps[4][4]={{0,0,0,0},{45,45,45,45},{90,90,90,90},{180,180,180,180}};
-				servo1_set(autoSteps[step][0]);
-				servo2_set(autoSteps[step][1]);
-				servo3_set(autoSteps[step][2]);
-				servo4_set(autoSteps[step][3]);
-				PORTD |= (1<<LED_VERDE);
-				if(autoSteps[step][3]>0) beep(2); 
-				if(++step>=4) step=0;
+	test_system();
+
+	// Posición inicial segura
+	servo_base(90);
+	servo_hombro(90);
+	servo_codo(90);
+	servo_pinza(90);
+
+	uint8_t manual_prev = 255;
+
+	// Variables automáticas
+	uint8_t ang_base=30, ang_h=60, ang_c=120, ang_p=90;
+	int8_t  dir_base=1, dir_h=1, dir_c=-1, dir_p=1;
+
+	while (1){
+		uint8_t manual = is_manual_mode();
+
+		// Aviso de cambio de modo (una sola vez)
+		if (manual != manual_prev){
+			leds_off();
+			if (manual){
+				PORTD |= (1<<LED_VERDE); // Manual -> LED VERDE
+				beep(1);
+				} else {
+				PORTD |= (1<<LED_AZUL);  // Auto -> LED AZUL
+				beep(2);
 			}
+			_delay_ms(150);
+			leds_off();
+			manual_prev = manual;
 		}
-		_delay_ms(10);
+
+		if (manual){
+			/* ======== MODO MANUAL ======== */
+			uint16_t p1 = adc_read(0);       // A0
+			static uint16_t p1f = 0;         // filtro IIR anti-jitter
+			p1f = (p1f*3 + p1)/4;
+
+			uint8_t ang = mapPotToServo(p1f);
+			servo_base(ang);
+
+			servo_hombro(90);
+			servo_codo(90);
+			servo_pinza(90);
+
+			_delay_ms(15);
+			} else {
+			/* ======== MODO AUTOMÁTICO ======== */
+			ang_base += dir_base * paso_ang;
+			if (ang_base <= base_min || ang_base >= base_max) dir_base = -dir_base;
+
+			ang_h += dir_h * paso_ang;
+			if (ang_h <= hombro_min || ang_h >= hombro_max) dir_h = -dir_h;
+
+			ang_c += dir_c * paso_ang;
+			if (ang_c <= codo_min || ang_c >= codo_max) dir_c = -dir_c;
+
+			ang_p += dir_p * paso_ang;
+			if (ang_p <= pinza_min || ang_p >= pinza_max) dir_p = -dir_p;
+
+			servo_base(ang_base);
+			servo_hombro(ang_h);
+			servo_codo(ang_c);
+			servo_pinza(ang_p);
+
+			delay_ms_var(vel_ms);  
+		}
 	}
 }
