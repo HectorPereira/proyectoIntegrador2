@@ -1,0 +1,154 @@
+\documentclass[11pt,a4paper]{article}
+
+% Idioma y codificación
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{csquotes}
+\usepackage{multicol}
+\usepackage{siunitx}
+\sisetup{round-mode=places,round-precision=2,detect-all}
+
+% Formato y utilidades
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\graphicspath{{../anexos/}{figuras/}{imagenes/}{img/}}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  citecolor=black
+}
+
+% Bibliografía
+\usepackage[style=ieee,backend=biber]{biblatex}
+\addbibresource{referencias.bib}
+
+\begin{document}
+
+% ----------------- Portada -----------------
+% Portada simple
+\begin{titlepage}
+  \centering
+  {\Large Universidad Tecnol\'ogica del Uruguay (UTEC)\par}
+  \vspace{0.5cm}
+  {\large Proyecto Integrador — Brazo rob\'otico did\'actico\par}
+  \vspace{2cm}
+  {\LARGE Evidencias del proyecto\par}
+  \vspace{1.5cm}
+  \begin{tabular}{rl}
+    Integrantes: & Mateo Lecuna, Hector Pereira, Priscila Rossi \\
+    Docente/s:   & Marcelo Diaz, Christian Campero \\
+    Fecha:       & \today
+  \end{tabular}
+  \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ----------------- Secciones principales -----------------
+\section{Resumen}
+
+\section{Metodología y cronograma}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{ruta/diagrama_gantt.png}
+%   \caption{Diagrama de Gantt. Fuente: elaboración propia.}
+% \end{figure}
+
+\section{Evidencias de diseño y fabricación}
+
+\subsection{Materiales y métodos}
+
+\begin{table}[H]
+\centering
+\caption{Matriz de selección: mecanismos de actuación}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Atributo} & \textbf{Peso} & \textbf{Opción 1} & \textbf{Opción 2} & \textbf{Opción 3} & \textbf{Opción 4} \\
+\midrule
+... & ... & ... & ... & ... & ... \\
+\midrule
+\textbf{Total ponderado} & & & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Galgas y tolerancias}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[height=\textwidth, angle=90]{ruta/imagen_galgas.jpg}
+%   \caption{Galgas para medición de tolerancias. Fuente: elaboración propia.}
+% \end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Ejemplo de tabla de mediciones}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Medición} & \textbf{Diseñado (mm)} & \textbf{Real (mm)} & \textbf{Error (mm)} & \textbf{Observaciones} \\
+\midrule
+... & ... & ... & ... & ... \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Diseños y prototipos}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=\textwidth]{ruta/diseno.png}
+%   \caption{Modelo del sistema. Fuente: elaboración propia.}
+% \end{figure}
+
+\subsubsection{Articulaciones}
+
+\subsubsection{Electroimán}
+
+\subsubsection{Controlador espejo}
+
+\section{Electrónica y programación}
+
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.9\textwidth]{ruta/pruebas_integracion.png}
+%   \caption{Pruebas de integración entre código y componentes. Fuente: elaboración propia.}
+% \end{figure}
+
+\newpage
+
+% ----------------- Apéndices -----------------
+\appendix
+\section{Inspiraciones y referencias de mercado}
+
+\begin{multicols}{2}
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.4\textwidth]{ruta/imagen1.png}
+%   \caption{Modelo referencial.}
+% \end{figure}
+\end{multicols}
+
+\section{Código}
+
+\begin{verbatim}
+#include <avr/io.h>
+#include <util/delay.h>
+
+int main(void) {
+    // Código base
+    while (1) {
+        // Bucle principal
+    }
+}
+\end{verbatim}
+
+\printbibliography
+
+\end{document}
