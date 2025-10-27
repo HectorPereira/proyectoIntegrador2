@@ -12,7 +12,6 @@
 % Formato y utilidades
 \usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage{graphicx}
-\graphicspath{{../anexos/}{figuras/}{imagenes/}{img/}}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{booktabs}
@@ -23,6 +22,55 @@
   citecolor=black
 }
 
+
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage[toc,page]{appendix}
+\usepackage[spanish]{cleveref}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{multicol}
+\usepackage{caption}   % para \captionof
+
+
+
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{1,1,1}
+
+\lstset{
+backgroundcolor=\color{backcolour},   
+commentstyle=\color{codegreen},
+keywordstyle=\color{magenta},
+numberstyle=\tiny\color{codegray},
+stringstyle=\color{codepurple},
+basicstyle=\small\ttfamily,
+breakatwhitespace=false,   
+keepspaces=true,
+showstringspaces=false,
+columns=flexible,
+breaklines=true,
+inputencoding=utf8,
+extendedchars = true  % Extended ASCII
+} 
+
+\geometry{a4paper, left=20mm, right=20mm, top=20mm, bottom=20mm}
+\renewcommand{\listtablename}{Lista de tablas}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\lstlistingname}{Algoritmo}% Listing -> Algorithm
+\renewcommand{\lstlistlistingname}{Lista de \lstlistingname s}% List of Listings -> List of Algorithms
+
+
+
+\renewcommand{\lstlistingname}{Código}
+\renewcommand{\lstlistlistingname}{Índice de códigos}
+
 % Bibliografía
 \usepackage[style=ieee,backend=biber]{biblatex}
 \addbibresource{referencias.bib}
@@ -30,87 +78,206 @@
 \begin{document}
 
 % ----------------- Portada -----------------
-% Portada simple
 \begin{titlepage}
+
+  % === Logo UTEC alineado a la izquierda ===
+  \begin{flushleft}
+    \includegraphics[width=0.25\textwidth]{./anexos/logo_utec.png}
+  \end{flushleft}
+
+  \vspace{1cm}
   \centering
   {\Large Universidad Tecnol\'ogica del Uruguay (UTEC)\par}
   \vspace{0.5cm}
   {\large Proyecto Integrador — Brazo rob\'otico did\'actico\par}
   \vspace{2cm}
-  {\LARGE Evidencias del proyecto\par}
+  {\LARGE Evidencias de proyecto\par}
   \vspace{1.5cm}
   \begin{tabular}{rl}
     Integrantes: & Mateo Lecuna, Hector Pereira, Priscila Rossi \\
     Docente/s:   & Marcelo Diaz, Christian Campero \\
     Fecha:       & \today
   \end{tabular}
+
   \vfill
 \end{titlepage}
+
 
 \tableofcontents
 \newpage
 
 % ----------------- Secciones principales -----------------
 \section{Resumen}
-Cuales fueron los avances principales que tuvimos
+%Cuales fueron los avances principales que tuvimos
 
 \section{Metodología y cronograma}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{./anexos/Online Gantt.png}
+  \caption{Diagrama de Gantt. Fuente: elaboración própia}
+\end{figure}
+
+
 
 \section{Evidencias de diseño y fabricación}
 
 \subsection{Materiales y métodos}
+Para el desarrollo del brazo robótico se emplearon materiales accesibles y técnicas de fabricación complementarias, priorizando la modularidad y facilidad de ensamblaje.  
+Las primeras etapas se centraron en el uso de MDF cortado por láser para los componentes estructurales, debido a su precisión y rapidez de fabricación, mientras que las piezas que requerían geometrías más complejas o encastres finos se imprimieron en 3D con filamento PLA.  
+
+El diseño se realizó íntegramente en software CAD, permitiendo iterar entre versiones y evaluar virtualmente la cinemática de cada articulación.  
+Posteriormente, se llevaron a cabo pruebas físicas con prototipos a escala real para validar tolerancias, rigidez y facilidad de ensamblaje antes de consolidar el diseño final.
 
 \subsection{Brazo articulado}
-% Luego de diseñar las articulaciones correctamente...
+Se realizaron cortes en MDF de los tres primeros segmentos articulados del brazo con el fin de evaluar tolerancias de fabricación, rigidez estructural y dificultad de ensamblaje. Durante esta etapa se verificó el calce de los servomotores y articulaciones, así como la estabilidad del conjunto al aplicar cargas simuladas.  
 
-% Figura del diseño y ensamblaje preliminar
-% Figura del render del diseño final
-% Figura del diseño final ensamblado
+Los resultados mostraron que el espesor del material utilizado era insuficiente para garantizar la rigidez necesaria, especialmente en los puntos de articulación. Además, el tipo de encastre abierto empleado en esta primera versión dificultaba el armado, ya que las piezas tendían a salirse de posición durante el proceso de montaje.  
+
+% === FIGURA 1: Ensamblaje preliminar del brazo ===
+% Colocar aquí la figura del primer prototipo en MDF (brazo_preliminar)
+% Motivo: se acaba de describir el problema del diseño original.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./anexos/Brazo V3/Pruebas ensamblaje/Screenshot 2025-10-25 165326.png}
+  \caption{Corte y ensamblaje preliminar de los tres primeros segmentos en MDF para evaluar tolerancias, rigidez y dificultad de ensamblaje. Fuente: elaboración propia.}
+  \label{fig:brazo_preliminar}
+\end{figure}
+
+A partir de estas observaciones, se rediseñaron los componentes con un sistema de encastre envolvente, el cual permite mantener las piezas en posición estable antes del pegado o atornillado.  
+Asimismo, se incorporó una base con patas y una superficie destinada al montaje de los componentes electrónicos, mejorando la distribución del peso y el acceso durante el mantenimiento.  
+Se añadieron también monturas adicionales para la fijación de tornillos y la instalación de medios elásticos —como gomas o resortes— que asisten al servomotor de la articulación inferior en ángulos de apertura críticos.  
+
+% === FIGURA 2: Render del diseño final ===
+% Colocar aquí la figura del modelo rediseñado (render_brazo_final)
+% Motivo: se acaba de explicar el rediseño estructural y mejoras.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./anexos/Brazo V3/Screenshot 2025-10-24 211250.png}
+  \caption{Render del diseño final del brazo robótico, con encastres envolventes y base estructural reforzada. Fuente: elaboración propia.}
+  \label{fig:render_brazo_final}
+\end{figure}
+
+El modelo final presentó una notable mejora en rigidez y estabilidad durante el ensamblaje. Las gomas elásticas implementadas resultaron eficaces para reducir el esfuerzo sobre los servomotores, evitando la necesidad de sustituirlos por modelos de mayor torque.  
+Finalmente, se realizó una prueba funcional con el electroimán montado, utilizando una galga reciclada de un diseño anterior para estimar el comportamiento dinámico y la capacidad de carga del brazo.  
+
+% === FIGURA 3: Brazo final ensamblado ===
+% Colocar aquí la fotografía del modelo físico final (brazo_final_ensamblado)
+% Motivo: se acaba de mencionar la prueba real con el electroimán.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./anexos/Brazo V3/IMG_20251026_211602.jpg}
+  \caption{Modelo final ensamblado del brazo articulado con gomas elásticas de asistencia y prueba del electroimán. Fuente: elaboración propia.}
+  \label{fig:brazo_final_ensamblado}
+\end{figure}
+
 
 \subsection{Controlador espejo}
-% Figura diseño original
-% Explicacion diseño original
-% Figura nuevo diseño
-% Explicacion nuevo diseño
+El controlador del brazo fue diseñado como una réplica funcional que permite manipular directamente las articulaciones del modelo principal mediante un sistema de control espejo.  
+En su primera versión, se optó por una estructura completamente fabricada en PLA impreso en 3D, lo que ofrecía una alta precisión dimensional pero presentaba limitaciones en rigidez y tiempos de fabricación prolongados.  
+
+% === FIGURA 4: Controlador versión inicial en PLA ===
+% Colocar aquí la figura del diseño original (controlador_v1)
+% Motivo: se acaba de mencionar la primera versión y sus limitaciones.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./anexos/Controlador espejo V1/Screenshot 2025-10-26 200406.png}
+  \caption{Diseño inicial del controlador del brazo fabricado completamente en PLA. Fuente: elaboración propia.}
+  \label{fig:controlador_v1}
+\end{figure}
+
+Frente a estas limitaciones, se implementó un rediseño híbrido que combina MDF y PLA, aprovechando las ventajas de ambos métodos.  
+La estructura principal se construyó en MDF mediante corte láser, garantizando una base robusta y de rápida producción, mientras que los encastres, acoples y carcasas con geometrías más complejas se imprimieron en PLA.  
+
+% === FIGURA 5: Controlador híbrido MDF–PLA ===
+% Colocar aquí la figura del nuevo diseño (controlador_v3)
+% Motivo: se acaba de explicar el rediseño mixto MDF–PLA.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./anexos/Controlador espejo V3/Screenshot 2025-10-24 033144.png}
+  \caption{Nuevo diseño del controlador híbrido MDF–PLA, combinando corte láser e impresión 3D para optimizar rigidez y precisión. Fuente: elaboración propia.}
+  \label{fig:controlador_v3}
+\end{figure}
+
+El diseño final logra una integración eficiente entre las piezas de madera y plástico, garantizando la precisión mecánica necesaria para reproducir los movimientos del brazo robótico.  
+Además, el enfoque modular del diseño facilita futuras mejoras, como la incorporación de sensores o la sustitución de componentes específicos sin necesidad de rehacer toda la estructura.
+
 
 
 
 
 \section{Electrónica y programación}
-% Explicacion codigo implementado hasta el momento
-% Figura del circuito para el control espejo de los servomotores
-% Explicacion del circuito implementado
-% Diagramas
-% Explicacion del cod
+
+\subsection{Electrónica de control}
+
+El sistema de control del brazo robótico está basado en un microcontrolador \textbf{ATmega328P} montado sobre una placa \textbf{Arduino Uno}, el cual actúa como unidad principal de procesamiento y coordinación de señales.  
+En el circuito se implementa una arquitectura de tipo \textit{control espejo}, donde un conjunto de potenciómetros permite reproducir manualmente los movimientos que el brazo ejecuta mediante servomotores.
+
+Cada potenciómetro funciona como un divisor de tensión conectado entre \SI{5}{\volt} y tierra, entregando en su terminal central una señal analógica proporcional al ángulo de giro. Estas señales son adquiridas por las entradas analógicas del microcontrolador (A0–A3), digitalizadas mediante su convertidor analógico–digital (ADC) interno y posteriormente traducidas a señales de modulación por ancho de pulso (PWM) generadas en los pines digitales (D3–D9).  
+Cada una de estas salidas PWM gobierna directamente un servomotor, logrando así que la posición de los ejes del brazo robótico imite en tiempo real el movimiento realizado sobre los potenciómetros del controlador.
+
+La alimentación del sistema se distribuye a través de una línea común de \SI{5}{\volt} y una referencia de tierra compartida. En esta configuración, los servomotores, potenciómetros y el microcontrolador comparten la misma fuente de energía, garantizando la coherencia de referencia eléctrica.  
+No obstante, para versiones finales o de mayor carga mecánica, se considera la posibilidad de incorporar una fuente externa de corriente continua dedicada exclusivamente a los servomotores, a fin de evitar caídas de tensión durante el funcionamiento.
+
+Finalmente, el esquema incluye tres indicadores luminosos —\textbf{LED rojo}, \textbf{verde} y \textbf{azul}— que cumplen funciones de depuración y señalización visual. Estos se conectan a través de resistencias limitadoras de corriente y permiten indicar estados del sistema como encendido, operación correcta o condiciones de error.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{./anexos/Videos brazo/tinkercad.jpg}
+  \caption{Diagrama eléctrico del sistema de control del brazo robótico, con conexiones entre potenciómetros, servomotores, LEDs y microcontrolador Arduino Uno. Fuente: elaboración propia.}
+  \label{fig:diagrama_electrico}
+\end{figure}
+
+\subsection{Interfaz de usuario}
+
+La interfaz de usuario fue desarrollada en \textbf{Python} utilizando la biblioteca \texttt{Tkinter}, con el propósito de ofrecer un medio visual e intuitivo para interactuar con el sistema.  
+Desde esta aplicación, el usuario puede seleccionar entre dos modos de funcionamiento: \textbf{automático} y \textbf{manual}, ambos comunicados con el microcontrolador a través del protocolo \textbf{USART}.
+
+En el \textbf{modo automático}, el programa ejecuta secuencias predefinidas de movimiento controlando los ángulos de cada servomotor directamente desde el entorno Python. Los valores de posición se transmiten mediante el puerto serial al microcontrolador, que interpreta los comandos y ajusta los servos en consecuencia. Este modo resulta útil para la ejecución repetitiva de trayectorias o demostraciones programadas sin intervención del usuario.
+
+Por otro lado, el \textbf{modo manual} permite al operador controlar en tiempo real la posición de cada articulación a través de los potenciómetros del controlador espejo. En este caso, la interfaz cumple el rol de monitor serial, mostrando los valores de ángulo recibidos desde el microcontrolador y permitiendo el cambio de estado o calibración mediante comandos específicos.  
+
+El seteo de ángulos, el cambio entre modos de operación y la comunicación bidireccional entre Python y el microcontrolador se gestionan completamente a través del puerto serial, utilizando mensajes de texto estructurados y delimitadores que aseguran la correcta interpretación de los datos en ambos sentidos.  
+Esta implementación facilita la depuración del sistema y ofrece una capa adicional de control y supervisión sobre el hardware embebido.
+
+% === FIGURA: Interfaz de usuario en Python ===
+% Colocar aquí la captura de la interfaz (por ejemplo: ./anexos/Interfaz/interfaz_tkinter.png)
+% Motivo: mostrar visualmente los modos automático y manual con sus controles y monitoreo.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./anexos/Interfaz Usuario/Screenshot 2025-10-26 213255.png}
+  \caption{Interfaz de usuario desarrollada en Python utilizando la biblioteca Tkinter, con opciones de control automático y manual comunicadas por USART. Fuente: elaboración propia.}
+  \label{fig:interfaz_usuario}
+\end{figure}
+
+
+
+
+
 
 \newpage
 
 % ----------------- Apéndices -----------------
 \appendix
-\section{Inspiraciones y referencias de mercado}
 
-\begin{multicols}{2}
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.4\textwidth]{ruta/imagen1.png}
-%   \caption{Modelo referencial.}
-% \end{figure}
-\end{multicols}
+\section{Repositorio de evidencias digitales}
+
+Con el fin de centralizar y facilitar el acceso a todos los materiales complementarios del proyecto, se ha dispuesto un repositorio en línea que contiene los archivos digitales correspondientes a las evidencias presentadas en este informe.  
+Dicho repositorio incluye fotografías del proceso de fabricación, renders de los modelos 3D, archivos CAD, esquemas eléctricos, simulaciones, programas en C y Python, así como los recursos multimedia asociados a las pruebas funcionales.
+
+\vspace{0.3cm}
+\noindent
+El acceso al repositorio puede realizarse mediante el siguiente enlace:
+
+\begin{center}
+\href{https://drive.google.com/drive/folders/1XPbaXmohBO5XQhgipXt-RZ1E9vsX4483?usp=drive_link}{\textbf{Repositorio en Google Drive — Evidencias del Proyecto}}
+\end{center}
+
 
 \section{Código}
 
-\begin{verbatim}
-#include <avr/io.h>
-#include <util/delay.h>
+\lstinputlisting[language=c]{anexos/Codigo/codigoMateo.c}
+\lstinputlisting[language=c]{anexos/Codigo/codigoPri.c}
+\lstinputlisting[language=c]{anexos/Codigo/Indicadores.c}
 
-int main(void) {
-    // Código base
-    while (1) {
-        // Bucle principal
-    }
-}
-\end{verbatim}
-
-\printbibliography
 
 \end{document}

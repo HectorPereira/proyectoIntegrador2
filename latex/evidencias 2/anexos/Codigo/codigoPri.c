@@ -1,0 +1,118 @@
+#define F_CPU 16000000UL
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdint.h>
+
+/* ===== CONFIGURACION SERVO ===== */
+#define SERVO_MIN_US   350
+#define SERVO_MAX_US   2650   
+#define SERVO_SLEW_STEP 2     // velocidad de respuesta 
+#define ADC_SAMPLES     10    // promedio de muestras para suavizar
+
+/* ===== CONFIGURACION PWM ===== */
+static inline void servo_init(void) {
+    DDRB |= (1 << PB1) | (1 << PB2); // D9 y D10 como salida
+    TCCR1A = (1 << COM1A1) | (1 << COM1B1) | (1 << WGM11); 
+    TCCR1B = (1 << WGM13) | (1 << WGM12) | (1 << CS11);    
+    ICR1 = 39999; // 20 ms -> 50 Hz
+}
+
+static inline uint16_t us_to_ticks(uint16_t us) {
+    return (uint16_t)(us * 2);
+}
+
+/* ===== FUNCIONES DE POSICION ===== */
+static inline void servoA_write_us(uint16_t us) {
+    if (us < SERVO_MIN_US) us = SERVO_MIN_US;
+    if (us > SERVO_MAX_US) us = SERVO_MAX_US;
+    OCR1A = us_to_ticks(us);
+}
+
+static inline void servoB_write_us(uint16_t us) {
+    if (us < SERVO_MIN_US) us = SERVO_MIN_US;
+    if (us > SERVO_MAX_US) us = SERVO_MAX_US;
+    OCR1B = us_to_ticks(us);
+}
+
+/* Grados (0-180) -> microsegundos */
+static inline uint16_t deg_to_us(uint8_t deg) {
+    if (deg > 180) deg = 180;
+    return SERVO_MIN_US + ((uint32_t)(SERVO_MAX_US - SERVO_MIN_US) * deg) / 180;
+}
+
+/* ===== ADC ===== */
+static inline void adc_init(void) {
+    ADMUX = (1 << REFS0); // referencia AVcc
+    ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1); // prescaler=64
+}
+
+/* Leer canal (0-7) */
+static inline uint16_t adc_read(uint8_t ch) {
+    ADMUX = (ADMUX & 0xF0) | (ch & 0x0F);
+    ADCSRA |= (1 << ADSC);
+    while (ADCSRA & (1 << ADSC));
+    return ADC;
+}
+
+/* Promediar varias lecturas */
+static inline uint16_t adc_read_avg(uint8_t ch, uint8_t muestras) {
+    uint32_t suma = 0;
+    for (uint8_t i = 0; i < muestras; i++) {
+        suma += adc_read(ch);
+    }
+    return (uint16_t)(suma / muestras);
+}
+
+/* ===== MAPEO POT -> ANGULO ===== */
+static inline uint8_t pot_to_deg(uint16_t val) {
+    uint32_t ang = ((uint32_t)val * 180) / 1023;
+    if (ang > 180) ang = 180;
+    return (uint8_t)ang;
+}
+
+/* ===== SLEW (movimiento suave) ===== */
+static inline uint8_t smooth_move(uint8_t actual, uint8_t target) {
+    if (actual < target) {
+        uint8_t diff = target - actual;
+        if (diff > SERVO_SLEW_STEP) actual += SERVO_SLEW_STEP;
+        else actual = target;
+    } else if (actual > target) {
+        uint8_t diff = actual - target;
+        if (diff > SERVO_SLEW_STEP) actual -= SERVO_SLEW_STEP;
+        else actual = target;
+    }
+    return actual;
+}
+
+/* ===== MAIN ===== */
+int main(void) {
+    servo_init();
+    adc_init();
+
+    uint8_t angA = 90; // servo en D9
+    uint8_t angB = 90; // servo en D10
+
+    servoA_write_us(deg_to_us(angA));
+    servoB_write_us(deg_to_us(angB));
+    _delay_ms(500);
+
+    while (1) {
+        // Leer potenciometros A0 y A1
+        uint16_t potA = adc_read_avg(0, ADC_SAMPLES);
+        uint16_t potB = adc_read_avg(1, ADC_SAMPLES);
+
+        // Mapear a angulos
+        uint8_t targetA = pot_to_deg(potA);
+        uint8_t targetB = pot_to_deg(potB);
+
+        // Movimiento suave
+        angA = smooth_move(angA, targetA);
+        angB = smooth_move(angB, targetB);
+
+        // Actualizar servos
+        servoA_write_us(deg_to_us(angA));
+        servoB_write_us(deg_to_us(angB));
+
+        _delay_ms(15);
+    }
+}
