@@ -1,47 +1,54 @@
 #define F_CPU 16000000UL
+
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define SERVO_MIN_US 1000
-#define SERVO_MAX_US 2000
+#define SERVO_MIN_US 350
+#define SERVO_MAX_US 2650
 #define SERVO_PERIOD_US 20000
 
-// UART
 #define UART_BAUD 9600UL
 #define UART_UBRR ((F_CPU/16/UART_BAUD)-1)
 
 // Modos
-#define MODE_CE  0   // Comando espejo (potes)
-#define MODE_APP 1   // Control por aplicación (UART)
+#define MODE_CE  0
+#define MODE_APP 1
 
-const uint8_t potPins[4]  = {0, 1, 2, 3};   // ADC0–ADC3
-const uint8_t servoPins[4]= {PD6, PB1, PB2, PB3};
+// Botón
+#define BTN_MODE_PIN PD2
+
+// ADC
+const uint8_t potPins[4]   = {0, 1, 2, 3};
+const uint8_t servoPins[4] = {PD6, PB1, PB2, PB3};
 
 uint16_t potCenter[4];
-uint16_t pulseWidth[4]; // in microseconds
+uint16_t pulseWidth[4];
 
-// Ángulos para modo APP (0–180°) recibidos por UART
-uint8_t angle_app[4] = {90, 90, 90, 90};
-
-// Ángulos lógicos (0–180°) que se reportan a la app
+uint8_t angle_app[4]     = {90, 90, 90, 90};
 uint8_t angle_logical[4] = {90, 90, 90, 90};
 
-// Modo actual (arranca en comando espejo)
 volatile uint8_t current_mode = MODE_CE;
 
-// ---------------------------------------------------------------------
-// UART básica
-// ---------------------------------------------------------------------
+// Botón
+uint8_t btn_last = 1;
+uint8_t btn_debounce = 0;
+
+// Buffer UART
+static char rx_buf[64];
+static uint8_t rx_idx = 0;
+
+/* ===================== UART ===================== */
+
 void uart_init(void) {
 	UBRR0H = (uint8_t)(UART_UBRR >> 8);
 	UBRR0L = (uint8_t)(UART_UBRR & 0xFF);
 
-	// Habilitar RX y TX
 	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
-
-	// Formato: 8 bits de datos, 1 bit de stop, sin paridad (8N1)
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 }
 
@@ -51,259 +58,241 @@ void uart_send_char(char c) {
 }
 
 void uart_send_str(const char *s) {
-	while (*s) {
-		uart_send_char(*s++);
-	}
+	while (*s) uart_send_char(*s++);
 }
 
-// Telemetría de posiciones
+/* === TELEMETRÍA: invertir SOLO S3 para la APP === */
 void uart_send_positions(void) {
 	char buf[48];
-	int n = snprintf(
-	buf, sizeof(buf),
+
+	unsigned s1 = angle_logical[0];
+	unsigned s2 = angle_logical[1];
+	unsigned s3_raw = angle_logical[2];
+	unsigned s4 = angle_logical[3];
+
+	// Invertimos S3 solo para el reporte
+	unsigned s3 = 180 - s3_raw;
+
+	int n = snprintf(buf, sizeof(buf),
 	"S1=%u S2=%u S3=%u S4=%u\n",
-	(unsigned)angle_logical[0],
-	(unsigned)angle_logical[1],
-	(unsigned)angle_logical[2],
-	(unsigned)angle_logical[3]
-	);
-	if (n > 0) {
-		uart_send_str(buf);
-	}
+	s1, s2, s3, s4);
+	if (n > 0) uart_send_str(buf);
 }
 
-// ---------------------------------------------------------------------
-// Parser de líneas UART: "MODE:APP", "MODE:CE", "S1:90 S2:120"
-// ---------------------------------------------------------------------
-void parse_uart_line(const char *s) {
+/* ===================== Parser ===================== */
+
+void parse_uart_line(char *s) {
 	while (*s) {
-		// Saltar espacios
-		while (*s == ' ' || *s == '\t') {
-			s++;
-		}
+		while (*s==' ' || *s=='\t') s++;
+		if (*s=='\0') break;
 
-		// Comando de modo: "MODE:APP" o "MODE:CE"
-		if (*s == 'M') {
-			if (s[1]=='O' && s[2]=='D' && s[3]=='E') {
-				s += 4;
-				// Saltar separadores
-				while (*s==' ' || *s=='\t' || *s==':' || *s=='=') {
-					s++;
-				}
+		if (strncmp(s,"MODE",4)==0) {
+			s+=4;
+			while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
 
-				if (*s=='A' || *s=='a') {
-					current_mode = MODE_APP;
-					uart_send_str("MODE=APP\n");
-					} else if (*s=='C' || *s=='c') {
-					current_mode = MODE_CE;
-					uart_send_str("MODE=CE\n");
-				}
-
-				// Avanzar hasta fin de token
-				while (*s && *s!=' ' && *s!='\t') {
-					s++;
-				}
-				continue;
-			}
-		}
-
-		// Comandos de servo: "S1:90", "S2:120", etc.
-		if (*s == 'S') {
-			s++;
-			uint8_t idx = 0xFF;
-
-			if (*s >= '1' && *s <= '4') {
-				idx = (uint8_t)(*s - '1');
-				s++;
+			if (*s=='A'||*s=='a') {
+				current_mode = MODE_APP;
+				uart_send_str("MODE=APP\n");
+				} else if (*s=='C'||*s=='c') {
+				current_mode = MODE_CE;
+				uart_send_str("MODE=CE\n");
 			}
 
-			if (*s == ':') {
-				s++;
-			}
-
-			int val = 0;
-			uint8_t has_digit = 0;
-
-			while (*s >= '0' && *s <= '9') {
-				has_digit = 1;
-				val = val * 10 + (*s - '0');
-				s++;
-			}
-
-			if (has_digit && idx < 4) {
-				if (val < 0)   val = 0;
-				if (val > 180) val = 180;
-				angle_app[idx] = (uint8_t)val;
-			}
-
-			while (*s && *s!=' ' && *s!='\t') {
-				s++;
-			}
+			while(*s && *s!=' ' && *s!='\t') s++;
 			continue;
 		}
 
-		// Si no es MODE ni Sx, avanzar hasta el siguiente espacio
-		while (*s && *s!=' ' && *s!='\t') {
-			s++;
+		if (*s=='S' && (s[1]>='1' && s[1]<='4')) {
+			uint8_t idx = s[1]-'1';
+			s+=2;
+
+			while(*s==' '||*s=='\t') s++;
+			if (*s==':' || *s=='=') s++;
+			while(*s==' '||*s=='\t') s++;
+
+			char *num_start = s;
+			uint8_t has_digit=0;
+			while(isdigit((unsigned char)*s)) {
+				has_digit=1;
+				s++;
+			}
+
+			if (has_digit) {
+				int val = atoi(num_start);
+				if (val<0) val=0;
+				if (val>180) val=180;
+				angle_app[idx]=val;
+			}
+
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
 		}
+
+		while(*s && *s!=' ' && *s!='\t') s++;
 	}
 }
 
-// ---------------------------------------------------------------------
-// Poll de UART: acumula hasta \n y llama a parse_uart_line()
-// ---------------------------------------------------------------------
-void uart_poll(void) {
-	static char rx_buf[32];
-	static uint8_t idx = 0;
-
-	while (UCSR0A & (1 << RXC0)) {
+void uart_poll_byte(void) {
+	if (UCSR0A & (1 << RXC0)) {
 		char c = UDR0;
 
-		if (c == '\r' || c == '\n') {
-			if (idx > 0) {
-				rx_buf[idx] = '\0';
+		if (c=='\r' || c=='\n') {
+			if (rx_idx>0) {
+				rx_buf[rx_idx]='\0';
 				parse_uart_line(rx_buf);
-				idx = 0;
+				rx_idx=0;
 			}
 			} else {
-			if (idx < sizeof(rx_buf) - 1) {
-				rx_buf[idx++] = c;
+			if (rx_idx<sizeof(rx_buf)-1) {
+				rx_buf[rx_idx++]=c;
+				} else {
+				rx_idx=0;
 			}
 		}
 	}
 }
 
-// ---------------------------------------------------------------------
-// ADC
-// ---------------------------------------------------------------------
-void ADC_init(void) {
-	ADMUX  = (1 << REFS0);                         // AVcc ref
-	ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // /128
+/* ===================== Botón ===================== */
+
+void mode_button_poll(void) {
+	uint8_t now = (PIND & (1<<BTN_MODE_PIN)) ? 1 : 0;
+
+	if (btn_debounce>0) btn_debounce--;
+
+	if (btn_last==1 && now==0 && btn_debounce==0) {
+		if (current_mode==MODE_CE) {
+			current_mode=MODE_APP;
+			uart_send_str("MODE=APP\n");
+			} else {
+			current_mode=MODE_CE;
+			uart_send_str("MODE=CE\n");
+		}
+		btn_debounce=10;
+	}
+
+	btn_last=now;
 }
 
-uint16_t ADC_read(uint8_t ch) {
+/* ===================== ADC ===================== */
+
+void ADC_init(void){
+	ADMUX  = (1<<REFS0);
+	ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
+}
+
+uint16_t ADC_read(uint8_t ch){
 	ADMUX = (ADMUX & 0xF8) | (ch & 0x07);
-	ADCSRA |= (1 << ADSC);
-	while (ADCSRA & (1 << ADSC));
+	ADCSRA |= (1<<ADSC);
+	while(ADCSRA & (1<<ADSC));
 	return ADC;
 }
 
-// ---------------------------------------------------------------------
-// Timer1 free-running microsecond counter (for 20 ms frame)
-// ---------------------------------------------------------------------
-void timer1_init(void) {
-	TCCR1A = 0;
-	TCCR1B = (1 << CS11);          // prescaler 8 → 0.5 µs per tick
+/* ===================== Timer1 ===================== */
+
+void timer1_init(void){
+	TCCR1A=0;
+	TCCR1B=(1<<CS11); // prescaler 8 ? 0.5 us
 }
 
-// ---------------------------------------------------------------------
-// Map helpers
-// ---------------------------------------------------------------------
+/* ===================== map ===================== */
+
 long map_value(long x,long in_min,long in_max,long out_min,long out_max){
-	return (x - in_min)*(out_max - out_min)/(in_max - in_min)+out_min;
+	return (x-in_min)*(out_max-out_min)/(in_max-in_min)+out_min;
 }
 
-// ---------------------------------------------------------------------
-// Generate pulses sequentially (software PWM)
-// ---------------------------------------------------------------------
-void servo_pulse_frame(void) {
-	// All outputs low initially
+/* ===================== PWM BITBANG ===================== */
+
+void servo_pulse_frame(void){
 	PORTD &= ~(1<<PD6);
 	PORTB &= ~((1<<PB1)|(1<<PB2)|(1<<PB3));
 
-	// Turn all high at start
 	PORTD |= (1<<PD6);
 	PORTB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
 
 	uint16_t start = TCNT1;
-	for (;;) {
+
+	for(;;){
 		uint16_t now = TCNT1;
-		uint16_t elapsed_us = (now - start)/2; // prescaler 8 → 0.5 µs/tick
+		uint16_t us  = (now-start)/2;
 
-		if (elapsed_us >= SERVO_PERIOD_US) break;
+		uart_poll_byte(); // <- AHORA SE LEE UART EN TIEMPO REAL
 
-		if (elapsed_us >= pulseWidth[0]) PORTD &= ~(1<<PD6);
-		if (elapsed_us >= pulseWidth[1]) PORTB &= ~(1<<PB1);
-		if (elapsed_us >= pulseWidth[2]) PORTB &= ~(1<<PB2);
-		if (elapsed_us >= pulseWidth[3]) PORTB &= ~(1<<PB3);
+		if (us>=SERVO_PERIOD_US) break;
+
+		if (us>=pulseWidth[0]) PORTD &= ~(1<<PD6);
+		if (us>=pulseWidth[1]) PORTB &= ~(1<<PB1);
+		if (us>=pulseWidth[2]) PORTB &= ~(1<<PB2);
+		if (us>=pulseWidth[3]) PORTB &= ~(1<<PB3);
 	}
 }
 
-// ---------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------
-int main(void) {
+/* ===================== MAIN ===================== */
+
+int main(void){
 	DDRD |= (1<<PD6);
 	DDRB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
+
+	DDRD &= ~(1<<BTN_MODE_PIN);
+	PORTD |= (1<<BTN_MODE_PIN);
 
 	ADC_init();
 	timer1_init();
 	uart_init();
 
-	// Calibración de los potenciómetros
 	for(uint8_t i=0;i<4;i++){
-		potCenter[i]=ADC_read(potPins[i]);
+		potCenter[i] = ADC_read(potPins[i]);
 		_delay_ms(5);
 	}
 
-	uint8_t telem_counter = 0;
+	uint8_t tcount=0;
 
 	while(1){
-		// Leer UART y actualizar angle_app[] o modo
-		uart_poll();
+		mode_button_poll();
 
 		for(uint8_t i=0;i<4;i++){
 			long logical_angle;
 			long servo_angle;
 
-			if (current_mode == MODE_CE) {
-				// Modo CE: comando espejo por potenciómetros
+			if (current_mode==MODE_CE) {
 				uint16_t val = ADC_read(potPins[i]);
-
-				long pot_angle = map_value(val, 0, 1023, 0, 270);
-				long offset    = map_value(potCenter[i], 0, 1023, 0, 270);
-				logical_angle  = 90 + (pot_angle - offset);
-
-				if (logical_angle < 0)   logical_angle = 0;
-				if (logical_angle > 180) logical_angle = 180;
+				long pot_a = map_value(val,0,1023,0,270);
+				long off   = map_value(potCenter[i],0,1023,0,270);
+				logical_angle = 90 + (pot_a - off);
+				if (logical_angle<0) logical_angle=0;
+				if (logical_angle>180) logical_angle=180;
 				} else {
-				// Modo APP: usar ángulo recibido por UART
 				logical_angle = angle_app[i];
 			}
 
-			// Guardar lo que ve la app
-			angle_logical[i] = (uint8_t)logical_angle;
+			angle_logical[i] = logical_angle;
 
-			// Ángulo que va al servo (inversiones y límites)
 			servo_angle = logical_angle;
 
 			switch(i){
 				case 0:
-				servo_angle = 180 - servo_angle;
+				servo_angle = 180-servo_angle;
 				break;
 				case 1:
-				servo_angle = 180 - servo_angle;
-				if(servo_angle < 30)  servo_angle = 30;
-				if(servo_angle > 150) servo_angle = 150;
+				servo_angle = 180-servo_angle;
+				if (servo_angle<30) servo_angle=30;
+				if (servo_angle>150) servo_angle=150;
 				break;
 				case 2:
 				break;
 				case 3:
-				servo_angle = 180 - servo_angle;
+				servo_angle = 180-servo_angle;
 				break;
 			}
 
 			pulseWidth[i] = SERVO_MIN_US +
-			(servo_angle * (SERVO_MAX_US - SERVO_MIN_US)) / 180;
+			(servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
 		}
 
-		// Emitir un frame de 20 ms para todos los servos
 		servo_pulse_frame();
 
-		// Telemetría cada ~5 frames ≈ 100 ms
-		telem_counter++;
-		if (telem_counter >= 5) {
-			telem_counter = 0;
+		tcount++;
+		if (tcount>=5){
+			tcount=0;
 			uart_send_positions();
 		}
 	}
