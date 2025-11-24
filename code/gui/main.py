@@ -122,12 +122,37 @@ def transform_angle_for_send(key: str, deg: int) -> int:
 
 # ===================== Parser (eco/estado) =====================
 def parse_and_update(text: str):
+    global mag_state
     last_line = None
     for line in text.splitlines():
         line = line.strip()
         if not line:
             continue
         last_line = line
+
+        upper = line.upper()
+
+        # Mensajes de MAG desde el firmware: "MAG:1", "MAG 0", "MAG=1", "mag on", etc.
+        if upper.startswith("MAG"):
+            # Normalizamos separadores
+            tmp = upper.replace("=", " ").replace(":", " ")
+            parts = tmp.split()
+            # parts[0] debería ser "MAG"
+            new_state = None
+            if len(parts) >= 2:
+                token = parts[1]
+                if token in ("1", "ON"):
+                    new_state = 1
+                elif token in ("0", "OFF"):
+                    new_state = 0
+
+            if new_state is not None:
+                mag_state = new_state
+                if mag_btn is not None:
+                    mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+                update_hud()
+            # seguimos con la siguiente línea
+            continue
 
         # Telemetría: "S1=90 S2=120 S3=45 S4=30"
         if ("S1=" in line) and ("S2=" in line) and ("S3=" in line) and ("S4=" in line):
@@ -298,7 +323,7 @@ def toggle_record():
     global recording, recorded_frames, record_after_id
 
     if not recording:
-        # Ahora solo permite grabar si hay brazo conectado
+        # Solo permite grabar si hay brazo conectado
         if not connected or ser is None:
             messagebox.showwarning("Conexión", "Conecte el brazo para grabar una trayectoria.")
             return
@@ -672,6 +697,7 @@ def toggle_magnet():
     if mag_btn is not None:
         mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
     write_line(f"MAG:{mag_state}")
+    update_hud()
 
 # ===================== HUD (Canvas) =====================
 def update_hud():
@@ -741,7 +767,7 @@ def update_hud():
                            text=f"Hombro S2={s2:d}°, Codo S3={s3:d}°, Muñeca S4={s4:d}°",
                            fill="#222")
 
-    # Texto con la pose actual de todos los sliders
+    # Texto con la pose actual de todos los sliders + MAG
     current_pose_var.set(
         f"Pose actual: S1={s1}°, S2={s2}°, S3={s3}°, S4={s4}°, MAG={mag_state}"
     )

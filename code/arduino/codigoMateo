@@ -25,6 +25,9 @@
 // Electroimán en PD7 (pin digital 7)
 #define MAG_PIN PD7
 
+// Botón físico del electroimán en D12 (PB4)
+#define MAG_BTN_PIN PB4
+
 // ADC
 const uint8_t potPins[4]   = {0, 1, 2, 3};
 const uint8_t servoPins[4] = {PD6, PB1, PB2, PB3};
@@ -37,12 +40,16 @@ uint8_t angle_logical[4] = {90, 90, 90, 90};
 
 volatile uint8_t current_mode = MODE_CE;
 
-// Estado del botón
+// Estado del botón de modo
 uint8_t btn_last = 1;
 uint8_t btn_debounce = 0;
 
 // Estado del electroimán
 uint8_t mag_state = 0;
+
+// Estado del botón del electroimán
+uint8_t mag_btn_last = 1;
+uint8_t mag_btn_debounce = 0;
 
 // Buffer UART
 static char rx_buf[64];
@@ -79,8 +86,8 @@ void uart_send_positions(void) {
 	unsigned s3 = 180 - s3_raw;
 
 	int n = snprintf(buf, sizeof(buf),
-		"S1=%u S2=%u S3=%u S4=%u\n",
-		s1, s2, s3, s4);
+	                 "S1=%u S2=%u S3=%u S4=%u\n",
+	                 s1, s2, s3, s4);
 	if (n > 0) uart_send_str(buf);
 }
 
@@ -108,7 +115,7 @@ void parse_uart_line(char *s) {
 			continue;
 		}
 
-		// MAG:0 / MAG:1
+		// MAG:0 / MAG:1 desde la app
 		if (strncmp(s,"MAG",3)==0) {
 			s += 3;
 
@@ -131,9 +138,6 @@ void parse_uart_line(char *s) {
 				} else {
 					PORTD &= ~(1<<MAG_PIN);
 				}
-				// Si querés eco:
-				// if (mag_state) uart_send_str("MAG=1\n");
-				// else           uart_send_str("MAG=0\n");
 			}
 
 			while(*s && *s!=' ' && *s!='\t') s++;
@@ -192,7 +196,7 @@ void uart_poll_byte(void) {
 	}
 }
 
-/* ===================== Botón ===================== */
+/* ===================== Botones ===================== */
 
 void mode_button_poll(void) {
 	uint8_t now = (PIND & (1<<BTN_MODE_PIN)) ? 1 : 0;
@@ -211,6 +215,36 @@ void mode_button_poll(void) {
 	}
 
 	btn_last=now;
+}
+
+/* Botón físico del electroimán (D12) */
+void mag_button_poll(void) {
+	uint8_t now = (PINB & (1<<MAG_BTN_PIN)) ? 1 : 0;
+
+	if (mag_btn_debounce > 0) mag_btn_debounce--;
+
+	// Flanco de bajada (HIGH -> LOW) con antirrebote
+	if (mag_btn_last == 1 && now == 0 && mag_btn_debounce == 0) {
+		// Toggle del estado del electroimán
+		mag_state = mag_state ? 0 : 1;
+
+		if (mag_state) {
+			PORTD |= (1<<MAG_PIN);
+		} else {
+			PORTD &= ~(1<<MAG_PIN);
+		}
+
+		// Aviso por UART
+		if (mag_state) {
+			uart_send_str("MAG:1\n");
+		} else {
+			uart_send_str("MAG:0\n");
+		}
+
+		mag_btn_debounce = 10;
+	}
+
+	mag_btn_last = now;
 }
 
 /* ===================== ADC ===================== */
@@ -243,6 +277,7 @@ long map_value(long x,long in_min,long in_max,long out_min,long out_max){
 /* ===================== PWM BITBANG ===================== */
 
 void servo_pulse_frame(void){
+	// Levantar todos
 	PORTD &= ~(1<<PD6);
 	PORTB &= ~((1<<PB1)|(1<<PB2)|(1<<PB3));
 
@@ -282,6 +317,10 @@ int main(void){
 	PORTD &= ~(1<<MAG_PIN);
 	mag_state = 0;
 
+	// Botón físico del electroimán (D12 = PB4)
+	DDRB &= ~(1<<MAG_BTN_PIN);
+	PORTB |= (1<<MAG_BTN_PIN); // pull-up interna
+
 	ADC_init();
 	timer1_init();
 	uart_init();
@@ -295,6 +334,7 @@ int main(void){
 
 	while(1){
 		mode_button_poll();
+		mag_button_poll();
 
 		for(uint8_t i=0;i<4;i++){
 			long logical_angle;
@@ -331,7 +371,7 @@ int main(void){
 			}
 
 			pulseWidth[i] = SERVO_MIN_US +
-				(servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
+			                (servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
 		}
 
 		servo_pulse_frame();
