@@ -111,6 +111,15 @@ def set_servo_angle(key: str, val: int):
     servos[key]["disp"].set(str(val))
     updating_from_code = False
 
+def transform_angle_for_send(key: str, deg: int) -> int:
+    """
+    Transforma el ángulo que se envía al firmware.
+    Para S3 se invierte (180 - deg), para los demás se envía tal cual.
+    """
+    if key == "S3":
+        return 180 - deg
+    return deg
+
 # ===================== Parser (eco/estado) =====================
 def parse_and_update(text: str):
     last_line = None
@@ -277,6 +286,10 @@ def record_tick():
     frame = {}
     for k in ("S1", "S2", "S3", "S4"):
         frame[k] = int(round(servos[k]["var"].get()))
+
+    # Guardar también el estado del electroimán en este instante
+    frame["MAG"] = int(mag_state)
+
     recorded_frames.append(frame)
 
     record_after_id = root.after(RECORD_INTERVAL_MS, record_tick)
@@ -399,7 +412,11 @@ def smooth_move_to_frame(frame, done_callback):
                 set_servo_angle(k, cur)
 
         if connected and mode_var.get() == "APP":
-            cmds = [f"{k}:{int(servos[k]['var'].get()):d}" for k in ("S1", "S2", "S3", "S4")]
+            cmds = []
+            for k in ("S1", "S2", "S3", "S4"):
+                deg = int(round(servos[k]["var"].get()))
+                send_deg = transform_angle_for_send(k, deg)
+                cmds.append(f"{k}:{send_deg:d}")
             write_line(" ".join(cmds))
 
         update_hud()
@@ -474,7 +491,7 @@ def stop_playback():
     status_var.set("Reproducción detenida por el usuario.")
 
 def playback_step():
-    global is_playing, play_index, play_after_id
+    global is_playing, play_index, play_after_id, mag_state
     if not is_playing:
         return
 
@@ -490,10 +507,25 @@ def playback_step():
         if k in frame:
             set_servo_angle(k, int(frame[k]))
 
+    # Actualizar electroimán según el frame, si tiene MAG
+    if "MAG" in frame:
+        mag_state = int(frame["MAG"])
+        if mag_btn is not None:
+            mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+
     # Solo envía por UART si realmente hay conexión y estás en APP
     if connected and mode_var.get() == "APP":
-        cmd = " ".join(f"{k}:{int(servos[k]['var'].get()):d}" for k in ("S1", "S2", "S3", "S4"))
-        write_line(cmd)
+        # Enviar servos
+        parts = []
+        for k in ("S1", "S2", "S3", "S4"):
+            deg = int(round(servos[k]["var"].get()))
+            send_deg = transform_angle_for_send(k, deg)
+            parts.append(f"{k}:{send_deg:d}")
+        write_line(" ".join(parts))
+
+        # Enviar también el estado del electroimán si está en el frame
+        if "MAG" in frame:
+            write_line(f"MAG:{mag_state}")
 
     update_hud()
 
@@ -515,7 +547,8 @@ def _send_pending_for(key: str):
     deg = max(lo, min(hi, deg))
     servos[key]["disp"].set(str(deg))
     if mode_var.get() == "APP" and deg != servos[key]["last_sent"]:
-        write_line(f"{key}:{deg:d}")
+        send_deg = transform_angle_for_send(key, deg)
+        write_line(f"{key}:{send_deg:d}")
         servos[key]["last_sent"] = deg
     if connected and mode_var.get() == "APP":
         servos[key]["after_id"] = root.after(SEND_INTERVAL_MS, _send_pending_for, key)
@@ -560,7 +593,8 @@ def on_slider_release(key: str, _event=None):
     servos[key]["var"].set(float(cur))
     servos[key]["disp"].set(str(cur))
     if cur != servos[key]["last_sent"]:
-        write_line(f"{key}:{cur:d}")
+        send_deg = transform_angle_for_send(key, cur)
+        write_line(f"{key}:{send_deg:d}")
         servos[key]["last_sent"] = cur
 
     update_hud()
@@ -606,7 +640,11 @@ def center_all_smooth():
                 set_servo_angle(k, cur)
 
         if connected and mode_var.get() == "APP":
-            cmds = [f"{k}:{int(servos[k]['var'].get()):d}" for k in ("S1", "S2", "S3", "S4")]
+            cmds = []
+            for k in ("S1", "S2", "S3", "S4"):
+                deg = int(round(servos[k]["var"].get()))
+                send_deg = transform_angle_for_send(k, deg)
+                cmds.append(f"{k}:{send_deg:d}")
             write_line(" ".join(cmds))
 
         update_hud()
@@ -705,7 +743,7 @@ def update_hud():
 
     # Texto con la pose actual de todos los sliders
     current_pose_var.set(
-        f"Pose actual: S1={s1}°, S2={s2}°, S3={s3}°, S4={s4}°"
+        f"Pose actual: S1={s1}°, S2={s2}°, S3={s3}°, S4={s4}°, MAG={mag_state}"
     )
 
 # ===================== UI =====================
@@ -739,7 +777,7 @@ for col in range(4):
 # Variables de UI
 status_var = tk.StringVar(value="Desconectado")
 last_msg_var = tk.StringVar(value="Último: —")
-current_pose_var = tk.StringVar(value="Pose actual: S1=90°, S2=90°, S3=90°, S4=90°")
+current_pose_var = tk.StringVar(value="Pose actual: S1=90°, S2=90°, S3=90°, S4=90°, MAG=0")
 traj_file_var = tk.StringVar(value="Trayectoria actual: (ninguna)")
 mode_var = tk.StringVar(value="APP")
 
