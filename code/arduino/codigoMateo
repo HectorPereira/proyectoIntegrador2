@@ -19,8 +19,11 @@
 #define MODE_CE  0
 #define MODE_APP 1
 
-// Botón
+// Botón de modo
 #define BTN_MODE_PIN PD2
+
+// Electroimán en PD7 (pin digital 7)
+#define MAG_PIN PD7
 
 // ADC
 const uint8_t potPins[4]   = {0, 1, 2, 3};
@@ -34,9 +37,12 @@ uint8_t angle_logical[4] = {90, 90, 90, 90};
 
 volatile uint8_t current_mode = MODE_CE;
 
-// Botón
+// Estado del botón
 uint8_t btn_last = 1;
 uint8_t btn_debounce = 0;
+
+// Estado del electroimán
+uint8_t mag_state = 0;
 
 // Buffer UART
 static char rx_buf[64];
@@ -61,7 +67,7 @@ void uart_send_str(const char *s) {
 	while (*s) uart_send_char(*s++);
 }
 
-/* === TELEMETRÍA: invertir SOLO S3 para la APP === */
+/* Telemetría: invertir solo S3 para la APP */
 void uart_send_positions(void) {
 	char buf[48];
 
@@ -70,12 +76,11 @@ void uart_send_positions(void) {
 	unsigned s3_raw = angle_logical[2];
 	unsigned s4 = angle_logical[3];
 
-	// Invertimos S3 solo para el reporte
 	unsigned s3 = 180 - s3_raw;
 
 	int n = snprintf(buf, sizeof(buf),
-	"S1=%u S2=%u S3=%u S4=%u\n",
-	s1, s2, s3, s4);
+		"S1=%u S2=%u S3=%u S4=%u\n",
+		s1, s2, s3, s4);
 	if (n > 0) uart_send_str(buf);
 }
 
@@ -86,6 +91,7 @@ void parse_uart_line(char *s) {
 		while (*s==' ' || *s=='\t') s++;
 		if (*s=='\0') break;
 
+		// MODE:APP / MODE:CE
 		if (strncmp(s,"MODE",4)==0) {
 			s+=4;
 			while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
@@ -93,7 +99,7 @@ void parse_uart_line(char *s) {
 			if (*s=='A'||*s=='a') {
 				current_mode = MODE_APP;
 				uart_send_str("MODE=APP\n");
-				} else if (*s=='C'||*s=='c') {
+			} else if (*s=='C'||*s=='c') {
 				current_mode = MODE_CE;
 				uart_send_str("MODE=CE\n");
 			}
@@ -102,6 +108,39 @@ void parse_uart_line(char *s) {
 			continue;
 		}
 
+		// MAG:0 / MAG:1
+		if (strncmp(s,"MAG",3)==0) {
+			s += 3;
+
+			while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
+
+			char *num_start = s;
+			uint8_t has_digit = 0;
+			while (isdigit((unsigned char)*s)) {
+				has_digit = 1;
+				s++;
+			}
+
+			if (has_digit) {
+				int val = atoi(num_start);
+				if (val != 0) val = 1;
+				mag_state = (uint8_t)val;
+
+				if (mag_state) {
+					PORTD |= (1<<MAG_PIN);
+				} else {
+					PORTD &= ~(1<<MAG_PIN);
+				}
+				// Si querés eco:
+				// if (mag_state) uart_send_str("MAG=1\n");
+				// else           uart_send_str("MAG=0\n");
+			}
+
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
+		}
+
+		// S1..S4
 		if (*s=='S' && (s[1]>='1' && s[1]<='4')) {
 			uint8_t idx = s[1]-'1';
 			s+=2;
@@ -128,6 +167,7 @@ void parse_uart_line(char *s) {
 			continue;
 		}
 
+		// Token desconocido
 		while(*s && *s!=' ' && *s!='\t') s++;
 	}
 }
@@ -142,10 +182,10 @@ void uart_poll_byte(void) {
 				parse_uart_line(rx_buf);
 				rx_idx=0;
 			}
-			} else {
+		} else {
 			if (rx_idx<sizeof(rx_buf)-1) {
 				rx_buf[rx_idx++]=c;
-				} else {
+			} else {
 				rx_idx=0;
 			}
 		}
@@ -163,7 +203,7 @@ void mode_button_poll(void) {
 		if (current_mode==MODE_CE) {
 			current_mode=MODE_APP;
 			uart_send_str("MODE=APP\n");
-			} else {
+		} else {
 			current_mode=MODE_CE;
 			uart_send_str("MODE=CE\n");
 		}
@@ -191,7 +231,7 @@ uint16_t ADC_read(uint8_t ch){
 
 void timer1_init(void){
 	TCCR1A=0;
-	TCCR1B=(1<<CS11); // prescaler 8 ? 0.5 us
+	TCCR1B=(1<<CS11); // prescaler 8, 0.5 us
 }
 
 /* ===================== map ===================== */
@@ -215,7 +255,7 @@ void servo_pulse_frame(void){
 		uint16_t now = TCNT1;
 		uint16_t us  = (now-start)/2;
 
-		uart_poll_byte(); // <- AHORA SE LEE UART EN TIEMPO REAL
+		uart_poll_byte();
 
 		if (us>=SERVO_PERIOD_US) break;
 
@@ -229,11 +269,18 @@ void servo_pulse_frame(void){
 /* ===================== MAIN ===================== */
 
 int main(void){
+	// Servos
 	DDRD |= (1<<PD6);
 	DDRB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
 
+	// Botón modo
 	DDRD &= ~(1<<BTN_MODE_PIN);
 	PORTD |= (1<<BTN_MODE_PIN);
+
+	// Electroimán
+	DDRD |= (1<<MAG_PIN);
+	PORTD &= ~(1<<MAG_PIN);
+	mag_state = 0;
 
 	ADC_init();
 	timer1_init();
@@ -260,32 +307,31 @@ int main(void){
 				logical_angle = 90 + (pot_a - off);
 				if (logical_angle<0) logical_angle=0;
 				if (logical_angle>180) logical_angle=180;
-				} else {
+			} else {
 				logical_angle = angle_app[i];
 			}
 
 			angle_logical[i] = logical_angle;
-
 			servo_angle = logical_angle;
 
 			switch(i){
 				case 0:
-				servo_angle = 180-servo_angle;
-				break;
+					servo_angle = 180-servo_angle;
+					break;
 				case 1:
-				servo_angle = 180-servo_angle;
-				if (servo_angle<30) servo_angle=30;
-				if (servo_angle>150) servo_angle=150;
-				break;
+					servo_angle = 180-servo_angle;
+					if (servo_angle<30) servo_angle=30;
+					if (servo_angle>150) servo_angle=150;
+					break;
 				case 2:
-				break;
+					break;
 				case 3:
-				servo_angle = 180-servo_angle;
-				break;
+					servo_angle = 180-servo_angle;
+					break;
 			}
 
 			pulseWidth[i] = SERVO_MIN_US +
-			(servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
+				(servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
 		}
 
 		servo_pulse_frame();

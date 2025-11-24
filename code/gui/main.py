@@ -10,7 +10,7 @@ import os
 BAUD = 9600                 # Debe coincidir con el firmware del Arduino
 SEND_INTERVAL_MS = 40       # Envío durante arrastre
 READ_POLL_MS = 60           # Lectura periódica del puerto
-CENTER_STEP_DEG = 1         # Paso del centrado (°)
+CENTER_STEP_DEG = 2         # Paso del centrado (°)
 CENTER_INTERVAL_MS = 40     # Intervalo entre pasos (ms)
 
 RECORD_INTERVAL_MS = 100    # Periodo para grabar trayectoria (ms)
@@ -49,6 +49,10 @@ updating_from_code = False
 
 # Archivo de trayectoria actual
 trajectory_filename = None
+
+# Electroimán
+mag_state = 0  # 0 = apagado, 1 = encendido
+mag_btn = None
 
 # Estado por-servo
 servos = {
@@ -198,7 +202,7 @@ def connect_serial():
 
 def disconnect_serial():
     global ser, connected, is_centering, recording, is_playing
-    global record_after_id, play_after_id, preplay_active, preplay_after_id
+    global record_after_id, play_after_id, preplay_active, preplay_after_id, mag_state
 
     for k in servos:
         aid = servos[k]["after_id"]
@@ -236,6 +240,14 @@ def disconnect_serial():
     is_centering = False
     set_scales_state("normal")
 
+    # Reset electroimán
+    mag_state = 0
+    if mag_btn is not None:
+        try:
+            mag_btn.config(text="Electroimán: OFF")
+        except Exception:
+            pass
+
     if ser:
         try:
             ser.close()
@@ -272,12 +284,15 @@ def record_tick():
 def toggle_record():
     global recording, recorded_frames, record_after_id
 
-    # Permitir grabar incluso sin Arduino (modo simulador).
     if not recording:
+        # Ahora solo permite grabar si hay brazo conectado
+        if not connected or ser is None:
+            messagebox.showwarning("Conexión", "Conecte el brazo para grabar una trayectoria.")
+            return
         recorded_frames = []
         recording = True
         record_btn.config(text="Detener grabación")
-        status_var.set("Grabando trayectoria (offline también).")
+        status_var.set("Grabando trayectoria.")
         record_tick()
     else:
         recording = False
@@ -412,6 +427,10 @@ def start_playback():
 
     if not recorded_frames:
         messagebox.showinfo("Reproducción", "No hay trayectoria cargada o grabada.")
+        return
+
+    if not connected or ser is None:
+        messagebox.showwarning("Conexión", "Conecte el brazo para reproducir una trayectoria.")
         return
 
     if is_playing:
@@ -604,6 +623,17 @@ def center_all_smooth():
             root.after(CENTER_INTERVAL_MS, _tick)
 
     _tick()
+
+# ===================== Electroimán =====================
+def toggle_magnet():
+    global mag_state
+    if not connected or ser is None:
+        messagebox.showwarning("Conexión", "Conecte el brazo para controlar el electroimán.")
+        return
+    mag_state = 0 if mag_state == 1 else 1
+    if mag_btn is not None:
+        mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+    write_line(f"MAG:{mag_state}")
 
 # ===================== HUD (Canvas) =====================
 def update_hud():
@@ -808,6 +838,11 @@ ttk.Button(traj_frame, text="Reproducir",
            command=start_playback).grid(row=0, column=3, padx=6)
 ttk.Button(traj_frame, text="Detener",
            command=stop_playback).grid(row=0, column=4, padx=6)
+
+# Botón electroimán
+mag_btn = ttk.Button(traj_frame, text="Electroimán: OFF",
+                     command=toggle_magnet)
+mag_btn.grid(row=1, column=0, columnspan=5, sticky="w", pady=(6, 0))
 
 # HUD
 row += 1
