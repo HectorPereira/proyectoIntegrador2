@@ -120,19 +120,61 @@ def transform_angle_for_send(key: str, deg: int) -> int:
         return 180 - deg
     return deg
 
+# ===================== Grabación control interno (desde HW) =====================
+def start_record_from_hw():
+    """Arranca grabación porque vino GON desde el Arduino."""
+    global recording, recorded_frames, record_after_id
+    if recording:
+        return
+    recorded_frames = []
+    recording = True
+    try:
+        record_btn.config(text="Detener grabación")
+    except Exception:
+        pass
+    status_var.set("Grabando trayectoria (botón físico).")
+    record_tick()
+
+def stop_record_from_hw():
+    """Detiene grabación porque vino GOFF desde el Arduino."""
+    global recording, record_after_id
+    if not recording:
+        return
+    recording = False
+    if record_after_id is not None:
+        try:
+            root.after_cancel(record_after_id)
+        except Exception:
+            pass
+        record_after_id = None
+    try:
+        record_btn.config(text="Grabar trayectoria")
+    except Exception:
+        pass
+    status_var.set(f"Grabación detenida. Pasos: {len(recorded_frames)}")
+
 # ===================== Parser (eco/estado) =====================
 def parse_and_update(text: str):
-    global mag_state
+    global mag_state, recording, recorded_frames, record_after_id
     last_line = None
+
     for line in text.splitlines():
         line = line.strip()
         if not line:
             continue
         last_line = line
-
         upper = line.upper()
 
-        # Mensajes de MAG desde el firmware: "MAG:1", "MAG 0", "MAG=1", "mag on", etc.
+        # ----- GON / GOFF desde el Arduino (botón físico de grabación) -----
+        if upper.startswith("GON"):
+            start_record_from_hw()
+            continue
+
+        if upper.startswith("GOFF"):
+            stop_record_from_hw()
+            continue
+
+        # ----- Mensajes de MAG desde el firmware: "MAG:1", "MAG 0", "MAG=1", "mag on", etc. -----
         if upper.startswith("MAG"):
             tmp = upper.replace("=", " ").replace(":", " ")
             parts = tmp.split()
@@ -521,6 +563,7 @@ def stop_playback():
 
 def playback_step():
     global is_playing, play_index, play_after_id, mag_state
+
     if not is_playing:
         return
 
@@ -531,39 +574,48 @@ def playback_step():
 
     frame = recorded_frames[play_index]
 
-    # Mover sliders a la posición grabada
+    # 1) Mover sliders a la posición grabada
     for k in ("S1", "S2", "S3", "S4"):
         if k in frame:
             set_servo_angle(k, int(frame[k]))
 
-    # Actualizar electroimán según el frame, si tiene MAG
+    # 2) Actualizar electroimán según el frame (si tiene MAG)
     if "MAG" in frame:
-        mag_state = int(frame["MAG"])
+        try:
+            mag_state = int(frame["MAG"])
+        except Exception:
+            # por si viene raro el valor en el JSON
+            mag_state = 1 if str(frame["MAG"]).strip() not in ("0", "OFF", "off") else 0
+
         if mag_btn is not None:
             mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
 
-    # Solo envía por UART si realmente hay conexión y estás en APP
-    if connected and mode_var.get() == "APP":
-        # Enviar servos
+    # 3) Enviar comandos al Arduino (servos + MAG en una sola línea)
+    if connected and ser is not None and mode_var.get() == "APP":
         parts = []
         for k in ("S1", "S2", "S3", "S4"):
             deg = int(round(servos[k]["var"].get()))
             send_deg = transform_angle_for_send(k, deg)
             parts.append(f"{k}:{send_deg:d}")
-        write_line(" ".join(parts))
 
-        # Enviar también el estado del electroimán si está en el frame
+        # Si el frame trae MAG, lo mandamos también
         if "MAG" in frame:
-            write_line(f"MAG:{mag_state}")
+            parts.append(f"MAG:{mag_state}")
 
+        cmd = " ".join(parts)
+        write_line(cmd)
+
+    # 4) Actualizar HUD
     update_hud()
 
+    # 5) Pasar al siguiente frame
     play_index += 1
-    if play_index < len(recorded_frames):
+    if is_playing and play_index < len(recorded_frames):
         play_after_id = root.after(RECORD_INTERVAL_MS, playback_step)
     else:
         is_playing = False
         status_var.set("Reproducción finalizada")
+
 
 # ===================== Envío por sliders =====================
 def _send_pending_for(key: str):
