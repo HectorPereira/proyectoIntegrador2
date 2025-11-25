@@ -134,10 +134,8 @@ def parse_and_update(text: str):
 
         # Mensajes de MAG desde el firmware: "MAG:1", "MAG 0", "MAG=1", "mag on", etc.
         if upper.startswith("MAG"):
-            # Normalizamos separadores
             tmp = upper.replace("=", " ").replace(":", " ")
             parts = tmp.split()
-            # parts[0] debería ser "MAG"
             new_state = None
             if len(parts) >= 2:
                 token = parts[1]
@@ -151,7 +149,6 @@ def parse_and_update(text: str):
                 if mag_btn is not None:
                     mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
                 update_hud()
-            # seguimos con la siguiente línea
             continue
 
         # Telemetría: "S1=90 S2=120 S3=45 S4=30"
@@ -331,6 +328,10 @@ def toggle_record():
         recording = True
         record_btn.config(text="Detener grabación")
         status_var.set("Grabando trayectoria.")
+
+        # Avisar al firmware que la grabación comenzó (LED rojo + 3 beeps)
+        write_line("GON")
+
         record_tick()
     else:
         recording = False
@@ -342,6 +343,9 @@ def toggle_record():
             record_after_id = None
         record_btn.config(text="Grabar trayectoria")
         status_var.set(f"Grabación detenida. Pasos: {len(recorded_frames)}")
+
+        # Avisar al firmware que la grabación terminó (apagar LED rojo)
+        write_line("GOFF")
 
 def save_trajectory():
     global trajectory_filename
