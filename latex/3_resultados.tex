@@ -1,5 +1,7 @@
 \section{Análisis de resultados}
 
+
+
 \subsection{Diseño y fabricación}
 \subsubsection{Articulaciónes desmontables}
 
@@ -269,6 +271,41 @@ Estas funciones complementan la lógica interna del microcontrolador, que tambi�
 \subsubsection{Integración entre la HMI y el microcontrolador}
 
 La aplicación de escritorio envía comandos en un formato estructurado que el microcontrolador interpreta en tiempo real, mientras que éste devuelve información del estado del sistema para su visualización en la interfaz. El funcionamiento del parser de mensajes entrantes se detalla en los Anexos~\ref{gui:parser_uart} y~\ref{gui:parser_uart_alt}. Este enlace bidireccional garantiza coherencia entre la representación gráfica y la postura física del robot, asegurando una operación estable, confiable y sincronizada.
+
+\subsection{Beneficios}
+
+\begin{table}[H]
+\centering
+\caption{Estimativo de costos por componente - precio. Fuente: elaboración propia}
+\begin{tabular}{p{0.63\textwidth} p{0.07\textwidth} p{0.20\textwidth}}
+\toprule
+\textbf{Componente} & \textbf{Cant.} & \textbf{Precio (UYU)} \\
+\midrule
+
+Arduino UNO & 1 & 450 \\
+
+Servomotor MG996R & 4 & 2\,400 \\
+
+Potenciómetros 10 $k\Omega$ & 4 & 280 \\
+
+Condensadores 2200 µF & 2 & 120 \\
+
+Protoboard / placa perforada & 1 & 400 \\
+
+Electroimán casero (materiales) & 1 & 500 \\
+
+MDF + tornillería + bridas + consumibles & — & 1\,100 \\
+
+LEDs + resistencias + cableado menor & — & 100 \\
+
+Cable multicore + funda termorretráctil + conectores & — & 600 \\
+
+\midrule
+\textbf{Total estimado} & --- & \textbf{6\,030} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 
 
 % TODO: Modelo CAD con todo incorporado
