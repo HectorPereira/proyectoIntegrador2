@@ -3,22 +3,38 @@
 \subsection{Alcance del proyecto}
 El proyecto comprende el diseño, construcción y validación de un brazo robótico didáctico a escala. La arquitectura mecánica contempla cuatro grados de libertad (sin contar el efector), con una estructura paramétrica diseñada para corte láser en MDF de espesores entre 3.2 y 10 mm, pero adaptable también a materiales como acrílico o metal. La base será fija y deberá estar contenida dentro de un volumen de 50 $\times$ 50 $\times$ 50 cm.
 
+\vspace{1em}
+
 El sistema contará con efectores intercambiables, entre ellos un electroimán para la manipulación de piezas ferromagnéticas y una garra mecánica para piezas no magnéticas. Ambos estarán diseñados con un mecanismo de cambio rápido que permita alternar entre uno y otro sin dificultad.
+
+\vspace{1em}
 
 La actuación del brazo se logrará mediante servomotores MG996R, con uno por cada articulación principal. Para optimizar el rendimiento, se implementará una transmisión por eslabones que mantenga la mayor parte de la masa cercana a los ejes de giro.
 
+\vspace{1em}
+
 En cuanto al control y la electrónica, se utilizará un microcontrolador (ESP32 o ATmega328P), un driver MOSFET como el IRFZ44N (o equivalente) para gobernar el electroimán, así como finales de carrera para homing y elementos de señalización visual y sonora mediante LEDs y un buzzer de estado.
+
+\vspace{1em}
 
 El software incluirá un firmware desarrollado en C/C++ y una interfaz gráfica en Python, implementada en Tkinter o PyQt. Esta ofrecerá un modo manual y un modo automático, además de control ON/OFF del electroimán y una cinemática inversa planar básica para la manipulación de piezas.
 
+\vspace{1em}
+
 La alimentación del sistema se resolverá con una fuente capaz de abastecer tanto la lógica como la potencia, incorporando convertidores adecuados para los servos y el electroimán.
+
+\vspace{1em}
 
 Finalmente, en el componente de documentación y docencia, se elaborará un manual de armado, una guía docente y un conjunto mínimo de cinco prácticas de laboratorio orientadas a la enseñanza y experimentación con el brazo robótico.
 
 \subsection{Criterios de aceptación}
 El dispositivo debe ser capaz de ejecutar trayectorias punto a punto tanto en modo manual como en modo automático. Asimismo, deberá alcanzar una tasa de éxito superior al 90 \% en las tareas de agarre y manipulación de objetos, garantizando un desempeño confiable durante su operación.
 
+\vspace{1em}
+
 De igual forma, contará con una rutina de referencia operativa que asegure la correcta inicialización del sistema, un mecanismo de paro de emergencia y límites mecánicos verificados para preservar la seguridad del equipo y del entorno.
+
+\vspace{1em}
 
 Finalmente, el proyecto se entregará con un prototipo completamente ensamblado, acompañado del firmware correspondiente, la interfaz gráfica de usuario, un manual de usuario detallado y una guía docente que incluya cinco prácticas evaluables para su aplicación en el ámbito académico.
 
@@ -42,6 +58,8 @@ Finalmente, el proyecto se entregará con un prototipo completamente ensamblado,
   \includegraphics[width=\textwidth]{anexos/Gantt.png}
   \caption{Diagrama de Gantt. Fuente: elaboración própia}\label{fig:diagrama_gantt}
 \end{figure}
+
+% TODO: Actualizar Gantt
 
 
 
@@ -106,12 +124,16 @@ Basádo en pruebas de encaje utilizando las galgas fabricadas, los ajustes para 
 
 Para imprimir superficies con interferencia entre sí, se debe considerar la presencia de la costura de impresión. Al momento de diseñar se debe incluir un receso en superficies redondas para permitir que la costura no sobresalga al momento de la impresión, y perjudicar la interferencia deseada.
 
+\vspace{1em}
+
 El corte láser brinda una precisión prácticamente exacta en la capa superficial donde se encuentra el punto focal del láser. Se debe considerar que mientras el láser atraviesa el material, y la superficie de contacto con el láser se va alejando del punto de foco, se produce una apertura de aproximadamente 1.8 grados. Lo que se traduce en que si se diseña un agujero de 10mm, en la cara trasera habrán 10.2mm. 
 
 \subsection{Diseño y fabricación}
 \subsubsection{Articulaciónes desmontables}
 
 Con base en los lineamientos de tolerancias del apartado~\ref{Tolerancias}, se diseñó y fabricó una articulación desmontable para el brazo robótico. El objetivo fue verificar encastres, juego angular y comportamiento frente a rozamiento en las superficies de contacto.
+
+\vspace{1em}
 
 Inicialmente se construyó con descartes de MDF cortados a láser y herrajes M3. La pieza se sometió a esfuerzos de fricción, corte y rotación para observar desgaste, holguras y deformaciones. El prototipo permitió validar el principio mecánico, pero evidenció pérdida de tolerancia en contactos MDF–MDF bajo uso repetido. 
 
@@ -134,6 +156,25 @@ Posteriormente se reemplazaron las superficies de contacto por insertos impresos
 
 Se identifican con verde las superficie de contacto que friccionan contra el perno azúl, las cualés tienen un ajuste deslizante con el perno. En amarillo se muestra la pieza que actúa como tope para el seguro del perno. En el modelo anterior se utilizaba una sola pieza que hacía esta función, pero al utilizar este tope (con un ajuste apretado) permite regular la fuerza de ajuste y juego de la articulación. Luego el seguro que se encuentra entre el tope y el perno, permite montar y desmontar la articulación de manera sencilla.
 
+% TODO:
+
+% Se incorpora la articulación desmontable en los eslabones hombro y muñeca
+
+% Figura del despieze del brazo
+
+% \subsubsection{Base}
+
+% Se incorpora una base giratoria para permitir la rotación de la estructura. A la misma se le agrega una mesa donde se incorporan el arduino y la protoboard. 
+
+% Figura base
+
+% \subsubsection{Tablero}
+
+% Se crea un tablero para albergar los componentes electrónicos y conectores tanto para la fuente como para el controlador espejo, a fin de facilitar la visualización e interacción con los mismos.
+
+% Figura tablero
+
+
 \subsubsection{Electroimán}
 Para realizar la carcasa del electroimán se realiza uso de un torno manual. Hasta tener las medidas concretadas, se dejan un excedente en espesor y longitud para realizar pruebas durante el proceso de prototipado. Cuando se obtengan el resto de valores se dará lugar a una finalización de esta pieza por motivos de reducción de peso.
 La bobina del electroimán se construyó utilizando alambre de cobre esmaltado de 0,5 mm de diámetro, enrollado a lo largo de aproximadamente 5 metros para generar el campo magnético necesario. Como núcleo ferromagnético se empleó un tornillo de acero, seleccionado por su alta permeabilidad magnética y disponibilidad. 
@@ -147,17 +188,33 @@ Para asegurar la integridad mecánica del devanado y permitir un montaje limpio 
 
 
 
-En lo referente a la electrónica de potencia, se utilizó una fuente ATX de una computadora en desuso para alimentar los motores del sistema.
- Esta fuente fue seleccionada debido a su capacidad para suministrar líneas estables de 12 V y 5 V, necesarias para los distintos actuadores.
-  Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, permitiendo un montaje seguro y una mejor organización del cableado dentro del proyecto, la misma se enciende por un interruptor ubicado en la parte delantera de la carcasa.
+\subsection{Fuente de alimentación}
+
+En lo referente a la electrónica de potencia, se utilizó una fuente ATX de una computadora en desuso para alimentar los motores del sistema. Esta fuente fue seleccionada debido a su capacidad para suministrar líneas estables de 12 V y 5 V, necesarias para los distintos actuadores.
+Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, permitiendo un montaje seguro y una mejor organización del cableado dentro del proyecto, la misma se enciende por un interruptor ubicado en la parte delantera de la carcasa.
+
+% TODO: Figura de fuente de alimentacion
 
 \subsubsection{Controlador espejo}
 
-Se da inicio al diseño del controlador espejo tomando en consideración las tolerancias especuladas. Se elaboran bosquejos y se diseñan partes individuales para verificar calces y encastres, tomando como inspiración el anexo \ref{fig:insp.impreso}.
+Se realiza el diseño del controlador espejo tomando en consideración las tolerancias especuladas. Se elaboran bosquejos y se diseñan partes individuales para verificar calces y encastres, tomando como inspiración el anexo \ref{fig:insp.impreso}.
+
+% TODO: 
+
+% Utilizando una filosofía de materiales híbrida, y luego de varias iteraciones, se llega al siguiente diseño: Un enfoque modular, con una estructura en MDF y con carcazas para protección y estética en PLA. 
+
+% Figura controlador espejo
+
+% Se conectan todos los potenciómetros entre sí y se crean conectores hembra para las entradas de alimentación, y las salidas analógicas y digitales de los potenciómetros y botones respectivamente.
+
 
 \subsection{Código y electrónica de control}
 
-Utilizando servomotores SG90 como prueba de concepto gracias a su reducido consumo comparados con los servomotores MG996R, se realizan pruebas de código en C de bajo nivel. Utilizando los conversores analógico-digital, y PWM para leer el valor de resistencia de los potenciometros y traducirlo en un ángulo de salida para los servomotores. Véase anexo \ref{apendice:codigo}
+Utilizando servomotores SG90 como prueba de concepto gracias a su reducido consumo comparados con los servomotores MG996R, se realizan pruebas de código en C de bajo nivel. Utilizando los conversores analógico-digital, y PWM para leer el valor de resistencia de los potenciometros y traducirlo en un ángulo de salida para los servomotores (véase anexo \ref{anexo:codigo}).
+
+% TODO: 
+
+% Diagrama electrónica de control
 
 
 

@@ -86,6 +86,8 @@ Al comparar el MG996R con el SG90 (\cite{oracid_mg996r_test} y \cite{MrProject_s
 
 En tamaño y peso también se distinguen bastante. El SG90 es muy compacto, con solo 9 gramos, frente a los 55 gramos del MG996R. Esa ligereza lo vuelve práctico cuando no hay mucho espacio o cuando se busca mantener la estructura lo más liviana posible, aunque lógicamente no tiene la misma capacidad de carga. En cuanto a velocidad, el SG90 responde un poco más rápido (0.1 s/60° frente a 0.17 s/60° a 4.8 V en el MG996R), pero esta diferencia no suele ser decisiva si lo que se necesita es fuerza y confiabilidad más que rapidez.
 
+\vspace{1em}
+
 Otra diferencia clave está en los materiales. El MG996R usa engranajes metálicos y un sistema de doble rodamiento de bolas, lo que le da más precisión y resistencia al desgaste. En cambio, el SG90 usa engranajes plásticos, que son más frágiles y tienden a deteriorarse con el uso. Eso sí, esta robustez del MG996R viene con un costo: su consumo de corriente es bastante más alto (puede llegar a 2.5 A en stall), mientras que el SG90 consume mucho menos y puede funcionar sin problemas con fuentes pequeñas.
 
 \begin{table}[H]
@@ -115,7 +117,11 @@ Basado en el resultado de la matriz de selección, el MG996R es la mejor opción
 
 Para la fabricación del brazo se evaluaron tres alternativas: (i) estructura íntegramente en MDF mediante corte láser, (ii) piezas 100\% impresas en 3D (PLA) y (iii) enfoque híbrido, utilizando MDF como material estructural principal e interfaces de PLA en zonas de fricción y articulaciones. En el contexto del taller, el MDF ofrece una ventaja clara en \emph{tiempo de iteración}: permite realizar ajustes dimensionales rápidos (re-cortes sucesivos) y validar encastres sin esperar horas de impresión \cite{xometry_laser_vs_3dp_2022}. Además, su costo por unidad de superficie es bajo y la documentación técnica del MDF como material de ingeniería está ampliamente consolidada \cite{usda_wood_handbook_2021}.
 
+\vspace{1em}
+
 Ahora bien, el MDF presenta limitaciones en contactos móviles: con fricción sostenida tiende a deshilacharse y perder tolerancia, lo que afecta la repetibilidad de las uniones; de hecho, la fricción en MDF no laminado se reporta relativamente alta frente a otras chapas y tableros \cite{kukla_woodresearch_2021_mdf_friction}. Allí el PLA aporta valor: permite generar \emph{interfaces} con mejor control de tolerancias, superficies de contacto más estables y geometrías que no son viables con corte láser (chaflanes, alojamientos, casquillos, topes, etc.), con evidencia tribológica específica sobre el comportamiento de PLA impreso (influencia de textura, parámetros de impresión y lubricación) \cite{asme_pla_friction_2022}.\footnote{En zonas PLA–PLA se recomienda lubricante seco y orientar las capas para minimizar desgaste.}
+
+\vspace{1em}
 
 La comparación cuantitativa se resume en la matriz de selección (véase Tabla~\ref{tab:matriz_materiales}), ponderando criterios como tiempo de fabricación, costo, facilidad de retrabajo, precisión/tolerancias, comportamiento a la fricción, rigidez estructural, peso y complejidad de ensamblaje. 
 
@@ -153,6 +159,8 @@ Con base en esa matriz, se adopta un enfoque \textbf{híbrido (MDF + interfaces 
 
 Para la alimentación del brazo se evaluaron cuatro alternativas: PC (fuente ATX reciclada), una fuente conmutada de 5 V y 10 A tipo ``LED'', varias fuentes genéricas de 5 V y 2 A distribuidas por carga, y una fuente de laboratorio regulable. La fuente de PC ofrece alto margen de corriente en 5 V, protecciones integradas habituales y muy buena disponibilidad a bajo costo, a cambio de mayor volumen y la necesidad de habilitar PS\_ON, además de considerar el límite combinado 3.3 V + 5 V. La fuente LED es compacta y sencilla de cablear, pero suele tener menos margen ante picos simultáneos de servos y protecciones más básicas. La opción de múltiples fuentes genéricas permite aislar cargas, aunque complica el cableado, incrementa los puntos de falla y no comparte bien los picos intermitentes entre líneas separadas. La fuente de laboratorio ofrece excelente regulación y medición, pero no resulta práctica para un kit didáctico autónomo por costo, tamaño y dependencia de un equipo externo.
 
+\vspace{1em}
+
 La comparación cuantitativa se resume en la matriz de selección (véase Tabla~\ref{tab:matriz_fuente}), donde se ponderan corriente y picos, disponibilidad y costo, integración, regulación y rizado, protecciones, portabilidad, EMI, escalabilidad y confiabilidad en una escala de 1 a 10.
 
 
@@ -175,6 +183,7 @@ Confiabilidad global               & 2 & 8 & 7 & 5 & 8 \\
 \midrule
 \textbf{Total ponderado}           &   & \textbf{139} & \textbf{116} & \textbf{102} & \textbf{117} \\
 \bottomrule
+\label{tab:matriz_fuente}
 \end{tabular}
 \end{table}
 
@@ -339,17 +348,27 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
 
 \cite{hyperphysics_tcr_cu}
 
+% TODO: Revisar si corresponde en marco teorico
+
 \subsubsection{Aspectos electrónicos}
 
 El sistema electrónico se concibe para ofrecer control preciso, seguridad y facilidad de mantenimiento. El \emph{Arduino Uno} (ATmega328P) actúa como controlador principal: genera las señales PWM para los servomotores, adquiere las entradas de potenciómetros y pulsadores, y coordina los estados de operación y seguridad. Cada servo MG996R incorpora un fusible en su línea de alimentación para limitar daños ante sobrecorrientes. La distribución de masas separa los retornos de potencia (servos y electroimán) del retorno de lógica, reuniéndose en un punto estrella cercano a la fuente con el objetivo de minimizar caídas y ruido eléctrico.
 
+\vspace{1em}
+
 El electroimán se conmuta con un MOSFET N–canal en configuración de low–side switch (fuente común). Se emplea un IRFZ44N en encapsulado TO–220, cuyas magnitudes relevantes (tensión \newline \mbox{$V_{\mathrm{DS,max}}=55~\mathrm{V}$}, corriente continua admisible del orden de decenas de amperios a $25\,^{\circ}\mathrm{C}$ y resistencia de conducción especificada como \mbox{$R_{\mathrm{DS(on)}}\leq 22~\mathrm{m}\Omega$ a $V_{\mathrm{GS}}=10~\mathrm{V}$}) resultan holgadas para el uso previsto. Dado que la hoja de datos garantiza la baja $R_{\mathrm{DS(on)}}$ a \mbox{$V_{\mathrm{GS}}=10~\mathrm{V}$} y no a \mbox{$5~\mathrm{V}$}, el dispositivo no es estrictamente de compuerta lógica; sin embargo, a las corrientes que demanda nuestro electroimán su desempeño es adecuado, y se deja constancia de que una evolución razonable es sustituirlo por un modelo \emph{logic–level} (p.\,ej., IRLZ44N) para reducir pérdidas y elevar el margen térmico.
+
+\vspace{1em}
+
 
 La bobina del electroimán está realizada con $20~\mathrm{m}$ de alambre de cobre esmaltado de diámetro \mbox{$d=0{,}5~\mathrm{mm}$}. Su resistencia en frío se estima con
 \[
 R=\rho\,\frac{\ell}{A},\qquad \rho_{\mathrm{Cu}}\approx 1{,}68\times 10^{-8}\ \Omega\!\cdot\!\mathrm{m},\quad A=\pi\!\left(\frac{d}{2}\right)^{2},
 \]
 lo que arroja aproximadamente \mbox{$R\approx 1{,}68~\Omega$}. Alimentada a \mbox{$5~\mathrm{V}$}, la corriente esperada es \newline \mbox{$I_{\mathrm{bob}}\approx 5/1{,}68\simeq 3{,}0~\mathrm{A}$} y la disipación en la bobina \mbox{$P_{\mathrm{bob}}\approx I_{\mathrm{bob}}^{2}R\simeq 15~\mathrm{W}$}. Estas magnitudes aconsejan operación intermitente (control de \emph{duty–cycle}) o gestión térmica adicional para mantener temperaturas seguras en uso continuado.
+
+
+\vspace{1em}
 
 La interfaz de control se completa con una resistencia en serie en la compuerta del MOSFET (\mbox{$R_{g}\approx 100~\Omega$}) para limitar el régimen de carga de la compuerta y un \emph{pull–down} (\mbox{$R_{\mathrm{pd}}\approx 100~\mathrm{k}\Omega$}) que asegura el apagado en reposo. En paralelo con la bobina se dispone un diodo de rueda libre (\emph{flyback}) rápido o Schottky, dimensionado para la corriente de la bobina y con tensión inversa acorde, a fin de suprimir sobretensiones al corte. En la alimentación de $5~\mathrm{V}$ se ubican condensadores de \emph{bulk} cerca de las cargas (típicamente del orden de $470$–$1000~\mu\mathrm{F}$) y desacoples locales de $100~\mathrm{nF}$, con la finalidad de amortiguar picos debidos a los servomotores y al propio electroimán. Finalmente, el firmware incorpora medidas de protección como límites por \emph{software} en el tiempo de activación del electroimán, vigilancia por \emph{watchdog} y paro de emergencia, coherentes con la filosofía de diseño seguro del conjunto.
 
@@ -359,7 +378,11 @@ La interfaz de control se completa con una resistencia en serie en la compuerta 
 
 En los sistemas robóticos con múltiples grados de libertad, la interacción entre el operador y el sistema representa un elemento crítico para garantizar precisión, seguridad y repetitividad. Las interfaces humano-máquina (HMI, por sus siglas en inglés) permiten que el usuario pueda supervisar y controlar el estado del sistema sin necesidad de interactuar directamente con los niveles más bajos del hardware.
 
+\vspace{1em}
+
 En el contexto de los brazos robóticos, las interfaces gráficas de usuario (GUI) se han consolidado como una solución estándar tanto en entornos industriales como educativos. Estas interfaces no solo facilitan el control manual, sino que también permiten visualizar información en tiempo real, como posiciones angulares, trayectorias, estados de los actuadores y condiciones de funcionamiento.
+
+\vspace{1em}
 
 La utilización de una HMI basada en software presenta ventajas significativas frente a interfaces exclusivamente físicas, tales como:
 \begin{itemize}
@@ -375,7 +398,12 @@ A partir de estos principios, se decidió incorporar una aplicación de escritor
 
 La elección de una interfaz gráfica de escritorio frente a otras alternativas, como controles físicos dedicados o paneles externos, se basa en criterios de flexibilidad, escalabilidad y facilidad de desarrollo.
 
+\vspace{1em}
+
+
 Una aplicación de escritorio permite modificar y ampliar las funcionalidades del sistema sin alterar el hardware, lo que resulta especialmente útil en entornos de prototipado y desarrollo. Asimismo, facilita la implementación de funciones complejas como la automatización de movimientos, la visualización dinámica del estado del sistema y la integración de funciones de seguridad mediante software.
+
+\vspace{1em}
 
 Este enfoque resulta adecuado para proyectos académicos y de investigación, donde se requiere iterar rápidamente sobre el diseño y evaluar distintos comportamientos del sistema sin necesidad de reconstruir la electrónica de control.
 
@@ -383,7 +411,11 @@ Este enfoque resulta adecuado para proyectos académicos y de investigación, do
 
 El sistema se diseñó bajo una arquitectura distribuida, en la cual las tareas de alto nivel se delegan a una aplicación externa, mientras que el control de bajo nivel permanece en el microcontrolador.
 
+\vspace{1em}
+
 La aplicación es responsable de la generación de consignas de movimiento, la gestión de trayectorias y la interacción con el usuario, mientras que el microcontrolador ejecuta el control de tiempo real de los actuadores. La comunicación entre ambos módulos se realiza mediante un enlace serie asíncrono (UART), utilizando un protocolo textual simplificado.
+
+\vspace{1em}
 
 Esta separación de responsabilidades permite que el sistema mantenga un comportamiento determinístico en el control de los servomotores, al mismo tiempo que ofrece una interfaz flexible y de fácil modificación.
 
@@ -402,12 +434,18 @@ La existencia de estos modos responde al principio de diseño de redundancia fun
 
 La posibilidad de registrar y repetir trayectorias es una característica presente en sistemas robóticos industriales, especialmente en aplicaciones de pick-and-place, manipulación y ensamblaje.
 
+\vspace{1em}
+
 Desde el punto de vista teórico, la grabación de trayectorias consiste en muestrear periódicamente el estado del sistema (en este caso, los ángulos articulares) y almacenarlos como una secuencia temporal de estados discretos. Posteriormente, estos estados pueden ser reproducidos respetando el mismo intervalo temporal, logrando la repetición aproximada del movimiento original.
+
+\vspace{1em}
 
 Este enfoque permite analizar el comportamiento dinámico del sistema, optimizar movimientos y facilitar tareas repetitivas sin depender exclusivamente del control manual.
 
 \subsubsection{Consideraciones de seguridad en interfaces gráficas de control}
 
 En sistemas mecatrónicos, el diseño de la interfaz de control no solo debe enfocarse en la funcionalidad, sino también en la seguridad del equipo y del operador.
+
+\vspace{1em}
 
 Una interfaz bien diseñada debe evitar cambios bruscos de estado, incorporar verificaciones de coherencia en los comandos enviados y garantizar transiciones suaves entre modos de operación. Estos principios se aplicaron en el diseño conceptual de la aplicación de control, priorizando movimientos progresivos al iniciar trayectorias automáticas y limitando los rangos de operación de los actuadores por software.
