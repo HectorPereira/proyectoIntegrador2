@@ -1,35 +1,55 @@
 \section{Conclusiones}
 
-El desarrollo del brazo robótico fue una experiencia muy completa para el equipo, ya que permitió poner en práctica muchos de los conocimientos que fuimos adquiriendo a lo largo de la carrera. El resultado final fue un prototipo completamente funcional, que puede moverse mediante cuatro grados de libertad y que permite ser controlado tanto desde el comando espejo como desde la interfaz gráfica desarrollada. Durante las pruebas, el sistema demostró un buen funcionamiento al manipular objetos metálicos livianos como tornillos, tuercas y pequeños componentes, cumpliendo con los objetivos principales del proyecto.
+El desarrollo del brazo robótico didáctico constituyó una experiencia integral para el equipo, permitiendo aplicar en un proyecto real gran parte de los conocimientos adquiridos durante la carrera. El prototipo final alcanzó un funcionamiento plenamente operativo, con cuatro grados de libertad y la posibilidad de ser controlado tanto mediante el comando espejo como mediante la interfaz gráfica desarrollada. Durante las pruebas, el sistema demostró un comportamiento confiable al manipular pequeños elementos metálicos, cumpliendo los objetivos planteados.
 
-Uno de los aspectos más satisfactorios del proyecto fue poder ver el brazo funcionando correctamente luego de todo el proceso de diseño, prueba y corrección. En especial, el correcto funcionamiento de la grabación y reproducción de movimientos, que al principio era una de las partes que más dudas generaba, terminó funcionando incluso mejor de lo esperado, lo que fue una gran motivación para todo el equipo.
+\vspace{1em}
 
-La parte más compleja del proyecto fue el diseño de la estructura mecánica. A diferencia de la electrónica o la programación, donde existe mucha información y ejemplos disponibles, la estructura requirió un proceso mucho más experimental. Se buscó lograr una estructura que fuera sencilla de armar y desarmar, pensada especialmente para ser utilizada en entornos educativos, y que al mismo tiempo fuera resistente y visualmente atractiva. Para esto se diseñaron encastres impresos en 3D que permitieran reducir el uso de tornillos y facilitar el armado, lo que además hizo que el montaje del brazo fuera una experiencia entretenida y didáctica.
+Uno de los logros más destacables fue la correcta integración entre las partes mecánicas, electrónicas y de software. Resultó especialmente satisfactorio comprobar el funcionamiento fluido del brazo y, en particular, la implementación de la grabación y reproducción de trayectorias, inicialmente uno de los desafíos más inciertos del proyecto.
 
-Aunque el prototipo funciona correctamente, se identificaron varias limitaciones técnicas. Los servomotores utilizados presentan una pequeña zona muerta, que si bien es pequeña, afecta la precisión del posicionamiento, especialmente cuando el brazo se encuentra extendido. Además, al no contar con sensores de posición absoluta, fue necesario implementar una rutina de inicio que lleva a todos los servos a una posición segura, lo que genera movimientos bruscos y esfuerzos sobre la estructura. Estas limitaciones no impiden el uso del sistema, pero muestran claramente aspectos que podrían mejorarse en futuras versiones.
+\vspace{1em}
 
-Desde el punto de vista del aprendizaje, el proyecto fue muy importante para el equipo. Todos los integrantes participaron en las distintas etapas, por lo que se fortalecieron conocimientos en diseño mecánico, electrónica, programación y, especialmente, en la integración de sistemas. Se pudo comprobar que los contenidos vistos en la carrera no quedan solo en la teoría, sino que se pueden aplicar directamente en proyectos reales y funcionales.
-=======
+El diseño de la estructura mecánica fue, sin duda, la etapa más desafiante. A diferencia de la programación o la electrónica, donde existe abundante referencia y documentación, el desarrollo estructural requirió un proceso iterativo de prueba y error. Se buscó deliberadamente un diseño robusto, sencillo de ensamblar y orientado a entornos educativos, incorporando encastres impresos en 3D que reducen el uso de tornillería y aportan un carácter más didáctico al montaje.
 
+\vspace{1em}
 
-% Aprendizaje
-
-
-En términos de aprendizaje, el proyecto representó una experiencia altamente formativa. El equipo fortaleció competencias en diseño mecánico, electrónica de potencia, control de actuadores y desarrollo de software embebido. Se logró una verdadera integración de los conocimientos adquiridos durante la carrera, demostrando que la formación no se limita al plano teórico, sino que permite una aplicación práctica y real en un sistema funcional.
-
-El trabajo en equipo fue fundamental para poder completar el proyecto. Si bien aparecieron diferencias durante el proceso, se lograron resolver de forma adecuada, manteniendo siempre el objetivo común. Esto permitió que el grupo funcionara de forma organizada y que se pudiera avanzar de manera constante, logrando un muy buen resultado final.
-
-En cuanto a su uso educativo, se considera que el brazo robótico es totalmente viable como herramienta didáctica. No solo permite mostrar el funcionamiento de los sistemas robóticos, sino que también ofrece la posibilidad de que otros estudiantes lo modifiquen, lo mejoren o le agreguen nuevas funciones, como una garra mecánica o un electroimán más potente. Esto lo convierte en una base muy interesante para futuros trabajos prácticos.
-
-Por último, el proyecto deja abiertas varias posibilidades de mejora. Entre ellas se encuentra la creación de una versión instalable de la interfaz gráfica para facilitar su uso por personas con menos experiencia técnica, el diseño de una placa de circuito impreso que reduzca el cableado y mejore el orden general del sistema, y la implementación de un efector de garra que quedó pendiente por falta de tiempo. Más allá de estas mejoras, el proyecto logró su objetivo principal: desarrollar un brazo robótico didáctico, funcional, replicable y con un fuerte valor educativo, dejando una base sólida para futuros proyectos.
-
-% Mejoras
-
-Finalmente, el proyecto dejó abiertas diversas líneas de mejora futura. Entre ellas se destaca el desarrollo de un instalador para la interfaz gráfica, con el objetivo de facilitar su uso por parte de usuarios sin experiencia técnica. También se plantea la posibilidad de diseñar una placa de circuito impreso (PCB) que reduzca el cableado y mejore la estética y confiabilidad del sistema. Asimismo, quedan como objetivos futuros la incorporación de una garra mecánica como efector intercambiable y el desarrollo de un electroimán de mayor potencia. Más allá de las limitaciones actuales, el proyecto cumplió con su propósito central: demostrar que es posible desarrollar un brazo robótico didáctico, funcional, replicable y con alto valor educativo, dejando una base sólida para futuros desarrollos y posibles extensiones a nivel académico o profesional.
+A pesar de su correcto funcionamiento, el prototipo presenta algunas limitaciones técnicas. Los servomotores empleados poseen una pequeña zona muerta que afecta la precisión, especialmente con el brazo extendido. Además, la ausencia de sensores de posición absoluta obliga a ejecutar una rutina de inicialización que genera movimientos bruscos al encenderse. Estas limitaciones no impiden el uso del sistema, pero sí señalan oportunidades claras de mejora.
 
 \begin{table}[H]
 \centering
-\caption{Evaluación general del proyecto y oportunidades de mejora. Fuente: elaboración propia}
+\caption{Comparación de costos entre el proyecto desarrollado y kits comerciales similares. Fuente: elaboración propia}\label{tab:comparacion_costos}
+\begin{tabular}{p{0.27\textwidth} p{0.18\textwidth} p{0.45\textwidth}}
+\toprule
+\textbf{Modelo} & \textbf{Precio estimado (UYU)} & \textbf{Descripción y fuente} \\
+\midrule
+
+\textbf{Proyecto propio (estimación media)} 
+& \textbf{$\approx$ 6\,030} 
+& Incluye 4 DOF, controlador espejo físico, HMI avanzada, grabación/reproducción de trayectorias, indicadores LED/buzzer, arquitectura distribuida. \\
+\midrule
+
+\textbf{XiaoR Geek 4 DOF} 
+& 3\,900--4\,000 
+& Brazo robótico educativo de 4 DOF. Control básico, sin controlador espejo ni HMI avanzada.  
+Fuente: \url{https://es.aliexpress.com/item/1005002090375154.html} \\
+\midrule
+
+\textbf{Adeept 5 DOF Robot Arm} 
+& 2\,350--2\,500 
+& Brazo de 5 DOF con control por Arduino/Raspberry. Menor nivel de personalización, sin grabación de trayectorias ni interfaz dedicada.  
+Fuente: \url{https://www.amazon.com/Adeept-Robotic-Processing-Electronic-Integrated/dp/B07P2HFRXJ} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+En términos de costo-beneficio, el análisis comparativo con kits comerciales revela diferencias significativas. Como se observa en la Tabla~\ref{tab:comparacion_costos}, el costo medio estimado del proyecto es superior al de brazos robóticos educativos disponibles en el mercado. Sin embargo, esta diferencia queda ampliamente compensada por la incorporación de funcionalidades avanzadas como el controlador espejo físico, la interfaz gráfica de control, la grabación y reproducción de trayectorias, y la presencia de indicadores luminosos y acústicos, elementos que no suelen estar presentes en kits comerciales de costo inferior.
+
+\vspace{1em}
+
+Desde el punto de vista formativo, el proyecto resultó altamente enriquecedor para el equipo. La participación en todas las etapas —diseño mecánico, electrónica de potencia, control de actuadores y desarrollo de firmware— permitió integrar conocimientos teóricos en un sistema real y funcional. Asimismo, la dinámica de trabajo en equipo fue fundamental: a pesar de las dificultades surgidas durante el proceso, se mantuvo una comunicación fluida y una organización efectiva, lo que permitió alcanzar un resultado sólido.
+
+\begin{table}[H]
+\centering
+\caption{Evaluación general del proyecto y oportunidades de mejora. Fuente: elaboración propia}\label{tab:evaluacion_proyecto}
 \begin{tabular}{p{0.25\textwidth} p{0.10\textwidth} p{0.58\textwidth}}
 \toprule
 \textbf{Criterio} & \textbf{Puntaje} & \textbf{Mejoras propuestas} \\
@@ -41,8 +61,8 @@ La estructura es estable y soporta esfuerzos moderados; se podría mejorar aumen
 Precisión de movimiento & 3/5 &
 La zona muerta de los servos limita la exactitud; servomotores digitales o con realimentación mejorarían la precisión. \\
 
-Precio del sistema & 5/5 &
-El costo es bajo y los materiales son accesibles; como mejora podría optimizarse la compra de componentes en kits unificados. \\
+Precio del sistema & 3/5 &
+El proyecto presenta un costo superior al de kits comerciales de prestaciones básicas; sin embargo, el precio se justifica por la inclusión de un controlador espejo físico, una HMI avanzada, grabación de trayectorias, indicadores LED/buzzer y un diseño modular. Se podría reducir el costo optimizando compras o diseñando una PCB propia. \\
 
 Dificultad de ensamblaje & 4/5 &
 El uso de encastres 3D reduce la tornillería; podría mejorarse incorporando una guía de armado y reduciendo el número de piezas. \\
@@ -65,37 +85,55 @@ El MDF y PLA son adecuados para uso didáctico, pero sensibles a desgaste; mater
 \end{tabular}
 \end{table}
 
+
+La valoración global del proyecto, resumida en la Tabla~\ref{tab:evaluacion_proyecto}, evidencia fortalezas importantes como la modularidad del diseño, la estabilidad del sistema electrónico y la calidad del software de control. Al mismo tiempo, identifica aspectos susceptibles de mejora, como el manejo del cableado, la precisión del movimiento y la durabilidad de ciertos materiales.
+
+\vspace{1em}
+
+Finalmente, el proyecto abre diversas líneas de desarrollo futuro. Entre las mejoras propuestas se destacan la creación de un instalador para la interfaz gráfica que facilite su distribución, el diseño de una placa de circuito impreso (PCB) que reduzca el cableado y mejore la estética del conjunto, y la incorporación de una garra mecánica intercambiable para incrementar la versatilidad del sistema. Más allá de estas potenciales mejoras, el proyecto cumplió su objetivo central: desarrollar un brazo robótico didáctico, funcional, replicable y con alto valor educativo, constituyendo una base sólida para futuros trabajos académicos o profesionales.
+
+
+\section{Recomendaciones}
+
+
+A partir del análisis del proyecto, su desempeño y las oportunidades de mejora identificadas, se presentan en la Tabla~\ref{tab:recomendaciones} una serie de recomendaciones orientadas a optimizar futuras iteraciones del sistema.
+
 \begin{table}[H]
 \centering
-\caption{Comparación de costos entre el proyecto desarrollado y kits comerciales similares}
-\begin{tabular}{p{0.27\textwidth} p{0.18\textwidth} p{0.45\textwidth}}
+\caption{Recomendaciones para futuras mejoras del sistema. Fuente: elaboración propia}
+\label{tab:recomendaciones}
+\begin{tabular}{p{0.28\textwidth} p{0.65\textwidth}}
 \toprule
-\textbf{Modelo} & \textbf{Precio estimado (UYU)} & \textbf{Descripción y fuente} \\
+\textbf{Área} & \textbf{Recomendación} \\
 \midrule
 
-\textbf{Proyecto propio (estimación media)} 
-& \textbf{$\approx$ 5\,630} 
-& Incluye 4 DOF, controlador espejo físico, HMI avanzada, grabación/reproducción de trayectorias, indicadores LED/buzzer, arquitectura distribuida. \\
-\midrule
+Diseño electrónico y cableado &
+Diseñar una PCB o \emph{shield} dedicado para reducir el cableado, mejorar la estética y minimizar errores de conexión. \\
 
-\textbf{XiaoR Geek 4 DOF} 
-& 3\,900--4\,000 
-& Brazo robótico educativo de 4 DOF. Control básico, sin controlador espejo ni HMI avanzada.  
-Fuente: \url{https://es.aliexpress.com/item/1005002090375154.html} \\
-\midrule
+Precisión de los actuadores &
+Considerar el uso de servomotores digitales o con realimentación para mejorar la resolución y eliminar el efecto de la zona muerta. \\
 
-\textbf{Adeept 5 DOF Robot Arm} 
-& 2\,350--2\,500 
-& Brazo de 5 DOF con control por Arduino/Raspberry. Menor nivel de personalización, sin grabación de trayectorias ni interfaz dedicada.  
-Fuente: \url{https://www.amazon.com/Adeept-Robotic-Processing-Electronic-Integrated/dp/B07P2HFRXJ} \\
+Estructura mecánica y durabilidad &
+Evaluar materiales más resistentes como PETG, acrílico o aluminio para piezas críticas, aumentando la vida útil del sistema. \\
+
+Interfaz gráfica (HMI) &
+Desarrollar un instalador multiplataforma y documentar su uso; a futuro, crear una API para permitir integración con software externo. \\
+
+Modularidad funcional &
+Continuar implementando efectores intercambiables (garra mecánica, electroimán reforzado), promoviendo un diseño más versátil y educativo. \\
+
+Ensamblaje y documentación &
+Elaborar una guía visual detallada del proceso de armado para facilitar el uso en entornos educativos y reducir la dificultad percibida. \\
+
+Optimización de costos &
+Reducir costos mediante compras consolidadas, proveedores locales o fabricación optimizada (por ejemplo, corte de MDF en menor cantidad de placas). \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+Estas recomendaciones brindan una hoja de ruta clara para continuar desarrollando el sistema, mejorando su robustez, su facilidad de uso y su valor educativo.
 
 
-% TODO: Aspectos positivos
-% TODO: Aspectos negativoss
-% TODO: Si fueramos a distribuirlo como kit... el circuito deberia incorporarse en una PCB o shield para el arduino, el tablero debería ser incorporado de manera similar o ser una unidad prefabricada.
+\vspace{1em}
 
-% TODO: Mejoras a futuro
+En síntesis, el desarrollo del brazo robótico didáctico no solo permitió alcanzar los objetivos funcionales propuestos, sino que también dejó una base tecnológica sólida y extensible. La experiencia adquirida en el proceso —tanto en el diseño mecánico como en la electrónica y el software— aporta un conocimiento significativo que podrá aprovecharse en futuros proyectos académicos o mejoras del sistema. Con las oportunidades de optimización identificadas y las recomendaciones presentadas, el prototipo constituye un punto de partida robusto para continuar expandiendo sus capacidades, incrementando su versatilidad y potenciando su valor educativo.

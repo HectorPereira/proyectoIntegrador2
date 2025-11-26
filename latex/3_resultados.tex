@@ -173,6 +173,12 @@ Utilizando una filosofía de materiales híbrida, y luego de varias iteraciones,
 
 Los potenciometros se encuentran conectados en paralelo a 5V y tierra, mientras que el wiper se lo toma como referencia analógica para la lectura de los ángulos, además de conectar los pulsadores a tierra para la lectura de entradas de comando de electroimán y grabación utilizando las resistencias pull up internas del microcontrolador. Se crean conectores hembra para facilitar la manipulación de las conexiones eléctricas, tanto para la alimentación del controlador, como para salidas analógicas de los potenciomestros y las salidas digitales de los pulsadores.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/fisico/mini.png}
+  \caption{Controlador espejo Fuente: elaboración própia}
+\end{figure}
+
 
 
 \subsection{Electrónica de control}
@@ -185,6 +191,8 @@ La electrónica de control se encarga de controlar adecuadamente todos los trans
   \caption{Diagrama de conexiones eléctricas. Fuente: elaboración própia}\label{fig:tinkerCAD}
 \end{figure}
 
+
+
 \subsection{Electrónica de potencia}
 
 La electrónica de potencia del sistema tiene como finalidad suministrar las tensiones y corrientes necesarias para los actuadores. Los servomotores se alimentan desde una línea regulada de 5\,V proveniente de una fuente ATX, capaz de entregar corrientes elevadas sin caídas significativas. Para mejorar la estabilidad durante movimientos simultáneos, la distribución se realiza mediante ramales separados.
@@ -192,6 +200,9 @@ La electrónica de potencia del sistema tiene como finalidad suministrar las ten
 \vspace{1em}
 
 El electroimán, por su parte, requiere una fuente independiente de 12\,V debido a su mayor demanda de potencia. Al ser una carga inductiva, se incorpora un diodo de rueda libre en paralelo con la bobina para disipar la energía almacenada durante la desconexión y evitar picos de tensión que podrían dañar el módulo relé o el microcontrolador. Ambas fuentes comparten un punto común de masa para asegurar una referencia eléctrica estable entre las etapas de control y potencia (véase figura~\ref{fig:tinkerCAD}).
+
+
+
 
 
 
@@ -272,11 +283,37 @@ Estas funciones complementan la lógica interna del microcontrolador, que tambi�
 
 La aplicación de escritorio envía comandos en un formato estructurado que el microcontrolador interpreta en tiempo real, mientras que éste devuelve información del estado del sistema para su visualización en la interfaz. El funcionamiento del parser de mensajes entrantes se detalla en los Anexos~\ref{gui:parser_uart} y~\ref{gui:parser_uart_alt}. Este enlace bidireccional garantiza coherencia entre la representación gráfica y la postura física del robot, asegurando una operación estable, confiable y sincronizada.
 
+\subsection{Implementaciones físicas}
+
+
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/fisico/demo 2.png}
+  \caption{Implementación en físico. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/fisico/final.png}
+  \caption{Funcionamiento de indicadores. Fuente: elaboración própia}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/fisico/precioso.png}
+  \caption{Brazo robótico, circuito y tablero. Fuente: elaboración própia}
+\end{figure}
+
+
 \subsection{Beneficios}
+
+Sin tomar en cuenta la fuente de alimentación reciclada ni la mano de obra, para la elaboración de este proyecto, se obtuvieron los resultados vistos en el cuadro~\ref{tab:costos}:
 
 \begin{table}[H]
 \centering
-\caption{Estimativo de costos por componente - precio. Fuente: elaboración propia}
+\caption{Estimativo de costos por componente - precio. Fuente: elaboración propia}\label{tab:costos}
 \begin{tabular}{p{0.63\textwidth} p{0.07\textwidth} p{0.20\textwidth}}
 \toprule
 \textbf{Componente} & \textbf{Cant.} & \textbf{Precio (UYU)} \\
@@ -301,7 +338,7 @@ LEDs + resistencias + cableado menor & — & 100 \\
 Cable multicore + funda termorretráctil + conectores & — & 600 \\
 
 \midrule
-\textbf{Total estimado} & --- & \textbf{6\,030} \\
+\textbf{Total} & --- & \textbf{6\,030} \\
 \bottomrule
 \end{tabular}
 \end{table}
