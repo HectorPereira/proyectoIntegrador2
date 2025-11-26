@@ -42,30 +42,67 @@ Se identifican con verde las superficie de contacto que friccionan contra el per
 
 \subsubsection{Brazo robótico articulado}
 
-\paragraph*{\textbf{Electroimán}} --- \\
 
-% Figura despiece electroimán
+
 
 \paragraph*{\textbf{Muñeca}} --- \\
 
-% Figura de la muñeca
+La muñeca está compuesta por una estructura principal de 5 piezas de MDF (véase la figura~\ref{fig:brazoMuneca}). Alberga al servomotor de la misma, junto con el electroimán, y la articulación que la une al eslabón anterior.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{anexos/CAD/brazoMuneca.png}
+  \caption{Muñeca de brazo robótico. Fuente: elaboración própia}\label{fig:brazoMuneca}
+\end{figure}
+
 
 \paragraph*{\textbf{Eslabones}} --- \\
 
-% Figura de eslabón
+Los 2 eslabones se componen de 6 piezas de MDF pegadas entre sí para dar soporte estructural al servomotor y articulación desmotable respectivamente. Poseen encastres para el siguiente efector y articulación, además, como se ve en la figura~\ref{fig:brazoEslabon}, el eslabón inferior o principal, posee soportes exteriores para tornillos, los cuales trabajan en conjunto con el hombro para albergar gomas elásticas o un resorte, el cual se encargará de brindar asistencia mecánica en posiciones extendidas para la articulación inferior, la cual es la encargada de soportar la mayor carga. 
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{anexos/CAD/brazoEslabon.png}
+  \caption{Eslabón de brazo robótico. Fuente: elaboración própia}\label{fig:brazoEslabon}
+\end{figure}
+
+\paragraph*{\textbf{Hombro}} --- \\
+
+Este componente, como se puede observar en la figura~\ref{fig:brazoHombro}, es una pieza completmanete estructural. Sus funciones son brindar estabilidad estructural a los eslabones y a la muñeca, junto con el electroimán, permitir la rotación del brazo al acoplarse al eje del servomotor de la base, y aliviar cargas axiales en el mismo al apoyarse en el anillo de soporte. Además el hombro se encarga de contener a la suspensión de la articulación inferior, encargada de dar asistencia en posiciones de extensión máxima o cercanas, y distribuir el esfuerzo del servomotor más uniformemente en el rango de movimiento.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{anexos/CAD/brazoHombro.png}
+  \caption{Hombro de brazo robótico. Fuente: elaboración própia}\label{fig:brazoHombro}
+\end{figure}
+
 
 \paragraph*{\textbf{Base}} --- \\
 
-% Se incorpora una base giratoria para permitir la rotación de la estructura. A la misma se le agrega una mesa donde se incorporan el arduino y la protoboard. 
+La base del brazo se encarga de mantener estático al sistema durante operación (véase figura~\ref{fig:brazoBase}), a la vez de albergar el servomotor que se encarga de la rotación del brazo sobre su própio eje. Este se encuentra en la parte inferior de la base, y se encuentra asistido por un anillo que hace leve contacto entre la base y el hombro, lo que permite alivitar cargas axiales y momentos no deseados. 
 
-% Figura de la base
+\vspace{1em}
+
+La base posee patas que se extienden lejos del centro de masa del sistema para brindar aproyo sobre cualquier extensión del brazo, sin que este llege a tambalearse. Además, la base cuenta con una mesa donde se alojan los componentes electrónicos, además del tablero. 
+
+\begin{figure}[H]lidad 
+  \centering
+  \includegraphics[width=0.6\textwidth]{anexos/CAD/brazoBase.png}
+  \caption{Base de brazo robótico. Fuente: elaboración própia}\label{fig:brazoBase}
+\end{figure}
+
 
 \paragraph*{\textbf{Tablero}} --- \\
 
+Se incorpora un tablero desmontable el cual incorpora los componentes electrónicos para la comunicación del usuario, además de alojar conectores tanto para el controlador espejo como para la fuente de alimentación del sistema. 
 
-% Se crea un tablero para albergar los componentes electrónicos y conectores tanto para la fuente como para el controlador espejo, a fin de facilitar la visualización e interacción con los mismos.
 
-% Figura tablero
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{anexos/CAD/brasoTablero.png}
+  \caption{Tablero de control de brazo robótico. Fuente: elaboración própia}
+\end{figure}
 
 
 
@@ -80,15 +117,21 @@ Para realizar la carcasa del electroimán se realiza uso de un torno manual. Has
 
 La bobina del electroimán se construyó utilizando alambre de cobre esmaltado de 0,5 mm de diámetro, enrollado a lo largo de aproximadamente 5 metros para generar el campo magnético necesario. Como núcleo ferromagnético se empleó un tornillo de acero, seleccionado por su alta permeabilidad magnética y disponibilidad. 
 
-\vspace{1em}
-
-Para asegurar la integridad mecánica del devanado y permitir un montaje limpio dentro del efector, se diseñó e imprimió en 3D una carcasa encapsulante, la cual facilita el proceso de bobinado, protege el alambre y permite fijar la bobina de manera estable en la estructura del electroimán. Este encapsulamiento también mejora la manipulabilidad del conjunto y reduce el riesgo de daños por fricción o tensiones mecánicas durante la operación del brazo robótico.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.7\textwidth]{anexos/Torno/Pieza final.jpg}
   \caption{Pieza fabricada. Fuente: elaboración própia}
 \end{figure}
+
+El electroimán cuenta con 5 partes principales, 4 de ellas se ven representadas en la figura~\ref{fig:despiece_iman}. El componente principal del electroimán es la la bobina de alambre de cobre esmaltado, esta es contenida por el carretel. Este se compone por doss piezas impresas en 3D que encastran entre sí. Esto se hizo así para evitar soportes durante el proceso de impresión. El carretel con la bobina es colocado dentro de la carcasa, el cual es asegurado por un anillo creado a partir de un segmento de barra de silicona, el cual evita que el carretel con la bobina salgan de la carcasa. Por último, se coloca un tornillo M10 o M9 en el centro que sirve tanto de núcleo para el electroimán, tanto como método de sujeción a la muñeca. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{anexos/CAD/despieceIman.png}
+  \caption{Despiece de electroimán. Fuente: elaboración própia}\label{fig:despiece_iman}
+\end{figure}
+
 
 
 
@@ -98,7 +141,7 @@ En lo referente a la electrónica de potencia, se utilizó una fuente ATX de una
 
 \vspace{1em}
 
-Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, permitiendo un montaje seguro y una mejor organización del cableado dentro del proyecto, la misma se enciende por un interruptor ubicado en la parte delantera de la carcasa.
+Además, se diseñó y cortó en MDF una carcasa para alojar y proteger la fuente, permitiendo un montaje seguro y una mejor organización del cableado dentro del proyecto, la misma se enciende por un interruptor ubicado en la parte delantera de la carcasa.
 
 
 \begin{figure}[H]
@@ -112,13 +155,21 @@ Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, p
 
 Se realiza el diseño del controlador espejo tomando en consideración las tolerancias especuladas. Se elaboran bosquejos y se diseñan partes individuales para verificar calces y encastres, tomando como inspiración el anexo \ref{fig:insp.impreso}.
 
-% TODO: redactar Controlador espejo
+\vspace{1em}
 
-% Utilizando una filosofía de materiales híbrida, y luego de varias iteraciones, se llega al siguiente diseño: Un enfoque modular, con una estructura en MDF y con carcazas para protección y estética en PLA. 
+Este controlador incorpora potenciometros para realizar la lectura de los ángulos de cada articulación, replicando la distribución de actuadores en el brazo real. A través de estos se puede realizar el control fluido del mismo, sin la necesidad de una programación extensiva de movimientos que pueden llegar a ser complicados de trazar sin cálculos complejos.
 
-% Figura controlador espejo
+\vspace{1em}
 
-% Se conectan todos los potenciómetros entre sí y se crean conectores hembra para las entradas de alimentación, y las salidas analógicas y digitales de los potenciómetros y botones respectivamente.
+Utilizando una filosofía de materiales híbrida, y luego de varias iteraciones, se llega al siguiente diseño: Un enfoque modular, con una estructura en MDF y con carcazas para protección y estética en PLA. La parte estructural está puramente dedicada con MDF por su velocidad de fabricación/prototipado, mientras que se utilzó PLA para carcazas por ser electricamente aislante, y su versatilidad al poder implementar impresión 3D como método de fabricación. La carcasa de la muñeca se encarga de albergar los botones para el electroimán y grabación.  
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{anexos/CAD/despieceEspejo.png}
+  \caption{Despiece del controlador espejo. Fuente: elaboración própia}
+\end{figure}
+
+Los potenciometros se encuentran conectados en paralelo a 5V y tierra, mientras que el wiper se lo toma como referencia analógica para la lectura de los ángulos, además de conectar los pulsadores a tierra para la lectura de entradas de comando de electroimán y grabación utilizando las resistencias pull up internas del microcontrolador. Se crean conectores hembra para facilitar la manipulación de las conexiones eléctricas, tanto para la alimentación del controlador, como para salidas analógicas de los potenciomestros y las salidas digitales de los pulsadores.
 
 
 
