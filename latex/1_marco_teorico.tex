@@ -352,3 +352,62 @@ R=\rho\,\frac{\ell}{A},\qquad \rho_{\mathrm{Cu}}\approx 1{,}68\times 10^{-8}\ \O
 lo que arroja aproximadamente \mbox{$R\approx 1{,}68~\Omega$}. Alimentada a \mbox{$5~\mathrm{V}$}, la corriente esperada es \newline \mbox{$I_{\mathrm{bob}}\approx 5/1{,}68\simeq 3{,}0~\mathrm{A}$} y la disipación en la bobina \mbox{$P_{\mathrm{bob}}\approx I_{\mathrm{bob}}^{2}R\simeq 15~\mathrm{W}$}. Estas magnitudes aconsejan operación intermitente (control de \emph{duty–cycle}) o gestión térmica adicional para mantener temperaturas seguras en uso continuado.
 
 La interfaz de control se completa con una resistencia en serie en la compuerta del MOSFET (\mbox{$R_{g}\approx 100~\Omega$}) para limitar el régimen de carga de la compuerta y un \emph{pull–down} (\mbox{$R_{\mathrm{pd}}\approx 100~\mathrm{k}\Omega$}) que asegura el apagado en reposo. En paralelo con la bobina se dispone un diodo de rueda libre (\emph{flyback}) rápido o Schottky, dimensionado para la corriente de la bobina y con tensión inversa acorde, a fin de suprimir sobretensiones al corte. En la alimentación de $5~\mathrm{V}$ se ubican condensadores de \emph{bulk} cerca de las cargas (típicamente del orden de $470$–$1000~\mu\mathrm{F}$) y desacoples locales de $100~\mathrm{nF}$, con la finalidad de amortiguar picos debidos a los servomotores y al propio electroimán. Finalmente, el firmware incorpora medidas de protección como límites por \emph{software} en el tiempo de activación del electroimán, vigilancia por \emph{watchdog} y paro de emergencia, coherentes con la filosofía de diseño seguro del conjunto.
+
+\subsection{Interfaz gráfica de control}
+
+\subsubsection{Interfaz humano-máquina (HMI)}
+
+En los sistemas robóticos con múltiples grados de libertad, la interacción entre el operador y el sistema representa un elemento crítico para garantizar precisión, seguridad y repetitividad. Las interfaces humano-máquina (HMI, por sus siglas en inglés) permiten que el usuario pueda supervisar y controlar el estado del sistema sin necesidad de interactuar directamente con los niveles más bajos del hardware.
+
+En el contexto de los brazos robóticos, las interfaces gráficas de usuario (GUI) se han consolidado como una solución estándar tanto en entornos industriales como educativos. Estas interfaces no solo facilitan el control manual, sino que también permiten visualizar información en tiempo real, como posiciones angulares, trayectorias, estados de los actuadores y condiciones de funcionamiento.
+
+La utilización de una HMI basada en software presenta ventajas significativas frente a interfaces exclusivamente físicas, tales como:
+\begin{itemize}
+    \item Mayor precisión en el ajuste de parámetros de movimiento.
+    \item Visualización clara del estado del sistema en tiempo real.
+    \item Posibilidad de implementar funciones avanzadas como grabación y reproducción de trayectorias.
+    \item Mayor seguridad operativa al reducir la intervención directa del usuario sobre el hardware.
+\end{itemize}
+
+A partir de estos principios, se decidió incorporar una aplicación de escritorio como parte integral del sistema de control del prototipo.
+
+\subsubsection{Justificación de una interfaz gráfica de control}
+
+La elección de una interfaz gráfica de escritorio frente a otras alternativas, como controles físicos dedicados o paneles externos, se basa en criterios de flexibilidad, escalabilidad y facilidad de desarrollo.
+
+Una aplicación de escritorio permite modificar y ampliar las funcionalidades del sistema sin alterar el hardware, lo que resulta especialmente útil en entornos de prototipado y desarrollo. Asimismo, facilita la implementación de funciones complejas como la automatización de movimientos, la visualización dinámica del estado del sistema y la integración de funciones de seguridad mediante software.
+
+Este enfoque resulta adecuado para proyectos académicos y de investigación, donde se requiere iterar rápidamente sobre el diseño y evaluar distintos comportamientos del sistema sin necesidad de reconstruir la electrónica de control.
+
+\subsubsection{Arquitectura de comunicación entre la aplicación y el microcontrolador}
+
+El sistema se diseñó bajo una arquitectura distribuida, en la cual las tareas de alto nivel se delegan a una aplicación externa, mientras que el control de bajo nivel permanece en el microcontrolador.
+
+La aplicación es responsable de la generación de consignas de movimiento, la gestión de trayectorias y la interacción con el usuario, mientras que el microcontrolador ejecuta el control de tiempo real de los actuadores. La comunicación entre ambos módulos se realiza mediante un enlace serie asíncrono (UART), utilizando un protocolo textual simplificado.
+
+Esta separación de responsabilidades permite que el sistema mantenga un comportamiento determinístico en el control de los servomotores, al mismo tiempo que ofrece una interfaz flexible y de fácil modificación.
+
+\subsubsection{Modos de operación del sistema de control}
+
+Desde un punto de vista conceptual, el sistema fue diseñado para operar en dos modos diferenciados:
+
+\begin{itemize}
+    \item \textbf{Modo de control manual (control espejo)}: en este modo, la prioridad la tiene el controlador físico, y el sistema replica los movimientos realizados por el operador de forma directa.
+    \item \textbf{Modo de control por aplicación}: en este modo, las consignas de movimiento se generan desde la interfaz gráfica, permitiendo un control más preciso y la posibilidad de automatizar secuencias.
+\end{itemize}
+
+La existencia de estos modos responde al principio de diseño de redundancia funcional, permitiendo que el sistema continúe siendo operable aun cuando uno de los métodos de control no se encuentre disponible.
+
+\subsubsection{Concepto de grabación y reproducción de trayectorias}
+
+La posibilidad de registrar y repetir trayectorias es una característica presente en sistemas robóticos industriales, especialmente en aplicaciones de pick-and-place, manipulación y ensamblaje.
+
+Desde el punto de vista teórico, la grabación de trayectorias consiste en muestrear periódicamente el estado del sistema (en este caso, los ángulos articulares) y almacenarlos como una secuencia temporal de estados discretos. Posteriormente, estos estados pueden ser reproducidos respetando el mismo intervalo temporal, logrando la repetición aproximada del movimiento original.
+
+Este enfoque permite analizar el comportamiento dinámico del sistema, optimizar movimientos y facilitar tareas repetitivas sin depender exclusivamente del control manual.
+
+\subsubsection{Consideraciones de seguridad en interfaces gráficas de control}
+
+En sistemas mecatrónicos, el diseño de la interfaz de control no solo debe enfocarse en la funcionalidad, sino también en la seguridad del equipo y del operador.
+
+Una interfaz bien diseñada debe evitar cambios bruscos de estado, incorporar verificaciones de coherencia en los comandos enviados y garantizar transiciones suaves entre modos de operación. Estos principios se aplicaron en el diseño conceptual de la aplicación de control, priorizando movimientos progresivos al iniciar trayectorias automáticas y limitando los rangos de operación de los actuadores por software.
