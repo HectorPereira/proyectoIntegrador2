@@ -20,33 +20,57 @@ Inicialmente se construyó con descartes de MDF cortados a láser y herrajes M3.
 
 Posteriormente se reemplazaron las superficies de contacto por insertos impresos en PLA, configurando una interfaz PLA–PLA en las zonas con rozamiento. Se ajustaron tolerancias según las galgas obtenidas, reduciendo el juego en el conjunto ensamblado y mejorando la repetibilidad. Se documentaron espesores, holguras objetivo y par de apriete de tornillería para su reproducción. Véase figura \ref{fig:corte_pernoV3}
 
+
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.7\textwidth]{anexos/Articulacion/Perno V3.png}
   \caption{Corte transversal perno --- versión mejorada. Fuente: elaboración própia}\label{fig:corte_pernoV3}
 \end{figure}
 
-Se identifican con verde las superficie de contacto que friccionan contra el perno azúl, las cualés tienen un ajuste deslizante con el perno. En amarillo se muestra la pieza que actúa como tope para el seguro del perno. En el modelo anterior se utilizaba una sola pieza que hacía esta función, pero al utilizar este tope (con un ajuste apretado) permite regular la fuerza de ajuste y juego de la articulación. Luego el seguro que se encuentra entre el tope y el perno, permite montar y desmontar la articulación de manera sencilla.
+
+
+Se identifican con verde las superficie de contacto que friccionan contra el perno azúl, las cualés tienen un ajuste deslizante con el perno. En amarillo se muestra la pieza que actúa como tope para el seguro del perno. En el modelo anterior se utilizaba una sola pieza que hacía esta función, pero al utilizar este tope (con un ajuste apretado) permite regular la fuerza de ajuste y juego de la articulación. El seguro que se encuentra entre el tope y el perno, este permite montar y desmontar la articulación de manera sencilla.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.3\textwidth]{anexos/CAD/despieceArticulacion.png}
+  \caption{Despiece de articulación desmontable. Fuente: elaboración própia}\label{fig:despiece_articulacion}
+\end{figure}
+
 
 \subsubsection{Brazo robótico articulado}
 
-% TODO: Redactar Brazo robótico articulado
+\paragraph*{\textbf{Electroimán}} --- \\
 
-% Se incorpora la articulación desmontable en los eslabones hombro y muñeca
+% Figura despiece electroimán
 
-% Figura del despieze del brazo
+\paragraph*{\textbf{Muñeca}} --- \\
 
-% \subsubsection{Base}
+% Figura de la muñeca
+
+\paragraph*{\textbf{Eslabones}} --- \\
+
+% Figura de eslabón
+
+\paragraph*{\textbf{Base}} --- \\
 
 % Se incorpora una base giratoria para permitir la rotación de la estructura. A la misma se le agrega una mesa donde se incorporan el arduino y la protoboard. 
 
-% Figura base
+% Figura de la base
 
-% \subsubsection{Tablero}
+\paragraph*{\textbf{Tablero}} --- \\
+
 
 % Se crea un tablero para albergar los componentes electrónicos y conectores tanto para la fuente como para el controlador espejo, a fin de facilitar la visualización e interacción con los mismos.
 
 % Figura tablero
+
+
+
+
+
 
 
 \subsubsection{Electroimán}
@@ -79,7 +103,7 @@ Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, p
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\textwidth]{anexos/CAD/fuenteAlim.png}
+  \includegraphics[width=0.5\textwidth]{anexos/CAD/fuenteAlim.png}
   \caption{Modelo CAD de fuente de alimentación. Fuente: elaboración própia}
 \end{figure}
 
@@ -104,7 +128,7 @@ Se realiza el diseño del controlador espejo tomando en consideración las toler
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\textwidth]{anexos/circuito/tinkerCAD.png}
+  \includegraphics[width=0.8\textwidth]{anexos/circuito/tinkerCAD.png}
   \caption{Diagrama de conexiones eléctricas. Fuente: elaboración própia}
 \end{figure}
 

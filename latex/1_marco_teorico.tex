@@ -356,8 +356,9 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
 
 
 
-
 % Electrónica 
+% Quiza agregar algunas figuras aca para complementar
+
 
 \subsection{Aspectos electrónicos en sistemas mecatrónicos}
 
@@ -365,19 +366,19 @@ En los sistemas mecatrónicos y robóticos, el diseño electrónico constituye u
 
 \subsubsection{Microcontroladores como unidades de control}
 
-Los microcontroladores modernos, basados en arquitecturas como AVR o ARM, suelen actuar como núcleo del sistema electrónico. Estos dispositivos permiten generar señales de modulación por ancho de pulso (PWM) para el accionamiento de servomotores y actuadores similares, adquirir señales analógicas provenientes de potenciómetros o sensores, gestionar entradas digitales y ejecutar algoritmos de control en tiempo real. Debido a su naturaleza integrada, es necesario que el entorno electrónico minimice interferencias y fluctuaciones que puedan afectar la precisión del control.
+Los microcontroladores modernos, basados en arquitecturas como AVR o ARM, suelen actuar como núcleo del sistema electrónico. Estos dispositivos integran periféricos tales como temporizadores, módulos PWM y conversores analógico-digitales (ADC), lo que permite accionar servomotores, adquirir señales de potenciómetros o sensores y gestionar entradas digitales \cite{arduino_uno_rev3_docs, espressif_esp32_series_ds}. Debido a la sensibilidad de estos módulos, es necesario que el entorno electrónico minimice interferencias y fluctuaciones que puedan afectar la precisión del control en tiempo real.
 
 \subsubsection{Distribución de potencia y reducción de ruido}
 
-Un aspecto fundamental en el diseño electrónico de sistemas robóticos es la adecuada separación entre las líneas de potencia y las de lógica. Los actuadores, en particular los motores o elementos inductivos, introducen variaciones rápidas de corriente que pueden provocar caídas de tensión o ruidos eléctricos en las líneas de referencia. Para mitigar estos efectos se emplea la llamada topología de masa en estrella, en la cual los retornos de corriente convergen en un único nodo de referencia, reduciendo la posibilidad de acoplamientos no deseados hacia la electrónica de control. Esta técnica mejora la estabilidad de las mediciones analógicas y evita comportamientos impredecibles en el microcontrolador.
+Un aspecto fundamental en el diseño electrónico de sistemas robóticos es la adecuada separación entre las líneas de potencia y las de lógica. Los actuadores, especialmente los motores y otros elementos inductivos, introducen variaciones rápidas de corriente que pueden provocar caídas de tensión o ruidos eléctricos en las referencias de señal. La aplicación de técnicas de distribución como la masa en estrella mejora la estabilidad del sistema al reducir diferencias de potencial no deseadas entre retornos, en concordancia con los principios generales de circulación de corriente descritos en la teoría de circuitos \cite{openstax_kcl_2022}. Esta estrategia resulta esencial para preservar la fiabilidad de las mediciones analógicas y evitar comportamientos impredecibles en el microcontrolador.
 
 \subsubsection{Conmutación de cargas inductivas}
 
-Los sistemas que manejan electroimanes, relés o motores deben considerar los fenómenos eléctricos asociados a la naturaleza inductiva de estos actuadores. Al ser desconectados, los inductores liberan la energía almacenada en su campo magnético generando picos de tensión que pueden resultar dañinos para los componentes de control. Para proteger el circuito se utilizan dispositivos como diodos de rueda libre o \emph{flyback}, capaces de conducir esta energía de manera segura. En ciertos casos se incorporan también capacitores de desacoplo, los cuales contribuyen a reducir interferencias de alta frecuencia asociadas a estos transitorios.
+Los sistemas que manejan electroimanes, relés o motores deben considerar los fenómenos eléctricos asociados a la naturaleza inductiva de estos actuadores. Al ser desconectados, los inductores liberan la energía almacenada en su campo magnético en forma de picos de tensión potencialmente dañinos para los componentes de control. Este comportamiento está directamente relacionado con los principios de energía y potencia eléctrica en sistemas con elementos reactivos \cite{openstax_power_2020}. Para proteger el circuito se utilizan dispositivos como diodos de rueda libre o \emph{flyback}, y en algunos casos capacitores de desacoplo, que ayudan a reducir interferencias de alta frecuencia durante los transitorios.
 
 \subsubsection{Compatibilidad electromagnética y desacoplo}
 
-La coexistencia de múltiples actuadores, sensores y líneas de señal dentro de un mismo sistema aumenta la probabilidad de interferencias electromagnéticas internas. Para garantizar la compatibilidad electromagnética (EMC) del conjunto se emplean técnicas como la colocación estratégica de capacitores de desacoplo cerca de los circuitos integrados, el mantenimiento de distancias adecuadas entre las líneas de potencia y aquellas destinadas al sensado, y el uso de cables trenzados o apantallados para señales susceptibles al ruido. Estas prácticas son esenciales para preservar la integridad de las señales y asegurar la estabilidad operativa del sistema, especialmente en aplicaciones que requieren precisión temporal o mediciones analógicas confiables.
+La coexistencia de múltiples actuadores, sensores y líneas de señal dentro de un mismo sistema aumenta la probabilidad de interferencias electromagnéticas internas. Para garantizar la compatibilidad electromagnética (EMC) se emplean técnicas como el uso de capacitores de desacoplo próximos a los circuitos integrados, el mantenimiento de distancias adecuadas entre las líneas de potencia y señal y, cuando es necesario, el uso de cables trenzados o apantallados para señales susceptibles al ruido. Estas prácticas se fundamentan en los principios básicos de conducción de corriente y caída de tensión en redes eléctricas \cite{openstax_kcl_2022}, y permiten preservar la integridad de las señales en sistemas que requieren precisión temporal o mediciones analógicas confiables.
 
 
 
@@ -385,6 +386,8 @@ La coexistencia de múltiples actuadores, sensores y líneas de señal dentro de
 
 
 % Programación Atmega328p
+% Quiza agregar algunas figuras aca para complementar
+
 
 \subsection{Control de servomotores mediante modulación por ancho de pulso (PWM)}
 
@@ -443,6 +446,7 @@ El uso de temporizadores en sistemas embebidos garantiza un comportamiento deter
 
 
 % Interfaz de usuario
+% Quiza agregar algunas figuras aca para complementar
 
 \subsection{Interfaz humano-máquina (HMI)}
 
