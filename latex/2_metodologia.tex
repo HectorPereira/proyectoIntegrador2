@@ -177,7 +177,13 @@ Se identifican con verde las superficie de contacto que friccionan contra el per
 
 \subsubsection{Electroimán}
 Para realizar la carcasa del electroimán se realiza uso de un torno manual. Hasta tener las medidas concretadas, se dejan un excedente en espesor y longitud para realizar pruebas durante el proceso de prototipado. Cuando se obtengan el resto de valores se dará lugar a una finalización de esta pieza por motivos de reducción de peso.
+
+\vspace{1em}
+
 La bobina del electroimán se construyó utilizando alambre de cobre esmaltado de 0,5 mm de diámetro, enrollado a lo largo de aproximadamente 5 metros para generar el campo magnético necesario. Como núcleo ferromagnético se empleó un tornillo de acero, seleccionado por su alta permeabilidad magnética y disponibilidad. 
+
+\vspace{1em}
+
 Para asegurar la integridad mecánica del devanado y permitir un montaje limpio dentro del efector, se diseñó e imprimió en 3D una carcasa encapsulante, la cual facilita el proceso de bobinado, protege el alambre y permite fijar la bobina de manera estable en la estructura del electroimán. Este encapsulamiento también mejora la manipulabilidad del conjunto y reduce el riesgo de daños por fricción o tensiones mecánicas durante la operación del brazo robótico.
 
 \begin{figure}[H]
@@ -208,13 +214,17 @@ Se realiza el diseño del controlador espejo tomando en consideración las toler
 % Se conectan todos los potenciómetros entre sí y se crean conectores hembra para las entradas de alimentación, y las salidas analógicas y digitales de los potenciómetros y botones respectivamente.
 
 
-\subsection{Código y electrónica de control}
+\subsection{Código}
 
 Utilizando servomotores SG90 como prueba de concepto gracias a su reducido consumo comparados con los servomotores MG996R, se realizan pruebas de código en C de bajo nivel. Utilizando los conversores analógico-digital, y PWM para leer el valor de resistencia de los potenciometros y traducirlo en un ángulo de salida para los servomotores (véase anexo \ref{anexo:codigo}).
 
 % TODO: 
 
-% Diagrama electrónica de control
+% Diagrama de flujo del código
+
+% \subsection{Electrónica de control}
+
+% Diagrama electrónica de control (TinkerCAD)
 
 
 

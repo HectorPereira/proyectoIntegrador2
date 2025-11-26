@@ -16,6 +16,9 @@ Enlace: \href{https://github.com/HectorPereira/proyectoIntegrador2}{\texttt{gith
 
 
 
+
+
+
 \subsection{Inspiraciones}\label{apendice:inspiraciones}
 
 \begin{multicols}{2}
@@ -111,6 +114,582 @@ Modelo impreso de código libre por el creador de contenido `Build Some Stuff' c
 Diseño própio descartado. Elaborado con servomotores mg996r y eslabones como prueba de concepto preliminar.
 \end{multicols}
 
-% TODO: Agregar código C
-% TODO: Agregar código Pyhton
+\subsection{Código para el microcontrolador}\label{apendice:codigo_micro}
+
+\subsubsection{Módulo UART: Inicialización y telemetría de servos}
+\begin{lstlisting}[language=C]
+void uart_init(void) {
+    UBRR0H = (uint8_t)(UART_UBRR >> 8);
+    UBRR0L = (uint8_t)(UART_UBRR & 0xFF);
+
+    UCSR0B = (1 << RXEN0) | (1 << TXEN0);      // RX/TX habilitados
+    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);    // 8N1
+}
+
+void uart_send_positions(void) {
+    char buf[48];
+
+    unsigned s1 = angle_logical[0];
+    unsigned s2 = angle_logical[1];
+    unsigned s3 = 180 - angle_logical[2];  // inversión para la app
+    unsigned s4 = angle_logical[3];
+
+    int n = snprintf(buf, sizeof(buf),
+        "S1=%u S2=%u S3=%u S4=%u\n",
+        s1, s2, s3, s4);
+
+    if (n > 0) uart_send_str(buf);
+}
+\end{lstlisting}
+
+
+\subsubsection{Parser de comandos UART (MODE, MAG, GON/GOFF, S1..S4)}
+\begin{lstlisting}[language=C]
+void parse_uart_line(char *s) {
+    while (*s) {
+        while (*s==' ' || *s=='\t') s++;
+
+        // MODE:APP / MODE:CE
+        if (strncmp(s,"MODE",4)==0) {
+            s += 4;
+            while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
+            if (*s=='A' || *s=='a') current_mode = MODE_APP;
+            else                    current_mode = MODE_CE;
+            while(*s && *s!=' ' && *s!='\t') s++;
+            continue;
+        }
+
+        // MAG:0 / MAG:1
+        if (strncmp(s,"MAG",3)==0) {
+            s += 3;
+            while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
+            int val = atoi(s);
+            mag_set(val ? 1 : 0);
+            while(*s && *s!=' ' && *s!='\t') s++;
+            continue;
+        }
+
+        // GON / GOFF (grabación)
+        if (strncmp(s,"GON",3)==0) {
+            rec_set(1, 0);
+            s += 3;
+            continue;
+        }
+        if (strncmp(s,"GOFF",4)==0) {
+            rec_set(0, 0);
+            s += 4;
+            continue;
+        }
+
+        // S1..S4
+        if (*s=='S' && (s[1]>='1'&&s[1]<='4')) {
+            uint8_t idx = s[1]-'1';
+            s += 2;
+            while(*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
+            int val = atoi(s);
+            if (val<0) val = 0;
+            if (val>180) val = 180;
+            angle_app[idx] = val;
+            while(*s && *s!=' ' && *s!='\t') s++;
+            continue;
+        }
+
+        while(*s && *s!=' ' && *s!='\t') s++;
+    }
+}
+\end{lstlisting}
+
+
+\subsubsection{Algoritmo de suavizado incremental (SLEW) para los servos}
+\begin{lstlisting}[language=C]
+for(uint8_t i=0; i<4; i++){
+    long logical_angle;
+
+    // 1) Ángulo objetivo según el modo (CE: joystick / APP: UART)
+    if (current_mode == MODE_CE) {
+        uint16_t val = ADC_read(potPins[i]);
+        long pot_a = map_value(val,0,1023,0,270);
+        long off   = map_value(potCenter[i],0,1023,0,270);
+        logical_angle = 90 + (pot_a - off);
+    } else {
+        logical_angle = angle_app[i];
+    }
+
+    if (logical_angle < 0)   logical_angle = 0;
+    if (logical_angle > 180) logical_angle = 180;
+    angle_logical[i] = logical_angle;
+
+    // 2) Suavizado SLEW: angle_output = angle_logical
+    int16_t out = angle_output[i];
+
+    if (out < logical_angle) {
+        out += SLEW_STEP_DEG;
+        if (out > logical_angle) out = logical_angle;
+    } else if (out > logical_angle) {
+        out -= SLEW_STEP_DEG;
+        if (out < logical_angle) out = logical_angle;
+    }
+
+    angle_output_prev[i] = angle_output[i];
+    angle_output[i] = out;
+}
+\end{lstlisting}
+
+
+\subsubsection{Generación de PWM por software (bit-banging) usando Timer1}
+\begin{lstlisting}[language=C]
+void servo_pulse_frame(void){
+    // Subir los cuatro pines simultáneamente
+    PORTD |= (1<<PD6);
+    PORTB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
+
+    uint16_t start = TCNT1;
+
+    for(;;){
+        uint16_t now = TCNT1;
+        uint16_t us = (now - start) / 2;  // 0.5 us por tick
+
+        uart_poll_byte();  // se permite recepción UART dentro del frame
+
+        if (us >= SERVO_PERIOD_US) break;
+
+        if (us >= pulseWidth[0]) PORTD &= ~(1<<PD6);
+        if (us >= pulseWidth[1]) PORTB &= ~(1<<PB1);
+        if (us >= pulseWidth[2]) PORTB &= ~(1<<PB2);
+        if (us >= pulseWidth[3]) PORTB &= ~(1<<PB3);
+    }
+}
+\end{lstlisting}
+
+
+\subsubsection{Control del electroimán (MAG) con feedback mediante buzzer}
+\begin{lstlisting}[language=C]
+void mag_set(uint8_t new_state) {
+    uint8_t old = mag_state;
+    mag_state = new_state ? 1 : 0;
+    mag_apply_state();
+
+    if (!old && mag_state) {
+        // Si pasó de OFF -> ON, 2 pitidos
+        buzzer_start(2);
+    }
+}
+
+void mag_button_poll(void) {
+    uint8_t now = (PINB & (1<<MAG_BTN_PIN)) ? 1 : 0;
+
+    if (mag_btn_last == 1 && now == 0 && mag_btn_debounce == 0) {
+        mag_set(mag_state ? 0 : 1);
+
+        if (mag_state) uart_send_str("MAG:1\n");
+        else           uart_send_str("MAG:0\n");
+
+        mag_btn_debounce = 10;
+    }
+
+    mag_btn_last = now;
+}
+\end{lstlisting}
+
+\subsubsection{Máquina de estados del buzzer para patrones de beeps}
+\begin{lstlisting}[language=C]
+void buzzer_start(uint8_t n_beeps) {
+    if (n_beeps == 0) return;
+    buzzer.active      = 1;
+    buzzer.beeps_total = n_beeps;
+    buzzer.beeps_done  = 0;
+    buzzer.phase       = 1;     // ON
+    buzzer.phase_ticks = 0;
+    PORTD |= (1 << BUZZER_PIN);
+}
+
+void buzzer_update(void) {
+    if (!buzzer.active) {
+        PORTD &= ~(1 << BUZZER_PIN);
+        return;
+    }
+
+    buzzer.phase_ticks++;
+
+    if (buzzer.phase == 1) {        // fase ON
+        if (buzzer.phase_ticks >= BUZZ_ON_TICKS) {
+            buzzer.phase = 0;
+            buzzer.phase_ticks = 0;
+            PORTD &= ~(1 << BUZZER_PIN);
+        }
+    } else {                        // fase OFF
+        if (buzzer.phase_ticks >= BUZZ_OFF_TICKS) {
+            buzzer.beeps_done++;
+            if (buzzer.beeps_done >= buzzer.beeps_total) {
+                buzzer.active = 0;
+            } else {
+                buzzer.phase = 1;
+                buzzer.phase_ticks = 0;
+                PORTD |= (1 << BUZZER_PIN);
+            }
+        }
+    }
+}
+\end{lstlisting}
+
+
+\subsubsection{Antirrebote por software de los botones físicos}
+\begin{lstlisting}[language=C]
+void mode_button_poll(void) {
+    uint8_t now = (PIND & (1<<BTN_MODE_PIN)) ? 1 : 0;
+
+    if (btn_last == 1 && now == 0 && btn_debounce == 0) {
+        current_mode = (current_mode == MODE_CE) ? MODE_APP : MODE_CE;
+        uart_send_str(current_mode == MODE_APP ? "MODE=APP\n" : "MODE=CE\n");
+        btn_debounce = 10;
+    }
+    btn_last = now;
+}
+\end{lstlisting}
+
+
+\subsubsection{Bucle principal del firmware (control, PWM, telemetría)}
+\begin{lstlisting}[language=C]
+while(1){
+    mode_button_poll();
+    mag_button_poll();
+    rec_button_poll();
+
+    uint8_t moving = 0;
+
+    // Actualización lógica y suavizada de los cuatro servos
+    for(uint8_t i=0; i<4; i++){
+        // Cálculo del ángulo lógico según modo CE/APP
+        ...
+        // Suavizado: angle_output se acerca a logical_angle
+        ...
+        // Conversión a ángulo físico del servo y PWM
+        pulseWidth[i] = SERVO_MIN_US +
+            (servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
+    }
+
+    // Generación de PWM para los 4 servos
+    servo_pulse_frame();
+
+    // Actualización de buzzer y LED verde
+    buzzer_update();
+    led_green_update(moving);
+
+    // Telemetría periódica hacia la PC
+    tcount++;
+    if (tcount >= 5){
+        tcount = 0;
+        uart_send_positions();
+    }
+}
+\end{lstlisting}
+
+
+
+\subsection{Código para la interfaz de usuario}\label{apendice:codigo_GUI}
+
+
+\subsubsection{Módulo de conexión y comunicación serial (UART)}
+\begin{lstlisting}[language=python]
+def connect_serial():
+    global ser, connected
+    port = port_combo.get().strip()
+    ser = serial.Serial(port, BAUD, timeout=0.2)
+    time.sleep(0.4)  # Reset automático del Arduino
+    connected = True
+    periodic_read()  # Arranca ciclo de lectura
+\end{lstlisting}
+\begin{lstlisting}[language=python]
+def periodic_read():
+    if not connected:
+        return
+    data = read_available().strip()
+    if data:
+        parse_and_update(data)
+    root.after(READ_POLL_MS, periodic_read)
+\end{lstlisting}
+
+\subsubsection{Módulo de interpretación de mensajes del firmware (Parser UART)}
+\begin{lstlisting}[language=python]
+def parse_and_update(text: str):
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        upper = line.upper()
+
+        # Inicio/fin de grabación (botón físico en el robot)
+        if upper.startswith("GON"):
+            start_record_from_hw()
+            continue
+        if upper.startswith("GOFF"):
+            stop_record_from_hw()
+            continue
+
+        # Lectura del electroimán: "MAG:1", "MAG=0", etc.
+        if upper.startswith("MAG"):
+            tmp = upper.replace("=", " ").replace(":", " ")
+            parts = tmp.split()
+            if len(parts) >= 2:
+                mag_state = 1 if parts[1] in ("1", "ON") else 0
+            mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+            update_hud()
+            continue
+
+        # Telemetría completa de servos: "S1=90 S2=120 S3=45 S4=30"
+        if ("S1=" in line) and ("S2=" in line) and ("S3=" in line) and ("S4=" in line):
+            parts = line.split()
+            for tok in parts:
+                if tok.startswith("S") and "=" in tok:
+                    name, val = tok.split("=", 1)
+                    set_servo_angle(name, int(val))
+            update_hud()
+\end{lstlisting}
+
+\subsubsection{Envío progresivo de comandos desde los sliders (Rate Limiter)}
+\begin{lstlisting}[language=python]
+def _send_pending_for(key: str):
+    if is_centering:
+        servos[key]["after_id"] = None
+        return
+
+    deg = int(servos[key]["pending"])
+    lo, hi = servos[key]["min"], servos[key]["max"]
+    deg = max(lo, min(hi, deg))
+    servos[key]["disp"].set(str(deg))
+
+    # Envío controlado para evitar saturación por UART
+    if mode_var.get() == "APP" and deg != servos[key]["last_sent"]:
+        send_deg = transform_angle_for_send(key, deg)
+        write_line(f"{key}:{send_deg:d}")
+        servos[key]["last_sent"] = deg
+
+    if connected and mode_var.get() == "APP":
+        servos[key]["after_id"] = root.after(SEND_INTERVAL_MS,
+                                             _send_pending_for, key)
+    update_hud()
+\end{lstlisting}
+
+\subsubsection{Algoritmo de centrado suave de los cuatro servos}
+\begin{lstlisting}[language=python]
+def center_all_smooth():
+    global is_centering
+    if is_centering:
+        return
+
+    is_centering = True
+    set_scales_state("disabled")
+
+    targets = {}
+    for k in ("S1", "S2", "S3", "S4"):
+        lo, hi = servos[k]["min"], servos[k]["max"]
+        targets[k] = max(lo, min(hi, 90))
+
+    def _tick():
+        nonlocal targets
+        global is_centering
+
+        all_done = True
+        for k in ("S1", "S2", "S3", "S4"):
+            cur = int(round(servos[k]["var"].get()))
+            tgt = targets[k]
+            if cur != tgt:
+                all_done = False
+                step = CENTER_STEP_DEG
+                cur = cur + step if cur < tgt else cur - step
+                set_servo_angle(k, cur)
+
+        if connected and mode_var.get() == "APP":
+            cmd = " ".join(f"{k}:{transform_angle_for_send(k, int(servos[k]['var'].get()))}"
+                           for k in ("S1","S2","S3","S4"))
+            write_line(cmd)
+
+        update_hud()
+
+        if all_done:
+            is_centering = False
+            set_scales_state("normal")
+            last_msg_var.set("Último: Centrado suave completado")
+        else:
+            root.after(CENTER_INTERVAL_MS, _tick)
+
+    _tick()
+\end{lstlisting}
+
+\subsubsection{Grabación periódica de la trayectoria (Logger de poses)}
+\begin{lstlisting}[language=python]
+def record_tick():
+    global record_after_id
+    if not recording:
+        record_after_id = None
+        return
+
+    frame = {}
+    for k in ("S1", "S2", "S3", "S4"):
+        frame[k] = int(round(servos[k]["var"].get()))
+
+    # Incluir estado del electroimán
+    frame["MAG"] = int(mag_state)
+
+    recorded_frames.append(frame)
+    record_after_id = root.after(RECORD_INTERVAL_MS, record_tick)
+\end{lstlisting}
+
+\subsubsection{Reproducción de trayectorias con prealineado suave}
+\begin{lstlisting}[language=python]
+def smooth_move_to_frame(frame, done_callback):
+    global preplay_active, is_centering
+    preplay_active = True
+    is_centering = True
+    set_scales_state("disabled")
+
+    targets = {k: int(frame.get(k, servos[k]["var"].get()))
+               for k in ("S1","S2","S3","S4")}
+
+    def _tick():
+        nonlocal targets
+        all_done = True
+
+        for k in ("S1","S2","S3","S4"):
+            cur = int(round(servos[k]["var"].get()))
+            tgt = targets[k]
+            if cur != tgt:
+                all_done = False
+                cur += CENTER_STEP_DEG if cur < tgt else -CENTER_STEP_DEG
+                set_servo_angle(k, cur)
+
+        if connected and mode_var.get() == "APP":
+            cmd = " ".join(
+                f"{k}:{transform_angle_for_send(k, int(servos[k]['var'].get()))}"
+                for k in ("S1","S2","S3","S4")
+            )
+            write_line(cmd)
+
+        update_hud()
+
+        if all_done:
+            preplay_active = False
+            is_centering = False
+            set_scales_state("normal")
+            done_callback()
+        else:
+            root.after(CENTER_INTERVAL_MS, _tick)
+
+    _tick()
+\end{lstlisting}
+
+\begin{lstlisting}[language=python]
+def start_playback():
+    global is_playing, play_index
+
+    if not recorded_frames or not connected:
+        return
+
+    first_frame = recorded_frames[0]
+
+    def after_align():
+        nonlocal first_frame
+        is_playing = True
+        play_index = 0
+        playback_step()
+
+    smooth_move_to_frame(first_frame, after_align)
+\end{lstlisting}
+
+\subsubsection{Paso discreto de reproducción de la trayectoria}
+\begin{lstlisting}[language=python]
+def playback_step():
+    global is_playing, play_index, play_after_id, mag_state
+
+    if not is_playing:
+        return
+    if play_index >= len(recorded_frames):
+        is_playing = False
+        return
+
+    frame = recorded_frames[play_index]
+
+    # 1) Actualizar sliders
+    for k in ("S1", "S2", "S3", "S4"):
+        set_servo_angle(k, int(frame[k]))
+
+    # 2) Electroimán sincronizado
+    if "MAG" in frame:
+        mag_state = int(frame["MAG"])
+        mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+
+    # 3) Enviar al firmware
+    if connected and mode_var.get() == "APP":
+        parts = []
+        for k in ("S1","S2","S3","S4"):
+            deg = int(servos[k]["var"].get())
+            parts.append(f"{k}:{transform_angle_for_send(k, deg)}")
+        parts.append(f"MAG:{mag_state}")
+        write_line(" ".join(parts))
+
+    update_hud()
+
+    play_index += 1
+    if is_playing and play_index < len(recorded_frames):
+        play_after_id = root.after(RECORD_INTERVAL_MS, playback_step)
+\end{lstlisting}
+
+\subsubsection{Control del electroimán vía UART}
+\begin{lstlisting}[language=python]
+def toggle_magnet():
+    global mag_state
+    if not connected:
+        return
+
+    mag_state = 1 - mag_state
+    mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+    write_line(f"MAG:{mag_state}")
+    update_hud()
+\end{lstlisting}
+
+\subsubsection{Visualización 2D del brazo robótico (HUD cinemático)}
+\begin{lstlisting}[language=python]
+def update_hud():
+    s2 = int(servos["S2"]["var"].get())
+    s3 = int(servos["S3"]["var"].get())
+    s4 = int(servos["S4"]["var"].get())
+
+    a1 = math.radians(s2)
+    a2 = a1 + math.radians(s3 - 90)
+    a3 = a2 + math.radians(s4 - 90)
+
+    x1 = ox + L1*cos(a1)
+    y1 = oy - L1*sin(a1)
+    x2p = x1 + L2*cos(a2)
+    y2p = y1 - L2*sin(a2)
+    x3 = x2p + L3*cos(a3)
+
+    arm_canvas.create_line(ox, oy, x1, y1, width=6)
+    arm_canvas.create_line(x1, y1, x2p, y2p, width=6)
+    arm_canvas.create_line(x2p, y2p, x3, y3, width=6)
+\end{lstlisting}
+
+\subsubsection{Módulo de interpretación de mensajes del firmware (Parser UART)}
+\begin{lstlisting}[language=python]
+def parse_and_update(text: str):
+    for line in text.splitlines():
+        upper = line.upper()
+
+        if upper.startswith("GON"):
+            start_record_from_hw()
+        elif upper.startswith("GOFF"):
+            stop_record_from_hw()
+
+        elif upper.startswith("MAG"):
+            token = upper.replace("=", " ").replace(":", " ").split()[1]
+            mag_state = 1 if token in ("1","ON") else 0
+            mag_btn.config(text=f"Electroimán: {'ON' if mag_state else 'OFF'}")
+
+        elif "S1=" in line and "S2=" in line:
+            for tok in line.split():
+                if "S" in tok:
+                    name, val = tok.split("=")
+                    set_servo_angle(name, int(val))
+            update_hud()
+\end{lstlisting}
 

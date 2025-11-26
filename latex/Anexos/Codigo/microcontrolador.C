@@ -1,0 +1,620 @@
+#define F_CPU 16000000UL
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define SERVO_MIN_US 350
+#define SERVO_MAX_US 2650
+#define SERVO_PERIOD_US 20000
+
+#define UART_BAUD 9600UL
+#define UART_UBRR ((F_CPU/16/UART_BAUD)-1)
+
+// Modos
+#define MODE_CE  0
+#define MODE_APP 1
+
+// Botón de modo
+#define BTN_MODE_PIN PD2
+
+// Electroimán en PD7 (pin digital 7)
+#define MAG_PIN PD7
+
+// Botón físico del electroimán en D12 (PB4)
+#define MAG_BTN_PIN PB4
+
+// Botón físico de grabación en D13 (PB5)
+#define REC_BTN_PIN PB5
+
+// LEDs y buzzer (pines actualizados)
+#define LED_RED_PIN    PD5   // D5
+#define LED_BLUE_PIN   PD4   // D4
+#define LED_GREEN_PIN  PB0   // D8
+#define BUZZER_PIN     PD3   // D3
+
+// Paso máximo de cambio suave por frame (en grados)
+#define SLEW_STEP_DEG 3
+
+// Duración de fases del buzzer en frames de servo (20 ms aprox)
+#define BUZZ_ON_TICKS   5   // ~100 ms ON
+#define BUZZ_OFF_TICKS  5   // ~100 ms OFF
+
+// ADC
+const uint8_t potPins[4]   = {0, 1, 2, 3};
+const uint8_t servoPins[4] = {PD6, PB1, PB2, PB3};
+
+uint16_t potCenter[4];
+uint16_t pulseWidth[4];
+
+uint8_t angle_app[4]     = {90, 90, 90, 90};
+uint8_t angle_logical[4] = {90, 90, 90, 90};
+uint8_t angle_output[4]  = {90, 90, 90, 90};
+uint8_t angle_output_prev[4] = {90, 90, 90, 90};
+
+volatile uint8_t current_mode = MODE_CE;
+
+// Estado del botón de modo
+uint8_t btn_last = 1;
+uint8_t btn_debounce = 0;
+
+// Estado del electroimán
+uint8_t mag_state = 0;
+
+// Estado del botón del electroimán
+uint8_t mag_btn_last = 1;
+uint8_t mag_btn_debounce = 0;
+
+// Estado de "grabación"
+uint8_t rec_state = 0;
+
+// Estado del botón de grabación
+uint8_t rec_btn_last = 1;
+uint8_t rec_btn_debounce = 0;
+
+// Buzzer: pequeño motor de estados
+typedef struct {
+	uint8_t active;
+	uint8_t beeps_total;
+	uint8_t beeps_done;
+	uint8_t phase;        // 0 = OFF, 1 = ON
+	uint16_t phase_ticks; // ticks dentro de la fase
+} buzzer_t;
+
+buzzer_t buzzer = {0, 0, 0, 0, 0};
+
+// Buffer UART
+static char rx_buf[64];
+static uint8_t rx_idx = 0;
+
+/* ===================== UART ===================== */
+
+void uart_init(void) {
+	UBRR0H = (uint8_t)(UART_UBRR >> 8);
+	UBRR0L = (uint8_t)(UART_UBRR & 0xFF);
+
+	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+}
+
+void uart_send_char(char c) {
+	while (!(UCSR0A & (1 << UDRE0)));
+	UDR0 = c;
+}
+
+void uart_send_str(const char *s) {
+	while (*s) uart_send_char(*s++);
+}
+
+/* Telemetría: invertir solo S3 para la APP */
+void uart_send_positions(void) {
+	char buf[48];
+
+	unsigned s1 = angle_logical[0];
+	unsigned s2 = angle_logical[1];
+	unsigned s3_raw = angle_logical[2];
+	unsigned s4 = angle_logical[3];
+
+	unsigned s3 = 180 - s3_raw;
+
+	int n = snprintf(buf, sizeof(buf),
+	"S1=%u S2=%u S3=%u S4=%u\n",
+	s1, s2, s3, s4);
+	if (n > 0) uart_send_str(buf);
+}
+
+/* ===================== Buzzer ===================== */
+
+void buzzer_start(uint8_t n_beeps) {
+	if (n_beeps == 0) return;
+	buzzer.active      = 1;
+	buzzer.beeps_total = n_beeps;
+	buzzer.beeps_done  = 0;
+	buzzer.phase       = 1;     // arrancamos en ON
+	buzzer.phase_ticks = 0;
+	PORTD |= (1 << BUZZER_PIN); // ON
+}
+
+void buzzer_update(void) {
+	if (!buzzer.active) {
+		PORTD &= ~(1 << BUZZER_PIN);
+		return;
+	}
+
+	buzzer.phase_ticks++;
+
+	if (buzzer.phase == 1) {
+		// Fase ON
+		if (buzzer.phase_ticks >= BUZZ_ON_TICKS) {
+			// Pasar a OFF
+			buzzer.phase = 0;
+			buzzer.phase_ticks = 0;
+			PORTD &= ~(1 << BUZZER_PIN);
+		}
+		} else {
+		// Fase OFF
+		if (buzzer.phase_ticks >= BUZZ_OFF_TICKS) {
+			buzzer.beeps_done++;
+			if (buzzer.beeps_done >= buzzer.beeps_total) {
+				// Terminar patrón
+				buzzer.active = 0;
+				PORTD &= ~(1 << BUZZER_PIN);
+				} else {
+				// Siguiente beep
+				buzzer.phase = 1;
+				buzzer.phase_ticks = 0;
+				PORTD |= (1 << BUZZER_PIN);
+			}
+		}
+	}
+}
+
+/* ===================== LEDs ===================== */
+
+void led_green_on(void)  { PORTB |=  (1 << LED_GREEN_PIN); }
+void led_green_off(void) { PORTB &= ~(1 << LED_GREEN_PIN); }
+
+void led_red_on(void)    { PORTD |=  (1 << LED_RED_PIN); }
+void led_red_off(void)   { PORTD &= ~(1 << LED_RED_PIN); }
+
+void led_blue_on(void)   { PORTD |=  (1 << LED_BLUE_PIN); }
+void led_blue_off(void)  { PORTD &= ~(1 << LED_BLUE_PIN); }
+
+// Parpadeo LED verde cuando hay movimiento
+void led_green_update(uint8_t moving) {
+	static uint8_t blink_state = 0;
+	static uint8_t blink_cnt = 0;
+
+	if (!moving) {
+		// Sin movimiento: verde fijo encendido
+		blink_state = 0;
+		blink_cnt = 0;
+		led_green_on();
+		} else {
+		// Hay movimiento: parpadeo
+		blink_cnt++;
+		if (blink_cnt >= 5) { // ~100 ms por cambio
+			blink_cnt = 0;
+			blink_state ^= 1;
+			if (blink_state) led_green_on();
+			else             led_green_off();
+		}
+	}
+}
+
+/* ===================== MAG (electroimán) ===================== */
+
+void mag_apply_state(void) {
+	if (mag_state) {
+		PORTD |= (1 << MAG_PIN);
+		led_blue_on();
+		} else {
+		PORTD &= ~(1 << MAG_PIN);
+		led_blue_off();
+	}
+}
+
+// Cambiar estado del imán y disparar beeps (desde app o botón)
+void mag_set(uint8_t new_state) {
+	uint8_t old = mag_state;
+	mag_state = new_state ? 1 : 0;
+	mag_apply_state();
+
+	if (!old && mag_state) {
+		// Pasó de OFF a ON -> 2 pitidos
+		buzzer_start(2);
+	}
+}
+
+/* ===================== Grabación (estado + helpers) ===================== */
+
+// new_state: 0/1; send_uart: 1 = mandar GON/GOFF al PC, 0 = solo cambiar estado local
+void rec_set(uint8_t new_state, uint8_t send_uart) {
+	uint8_t old = rec_state;
+	rec_state = new_state ? 1 : 0;
+
+	if (rec_state) {
+		led_red_on();
+		// Solo disparar beeps cuando pasamos de OFF a ON
+		if (!old) {
+			buzzer_start(3);   // 3 pitidos al empezar a grabar
+		}
+		if (send_uart) {
+			uart_send_str("GON\n");
+		}
+		} else {
+		led_red_off();
+		if (send_uart) {
+			uart_send_str("GOFF\n");
+		}
+	}
+}
+
+/* ===================== Parser ===================== */
+
+void parse_uart_line(char *s) {
+	while (*s) {
+		while (*s==' ' || *s=='\t') s++;
+		if (*s=='\0') break;
+
+		// MODE:APP / MODE:CE
+		if (strncmp(s,"MODE",4)==0) {
+			s+=4;
+			while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
+
+			if (*s=='A'||*s=='a') {
+				current_mode = MODE_APP;
+				uart_send_str("MODE=APP\n");
+				} else if (*s=='C'||*s=='c') {
+				current_mode = MODE_CE;
+				uart_send_str("MODE=CE\n");
+			}
+
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
+		}
+
+		// MAG:0 / MAG:1 desde la app
+		if (strncmp(s,"MAG",3)==0) {
+			s += 3;
+
+			while (*s==' '||*s=='\t'||*s==':'||*s=='=') s++;
+
+			char *num_start = s;
+			uint8_t has_digit = 0;
+			while (isdigit((unsigned char)*s)) {
+				has_digit = 1;
+				s++;
+			}
+
+			if (has_digit) {
+				int val = atoi(num_start);
+				if (val != 0) val = 1;
+				mag_set((uint8_t)val);
+			}
+
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
+		}
+
+		// GON / GOFF (grabación ON/OFF) desde la APP
+		if (strncmp(s,"GON",3)==0) {
+			// Encender LED rojo + 3 pitidos (si veníamos de OFF), pero SIN eco UART
+			rec_set(1, 0);
+
+			s += 3;
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
+		}
+
+		if (strncmp(s,"GOFF",4)==0) {
+			// Apagar LED rojo, sin eco UART
+			rec_set(0, 0);
+
+			s += 4;
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
+		}
+
+		// S1..S4
+		if (*s=='S' && (s[1]>='1' && s[1]<='4')) {
+			uint8_t idx = s[1]-'1';
+			s+=2;
+
+			while(*s==' '||*s=='\t') s++;
+			if (*s==':' || *s=='=') s++;
+			while(*s==' '||*s=='\t') s++;
+
+			char *num_start = s;
+			uint8_t has_digit=0;
+			while(isdigit((unsigned char)*s)) {
+				has_digit=1;
+				s++;
+			}
+
+			if (has_digit) {
+				int val = atoi(num_start);
+				if (val<0) val=0;
+				if (val>180) val=180;
+				angle_app[idx]=val;
+			}
+
+			while(*s && *s!=' ' && *s!='\t') s++;
+			continue;
+		}
+
+		// Token desconocido
+		while(*s && *s!=' ' && *s!='\t') s++;
+	}
+}
+
+void uart_poll_byte(void) {
+	if (UCSR0A & (1 << RXC0)) {
+		char c = UDR0;
+
+		if (c=='\r' || c=='\n') {
+			if (rx_idx>0) {
+				rx_buf[rx_idx]='\0';
+				parse_uart_line(rx_buf);
+				rx_idx=0;
+			}
+			} else {
+			if (rx_idx<sizeof(rx_buf)-1) {
+				rx_buf[rx_idx++]=c;
+				} else {
+				rx_idx=0;
+			}
+		}
+	}
+}
+
+/* ===================== Botones ===================== */
+
+void mode_button_poll(void) {
+	uint8_t now = (PIND & (1<<BTN_MODE_PIN)) ? 1 : 0;
+
+	if (btn_debounce>0) btn_debounce--;
+
+	if (btn_last==1 && now==0 && btn_debounce==0) {
+		if (current_mode==MODE_CE) {
+			current_mode=MODE_APP;
+			uart_send_str("MODE=APP\n");
+			} else {
+			current_mode=MODE_CE;
+			uart_send_str("MODE=CE\n");
+		}
+		btn_debounce=10;
+	}
+
+	btn_last=now;
+}
+
+/* Botón físico del electroimán (D12) */
+void mag_button_poll(void) {
+	uint8_t now = (PINB & (1<<MAG_BTN_PIN)) ? 1 : 0;
+
+	if (mag_btn_debounce > 0) mag_btn_debounce--;
+
+	// Flanco de bajada (HIGH -> LOW) con antirrebote
+	if (mag_btn_last == 1 && now == 0 && mag_btn_debounce == 0) {
+		// Toggle del estado del electroimán
+		mag_set(mag_state ? 0 : 1);
+
+		// Aviso por UART del nuevo estado
+		if (mag_state) {
+			uart_send_str("MAG:1\n");
+			} else {
+			uart_send_str("MAG:0\n");
+		}
+
+		mag_btn_debounce = 10;
+	}
+
+	mag_btn_last = now;
+}
+
+/* Botón físico de grabación (D13) */
+void rec_button_poll(void) {
+	uint8_t now = (PINB & (1<<REC_BTN_PIN)) ? 1 : 0;
+
+	if (rec_btn_debounce > 0) rec_btn_debounce--;
+
+	// Flanco de bajada (HIGH -> LOW) con antirrebote
+	if (rec_btn_last == 1 && now == 0 && rec_btn_debounce == 0) {
+		// Toggle del estado de grabación:
+		// cambia LED rojo, beeps y MANDA GON/GOFF a la PC
+		rec_set(rec_state ? 0 : 1, 1);
+
+		rec_btn_debounce = 10;
+	}
+
+	rec_btn_last = now;
+}
+
+/* ===================== ADC ===================== */
+
+void ADC_init(void){
+	ADMUX  = (1<<REFS0);
+	ADCSRA = (1<<ADEN)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0);
+}
+
+uint16_t ADC_read(uint8_t ch){
+	ADMUX = (ADMUX & 0xF8) | (ch & 0x07);
+	ADCSRA |= (1<<ADSC);
+	while(ADCSRA & (1<<ADSC));
+	return ADC;
+}
+
+/* ===================== Timer1 ===================== */
+
+void timer1_init(void){
+	TCCR1A=0;
+	TCCR1B=(1<<CS11); // prescaler 8, 0.5 us
+}
+
+/* ===================== map ===================== */
+
+long map_value(long x,long in_min,long in_max,long out_min,long out_max){
+	return (x-in_min)*(out_max-out_min)/(in_max-in_min)+out_min;
+}
+
+/* ===================== PWM BITBANG ===================== */
+
+void servo_pulse_frame(void){
+	// Levantar todos
+	PORTD &= ~(1<<PD6);
+	PORTB &= ~((1<<PB1)|(1<<PB2)|(1<<PB3));
+
+	PORTD |= (1<<PD6);
+	PORTB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
+
+	uint16_t start = TCNT1;
+
+	for(;;){
+		uint16_t now = TCNT1;
+		uint16_t us  = (now-start)/2;
+
+		uart_poll_byte();
+
+		if (us>=SERVO_PERIOD_US) break;
+
+		if (us>=pulseWidth[0]) PORTD &= ~(1<<PD6);
+		if (us>=pulseWidth[1]) PORTB &= ~(1<<PB1);
+		if (us>=pulseWidth[2]) PORTB &= ~(1<<PB2);
+		if (us>=pulseWidth[3]) PORTB &= ~(1<<PB3);
+	}
+}
+
+/* ===================== MAIN ===================== */
+
+int main(void){
+	// Servos
+	DDRD |= (1<<PD6);
+	DDRB |= (1<<PB1)|(1<<PB2)|(1<<PB3);
+
+	// Botón modo
+	DDRD &= ~(1<<BTN_MODE_PIN);
+	PORTD |= (1<<BTN_MODE_PIN);
+
+	// Electroimán
+	DDRD |= (1<<MAG_PIN);
+	PORTD &= ~(1<<MAG_PIN);
+	mag_state = 0;
+	mag_apply_state();
+
+	// Botones físicos (MAG en D12, REC en D13)
+	DDRB &= ~((1<<MAG_BTN_PIN) | (1<<REC_BTN_PIN));
+	PORTB |= (1<<MAG_BTN_PIN) | (1<<REC_BTN_PIN); // pull-up internas
+
+	// LEDs y buzzer (pines nuevos)
+	DDRD |= (1<<LED_RED_PIN) | (1<<LED_BLUE_PIN) | (1<<BUZZER_PIN);
+	DDRB |= (1<<LED_GREEN_PIN);
+
+	led_green_on();   // brazo encendido
+	led_red_off();
+	led_blue_off();
+
+	ADC_init();
+	timer1_init();
+	uart_init();
+
+	for(uint8_t i=0;i<4;i++){
+		potCenter[i] = ADC_read(potPins[i]);
+		angle_output_prev[i] = angle_output[i];
+		_delay_ms(5);
+	}
+
+	// Pitido de encendido (1 beep)
+	buzzer_start(1);
+
+	uint8_t tcount=0;
+
+	while(1){
+		mode_button_poll();
+		mag_button_poll();
+		rec_button_poll();
+
+		uint8_t moving = 0;
+
+		for(uint8_t i=0;i<4;i++){
+			long logical_angle;
+			long servo_angle;
+
+			// 1) Ángulo objetivo según modo
+			if (current_mode==MODE_CE) {
+				uint16_t val = ADC_read(potPins[i]);
+				long pot_a = map_value(val,0,1023,0,270);
+				long off   = map_value(potCenter[i],0,1023,0,270);
+				logical_angle = 90 + (pot_a - off);
+				if (logical_angle<0) logical_angle=0;
+				if (logical_angle>180) logical_angle=180;
+				} else {
+				logical_angle = angle_app[i];
+			}
+
+			angle_logical[i] = (uint8_t)logical_angle;
+
+			// 2) Suavizado: angle_output se acerca a logical_angle
+			int16_t out = angle_output[i];
+
+			if (out < logical_angle) {
+				out += SLEW_STEP_DEG;
+				if (out > logical_angle) out = logical_angle;
+				} else if (out > logical_angle) {
+				out -= SLEW_STEP_DEG;
+				if (out < logical_angle) out = logical_angle;
+			}
+
+			if (out < 0) out = 0;
+			if (out > 180) out = 180;
+
+			if ((uint8_t)out != angle_output_prev[i]) {
+				moving = 1;
+			}
+
+			angle_output_prev[i] = angle_output[i];
+			angle_output[i] = (uint8_t)out;
+
+			// 3) Usar angle_output como base para servo_angle
+			servo_angle = angle_output[i];
+
+			switch(i){
+				case 0:
+				servo_angle = 180-servo_angle;
+				break;
+				case 1:
+				servo_angle = 180-servo_angle;
+				if (servo_angle<30) servo_angle=30;
+				if (servo_angle>150) servo_angle=150;
+				break;
+				case 2:
+				// S3 tal cual
+				break;
+				case 3:
+				servo_angle = 180-servo_angle;
+				break;
+			}
+
+			pulseWidth[i] = SERVO_MIN_US +
+			(servo_angle*(SERVO_MAX_US-SERVO_MIN_US))/180;
+		}
+
+		// PWM servos
+		servo_pulse_frame();
+
+		// Actualizar buzzer y LED verde (parpadeo si hay movimiento)
+		buzzer_update();
+		led_green_update(moving);
+
+		// Telemetría
+		tcount++;
+		if (tcount>=5){
+			tcount=0;
+			uart_send_positions();
+		}
+	}
+}

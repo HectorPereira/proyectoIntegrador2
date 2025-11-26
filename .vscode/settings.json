@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "codigomateo": "cpp"
+        "codigomateo": "cpp",
+        "microcontrolador.C": "cpp"
     }
 }

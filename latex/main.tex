@@ -12,6 +12,53 @@
 \usepackage[hyphens,spaces]{url} % optional, but highly recommended
 \usepackage{siunitx}
 \usepackage{natbib}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% ============================
+%    ESTILO PARA LISTINGS
+% ============================
+\definecolor{miverde}{rgb}{0,0.6,0}
+\definecolor{miamarillo}{rgb}{0.7,0.5,0}
+\definecolor{mimagenta}{rgb}{0.58,0,0.82}
+\definecolor{migris}{rgb}{0.95,0.95,0.95}
+
+\lstdefinestyle{estilo-mectronica}{
+    backgroundcolor=\color{migris},
+    commentstyle=\color{miverde},
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{mimagenta},
+    numberstyle=\tiny\color{miamarillo},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numbersep=8pt,
+    tabsize=4,
+    showspaces=false,
+    showtabs=false,
+    frame=single,
+    literate=
+        {á}{{\'a}}1
+        {é}{{\'e}}1
+        {í}{{\'\i}}1
+        {ó}{{\'o}}1
+        {ú}{{\'u}}1
+        {ñ}{{\~n}}1
+        {Á}{{\'A}}1
+        {É}{{\'E}}1
+        {Í}{{\'I}}1
+        {Ó}{{\'O}}1
+        {Ú}{{\'U}}1
+        {Ñ}{{\~N}}1
+        {¿}{{\textquestiondown}}1
+        {¡}{{\textexclamdown}}1
+}
+
+
+\lstset{style=estilo-mectronica, language=C}
+
+
+
 \sisetup{round-mode=places,round-precision=2,detect-all}
 \usepackage[
   colorlinks=true,
