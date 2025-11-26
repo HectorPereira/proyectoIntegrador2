@@ -114,9 +114,9 @@ Modelo impreso de código libre por el creador de contenido `Build Some Stuff' c
 Diseño própio descartado. Elaborado con servomotores mg996r y eslabones como prueba de concepto preliminar.
 \end{multicols}
 
-\subsection{Código para el microcontrolador}\label{apendice:codigo_micro}
+\subsection{Código para el microcontrolador}\label{ap:codigo_micro}
 
-\subsubsection{Módulo UART: Inicialización y telemetría de servos}
+\subsubsection{Módulo UART: Inicialización y telemetría de servos}\label{ap:uart_init}
 \begin{lstlisting}[language=C]
 void uart_init(void) {
     UBRR0H = (uint8_t)(UART_UBRR >> 8);
@@ -143,7 +143,7 @@ void uart_send_positions(void) {
 \end{lstlisting}
 
 
-\subsubsection{Parser de comandos UART (MODE, MAG, GON/GOFF, S1..S4)}
+\subsubsection{Parser de comandos UART (MODE, MAG, GON/GOFF, S1..S4)}\label{ap:uart_parser}
 \begin{lstlisting}[language=C]
 void parse_uart_line(char *s) {
     while (*s) {
@@ -200,7 +200,7 @@ void parse_uart_line(char *s) {
 \end{lstlisting}
 
 
-\subsubsection{Algoritmo de suavizado incremental (SLEW) para los servos}
+\subsubsection{Algoritmo de suavizado incremental (SLEW) para los servos}\label{ap:slew}
 \begin{lstlisting}[language=C]
 for(uint8_t i=0; i<4; i++){
     long logical_angle;
@@ -236,7 +236,7 @@ for(uint8_t i=0; i<4; i++){
 \end{lstlisting}
 
 
-\subsubsection{Generación de PWM por software (bit-banging) usando Timer1}
+\subsubsection{Generación de PWM por software (bit-banging) usando Timer1}\label{ap:pwm_bitbanging}
 \begin{lstlisting}[language=C]
 void servo_pulse_frame(void){
     // Subir los cuatro pines simultáneamente
@@ -262,7 +262,7 @@ void servo_pulse_frame(void){
 \end{lstlisting}
 
 
-\subsubsection{Control del electroimán (MAG) con feedback mediante buzzer}
+\subsubsection{Control del electroimán (MAG) con feedback mediante buzzer}\label{ap:mag_control}
 \begin{lstlisting}[language=C]
 void mag_set(uint8_t new_state) {
     uint8_t old = mag_state;
@@ -291,7 +291,7 @@ void mag_button_poll(void) {
 }
 \end{lstlisting}
 
-\subsubsection{Máquina de estados del buzzer para patrones de beeps}
+\subsubsection{Máquina de estados del buzzer para patrones de beeps}\label{ap:buzzer_fsm}
 \begin{lstlisting}[language=C]
 void buzzer_start(uint8_t n_beeps) {
     if (n_beeps == 0) return;
@@ -333,7 +333,7 @@ void buzzer_update(void) {
 \end{lstlisting}
 
 
-\subsubsection{Antirrebote por software de los botones físicos}
+\subsubsection{Antirrebote por software de los botones físicos}\label{ap:debounce}
 \begin{lstlisting}[language=C]
 void mode_button_poll(void) {
     uint8_t now = (PIND & (1<<BTN_MODE_PIN)) ? 1 : 0;
@@ -348,7 +348,7 @@ void mode_button_poll(void) {
 \end{lstlisting}
 
 
-\subsubsection{Bucle principal del firmware (control, PWM, telemetría)}
+\subsubsection{Bucle principal del firmware (control, PWM, telemetría)}\label{ap:loop}
 \begin{lstlisting}[language=C]
 while(1){
     mode_button_poll();
@@ -388,12 +388,12 @@ while(1){
 
 
 
+
 \newpage
 
 \subsection{Código para la interfaz de usuario}\label{apendice:codigo_GUI}
 
-
-\subsubsection{Módulo de conexión y comunicación serial (UART)}
+\subsubsection{Módulo de conexión y comunicación serial (UART)}\label{gui:uart_connect}
 \begin{lstlisting}[language=python]
 def connect_serial():
     global ser, connected
@@ -413,7 +413,7 @@ def periodic_read():
     root.after(READ_POLL_MS, periodic_read)
 \end{lstlisting}
 
-\subsubsection{Módulo de interpretación de mensajes del firmware (Parser UART)}
+\subsubsection{Módulo de interpretación de mensajes del firmware (Parser UART)}\label{gui:parser_uart}
 \begin{lstlisting}[language=python]
 def parse_and_update(text: str):
     for line in text.splitlines():
@@ -450,7 +450,7 @@ def parse_and_update(text: str):
             update_hud()
 \end{lstlisting}
 
-\subsubsection{Envío progresivo de comandos desde los sliders (Rate Limiter)}
+\subsubsection{Envío progresivo de comandos desde los sliders (Rate Limiter)}\label{gui:rate_limiter}
 \begin{lstlisting}[language=python]
 def _send_pending_for(key: str):
     if is_centering:
@@ -474,7 +474,7 @@ def _send_pending_for(key: str):
     update_hud()
 \end{lstlisting}
 
-\subsubsection{Algoritmo de centrado suave de los cuatro servos}
+\subsubsection{Algoritmo de centrado suave de los cuatro servos}\label{gui:center_all}
 \begin{lstlisting}[language=python]
 def center_all_smooth():
     global is_centering
@@ -520,7 +520,7 @@ def center_all_smooth():
     _tick()
 \end{lstlisting}
 
-\subsubsection{Grabación periódica de la trayectoria (Logger de poses)}
+\subsubsection{Grabación periódica de la trayectoria (Logger de poses)}\label{gui:logger}
 \begin{lstlisting}[language=python]
 def record_tick():
     global record_after_id
@@ -539,7 +539,7 @@ def record_tick():
     record_after_id = root.after(RECORD_INTERVAL_MS, record_tick)
 \end{lstlisting}
 
-\subsubsection{Reproducción de trayectorias con prealineado suave}
+\subsubsection{Reproducción de trayectorias con prealineado suave}\label{gui:smooth_playback}
 \begin{lstlisting}[language=python]
 def smooth_move_to_frame(frame, done_callback):
     global preplay_active, is_centering
@@ -600,7 +600,7 @@ def start_playback():
     smooth_move_to_frame(first_frame, after_align)
 \end{lstlisting}
 
-\subsubsection{Paso discreto de reproducción de la trayectoria}
+\subsubsection{Paso discreto de reproducción de la trayectoria}\label{gui:playback_step}
 \begin{lstlisting}[language=python]
 def playback_step():
     global is_playing, play_index, play_after_id, mag_state
@@ -638,7 +638,7 @@ def playback_step():
         play_after_id = root.after(RECORD_INTERVAL_MS, playback_step)
 \end{lstlisting}
 
-\subsubsection{Control del electroimán vía UART}
+\subsubsection{Control del electroimán vía UART}\label{gui:mag_control}
 \begin{lstlisting}[language=python]
 def toggle_magnet():
     global mag_state
@@ -651,7 +651,7 @@ def toggle_magnet():
     update_hud()
 \end{lstlisting}
 
-\subsubsection{Visualización 2D del brazo robótico (HUD cinemático)}
+\subsubsection{Visualización 2D del brazo robótico (HUD cinemático)}\label{gui:hud}
 \begin{lstlisting}[language=python]
 def update_hud():
     s2 = int(servos["S2"]["var"].get())
@@ -673,7 +673,7 @@ def update_hud():
     arm_canvas.create_line(x2p, y2p, x3, y3, width=6)
 \end{lstlisting}
 
-\subsubsection{Módulo de interpretación de mensajes del firmware (Parser UART)}
+\subsubsection{Módulo de interpretación de mensajes del firmware (Parser UART) — versión alternativa}\label{gui:parser_uart_alt}
 \begin{lstlisting}[language=python]
 def parse_and_update(text: str):
     for line in text.splitlines():
@@ -696,6 +696,7 @@ def parse_and_update(text: str):
                     set_servo_angle(name, int(val))
             update_hud()
 \end{lstlisting}
+
 
 
 \includepdf[pages=-]{anexos/CAD/CAD.pdf}

@@ -175,20 +175,28 @@ Los potenciometros se encuentran conectados en paralelo a 5V y tierra, mientras 
 
 \subsection{Electrónica de control}
 
-% TODO: Redactar {Electrónica de control}
+La electrónica de control se encarga de controlar adecuadamente todos los transductores implementados. Como se puede observar en la figura~\ref{fig:tinkerCAD}, el conexionado entre compoenentes se da más o menos de manera directa, donde un pin del arduino se corresponde con el elemento que se desea controlar, exceptuando el caso del electroimán. Al tratarse de un elemento inductor conmutado que maneja potencias superiores el sistema de control, se requiere alimentar con 12V. Para conmutarlo, el sistema de control emplea un módulo relé, capaz de ser accionado con el mismo microcontrolador.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{anexos/circuito/tinkerCAD.png}
-  \caption{Diagrama de conexiones eléctricas. Fuente: elaboración própia}
+  \caption{Diagrama de conexiones eléctricas. Fuente: elaboración própia}\label{fig:tinkerCAD}
 \end{figure}
+
+\subsection{Electrónica de potencia}
+
+La electrónica de potencia del sistema tiene como finalidad suministrar las tensiones y corrientes necesarias para los actuadores. Los servomotores se alimentan desde una línea regulada de 5\,V proveniente de una fuente ATX, capaz de entregar corrientes elevadas sin caídas significativas. Para mejorar la estabilidad durante movimientos simultáneos, la distribución se realiza mediante ramales separados.
+
+\vspace{1em}
+
+El electroimán, por su parte, requiere una fuente independiente de 12\,V debido a su mayor demanda de potencia. Al ser una carga inductiva, se incorpora un diodo de rueda libre en paralelo con la bobina para disipar la energía almacenada durante la desconexión y evitar picos de tensión que podrían dañar el módulo relé o el microcontrolador. Ambas fuentes comparten un punto común de masa para asegurar una referencia eléctrica estable entre las etapas de control y potencia (véase figura~\ref{fig:tinkerCAD}).
 
 
 
 
 \subsection{Código microcontrolador}
 
-% TODO: redactar Código microcontrolador
+El firmware implementado en el microcontrolador ATmega328P coordina de maneradeterminística el control de los servomotores, la lectura de potenciómetros, lacomunicación UART, la gestión del electroimán y el sistema de señalización(acústica y lumínica). Su estructura se basa en un bucle principal de ejecucióncontinua (véase Anexo~\ref{ap:loop}), donde en cada iteración se realizan lastareas de lectura, procesamiento y actualización necesarias para mantener elestado del brazo robótico.
 
 \begin{figure}[H]
   \centering
@@ -196,47 +204,64 @@ Los potenciometros se encuentran conectados en paralelo a 5V y tierra, mientras 
   \caption{Diagrama de flujo del código en C. Fuente: elaboración própia}
 \end{figure}
 
+En primer lugar, el sistema gestiona la comunicación serie mediante un módulo UART configurado a 9600\,bps (Anexo~\ref{ap:uart_init}). La telemetría seenvía periódicamente a la computadora, incluyendo los ángulos articulares enformato textual, mientras que el parser de comandos (Anexo~\ref{ap:uart_parser})interpreta instrucciones tales como el cambio de modo de operación, laactivación del electroimán, la orden de inicio de grabación o consignasdirectas para los servomotores. Este mecanismo de intercambio permite manteneruna arquitectura distribuida donde el microcontrolador ejecuta el control entiempo real y la aplicación de escritorio gestiona la capa de interacción.
+
+\vspace{1em}
+
+El movimiento de cada articulación se calcula siguiendo un modelo de doblerepresentación: un ángulo lógico (proveniente de potenciómetros o de la APP) yun ángulo efectivo suavizado mediante un algoritmo de ``slew rate'' que limitala velocidad de cambio (Anexo~\ref{ap:slew}). Este método evita transicionesbruscas y reduce esfuerzos mecánicos. Una vez determinado el ángulo final, segenera la señal PWM correspondiente mediante un mecanismo de bit-banging basadoen el Timer1 (Anexo~\ref{ap:pwm_bitbanging}), lo cual permite controlarsimultáneamente los cuatro servomotores sin depender de librerías externas.
+
+\vspace{1em}
+
+Además, el firmware incorpora un control del electroimán con feedback audible yvisual (Anexo~\ref{ap:mag_control}). El estado del imán puede cambiarse tantodesde la aplicación como desde un botón físico, y la transición OFF→ON disparaautomáticamente un patrón de dos pitidos generado mediante una máquina deestados dedicada al buzzer (Anexo~\ref{ap:buzzer_fsm}). De manera similar, lagrabación de trayectorias puede activarse mediante un botón con antirrebote, loque a su vez ilumina el LED rojo y emite un patrón distintivo de tres beeps.
+
+\vspace{1em}
+
+Finalmente, el sistema incorpora una gestión por software de los botonesfísicos, donde se aplica filtrado de rebote (Anexo~\ref{ap:debounce}) paragarantizar detecciones fiables sin necesidad de hardware adicional. En conjunto,todas estas funcionalidades convergen en el bucle principal del firmware(Anexo~\ref{ap:loop}), el cual mantiene un comportamiento estable, coherente conla HMI y seguro para la operación del brazo robótico.
+
 
 
 
 
 
 \subsection{Interfaz gráfica}
+
 \subsubsection{Selección y justificación de la interfaz gráfica de control}
 
-Se adoptó una aplicación de escritorio como interfaz humano-máquina (HMI) con el objetivo de facilitar el proceso de prototipado y permitir la incorporación rápida de nuevas funcionalidades. Este enfoque proporciona una mayor flexibilidad frente a los paneles físicos, evitando modificaciones en el hardware cada vez que se requieren ajustes en el sistema. Asimismo, la interfaz gráfica permite integrar visualización en tiempo real, ajustes finos de parámetros operativos y funciones avanzadas como la automatización de secuencias.
+Se adoptó una aplicación de escritorio como interfaz humano-máquina (HMI) con el objetivo de facilitar el proceso de prototipado y permitir la incorporación rápida de nuevas funcionalidades. Este enfoque proporciona una mayor flexibilidad frente a paneles físicos tradicionales, ya que evita modificaciones de hardware cada vez que se requiere ajustar el sistema. Además, la interfaz gráfica integra visualización en tiempo real, ajuste fino de parámetros operativos y funciones avanzadas como la automatización de secuencias. Su implementación completa puede consultarse en el Anexo~\ref{apendice:codigo_GUI}.
 
 \subsubsection{Arquitectura distribuida del sistema}
 
-El sistema se diseñó mediante una arquitectura distribuida en la cual la aplicación ejecuta las tareas de control de alto nivel, mientras que el microcontrolador gestiona el control de tiempo real de los actuadores. La comunicación entre ambos módulos se implementó mediante un enlace serial UART utilizando un protocolo textual simplificado. Esta separación permite mantener un comportamiento determinístico en el movimiento de los servomotores, al mismo tiempo que se preserva la flexibilidad y escalabilidad de la capa superior del sistema.
+El sistema se diseñó bajo una arquitectura distribuida en la que la aplicación ejecuta las tareas de control de alto nivel, mientras que el microcontrolador gestiona el control de tiempo real de los actuadores. La comunicación entre ambos módulos se implementó mediante un enlace serial UART utilizando un protocolo textual simplificado. Los módulos de conexión y recepción periódica se detallan en el Anexo~\ref{gui:uart_connect}. Esta separación garantiza un comportamiento determinístico en el movimiento de los servomotores sin sacrificar la flexibilidad y escalabilidad en la capa superior.
 
 \subsubsection{Modos de operación implementados}
 
 Se definieron dos modos principales de operación:
 \begin{itemize}
     \item \textbf{Modo de control manual (modo espejo):} el robot replica directamente los movimientos ejecutados mediante el controlador físico.
-    \item \textbf{Modo de control por aplicación:} las consignas de movimiento se generan desde la interfaz gráfica, lo que permite una mayor precisión y la posibilidad de automatizar secuencias.
+    \item \textbf{Modo de control por aplicación:} las consignas se generan desde la interfaz gráfica, permitiendo una mayor precisión y la automatización de secuencias.
 \end{itemize}
 
-La elección del modo se gestiona mediante lógica interna del sistema, garantizando transiciones suaves y sin interrupciones bruscas.
+La selección del modo se gestiona mediante la lógica interna del firmware, asegurando transiciones progresivas sin interrupciones bruscas. El envío regulado de comandos desde la interfaz gráfica se describe en el Anexo~\ref{gui:rate_limiter}.
 
 \subsubsection{Procedimiento de grabación y reproducción de trayectorias}
 
-Se implementó un sistema de muestreo periódico de los ángulos articulares para registrar secuencias de movimiento. Las trayectorias se almacenan en estructuras ordenadas que preservan tanto el valor de cada articulación como el intervalo de muestreo. Para la reproducción, el sistema ejecuta las consignas respetando la cadencia temporal original, lo cual permite replicar movimientos de forma aproximada y consistente.
+Se implementó un sistema de muestreo periódico de los ángulos articulares para registrar secuencias de movimiento. Las trayectorias se almacenan en estructuras ordenadas que conservan tanto los valores angulares como el intervalo de muestreo. El mecanismo de registro se presenta en el Anexo~\ref{gui:logger}, mientras que el algoritmo de reproducción —incluyendo el prealineado suave— se detalla en los Anexos~\ref{gui:smooth_playback} y~\ref{gui:playback_step}. Este método permite replicar movimientos de manera consistente respetando la cadencia temporal original.
 
 \subsubsection{Estrategias de seguridad aplicadas}
 
-Con el fin de garantizar la integridad del sistema y del operador, se incorporaron diversas estrategias de seguridad en la capa de software. Entre ellas se incluyen:
+Para garantizar la integridad del sistema y del operador, se incorporaron diversas estrategias de seguridad en la capa de software. Entre ellas se encuentran:
 \begin{itemize}
-    \item Establecimiento de límites de operación por software para cada articulación.
-    \item Validación de comandos provenientes de la aplicación para evitar consignas incoherentes.
-    \item Implementación de transiciones progresivas entre modos de operación.
-    \item Generación de rampas de movimiento al iniciar trayectorias automáticas, reduciendo esfuerzos mecánicos y evitando cambios bruscos.
+    \item límites de operación por software para cada articulación;
+    \item validación de comandos provenientes de la aplicación;
+    \item transiciones progresivas entre modos de operación;
+    \item rampas de movimiento al iniciar trayectorias automáticas.
 \end{itemize}
+
+Estas funciones complementan la lógica interna del microcontrolador, que también incorpora mecanismos de suavizado en el control de servomotores (véase Anexo~\ref{gui:center_all}).
 
 \subsubsection{Integración entre la HMI y el microcontrolador}
 
-La aplicación de escritorio envía comandos en un formato estructurado que el microcontrolador interpreta y ejecuta en tiempo real. De forma complementaria, el microcontrolador retorna información del estado del sistema, la cual es procesada y presentada visualmente al operador. Este mecanismo bidireccional garantiza coherencia entre la interfaz y el estado físico del robot, asegurando una operación confiable y sincronizada.
+La aplicación de escritorio envía comandos en un formato estructurado que el microcontrolador interpreta en tiempo real, mientras que éste devuelve información del estado del sistema para su visualización en la interfaz. El funcionamiento del parser de mensajes entrantes se detalla en los Anexos~\ref{gui:parser_uart} y~\ref{gui:parser_uart_alt}. Este enlace bidireccional garantiza coherencia entre la representación gráfica y la postura física del robot, asegurando una operación estable, confiable y sincronizada.
 
 
 % TODO: Modelo CAD con todo incorporado
