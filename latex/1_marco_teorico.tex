@@ -352,104 +352,121 @@ Con base en esa matriz y en la experiencia del equipo, se selecciona Arduino UNO
 
 \cite{hyperphysics_tcr_cu}
 
-% TODO: Revisar si corresponde en marco teorico
-
-\subsubsection{Aspectos electrónicos}
-
-El sistema electrónico se concibe para ofrecer control preciso, seguridad y facilidad de mantenimiento. El \emph{Arduino Uno} (ATmega328P) actúa como controlador principal: genera las señales PWM para los servomotores, adquiere las entradas de potenciómetros y pulsadores, y coordina los estados de operación y seguridad. Cada servo MG996R incorpora un fusible en su línea de alimentación para limitar daños ante sobrecorrientes. La distribución de masas separa los retornos de potencia (servos y electroimán) del retorno de lógica, reuniéndose en un punto estrella cercano a la fuente con el objetivo de minimizar caídas y ruido eléctrico.
-
-\vspace{1em}
-
-El electroimán se conmuta con un MOSFET N–canal en configuración de low–side switch (fuente común). Se emplea un IRFZ44N en encapsulado TO–220, cuyas magnitudes relevantes (tensión \newline \mbox{$V_{\mathrm{DS,max}}=55~\mathrm{V}$}, corriente continua admisible del orden de decenas de amperios a $25\,^{\circ}\mathrm{C}$ y resistencia de conducción especificada como \mbox{$R_{\mathrm{DS(on)}}\leq 22~\mathrm{m}\Omega$ a $V_{\mathrm{GS}}=10~\mathrm{V}$}) resultan holgadas para el uso previsto. Dado que la hoja de datos garantiza la baja $R_{\mathrm{DS(on)}}$ a \mbox{$V_{\mathrm{GS}}=10~\mathrm{V}$} y no a \mbox{$5~\mathrm{V}$}, el dispositivo no es estrictamente de compuerta lógica; sin embargo, a las corrientes que demanda nuestro electroimán su desempeño es adecuado, y se deja constancia de que una evolución razonable es sustituirlo por un modelo \emph{logic–level} (p.\,ej., IRLZ44N) para reducir pérdidas y elevar el margen térmico.
-
-\vspace{1em}
 
 
-La bobina del electroimán está realizada con $20~\mathrm{m}$ de alambre de cobre esmaltado de diámetro \mbox{$d=0{,}5~\mathrm{mm}$}. Su resistencia en frío se estima con
-\[
-R=\rho\,\frac{\ell}{A},\qquad \rho_{\mathrm{Cu}}\approx 1{,}68\times 10^{-8}\ \Omega\!\cdot\!\mathrm{m},\quad A=\pi\!\left(\frac{d}{2}\right)^{2},
-\]
-lo que arroja aproximadamente \mbox{$R\approx 1{,}68~\Omega$}. Alimentada a \mbox{$5~\mathrm{V}$}, la corriente esperada es \newline \mbox{$I_{\mathrm{bob}}\approx 5/1{,}68\simeq 3{,}0~\mathrm{A}$} y la disipación en la bobina \mbox{$P_{\mathrm{bob}}\approx I_{\mathrm{bob}}^{2}R\simeq 15~\mathrm{W}$}. Estas magnitudes aconsejan operación intermitente (control de \emph{duty–cycle}) o gestión térmica adicional para mantener temperaturas seguras en uso continuado.
 
 
-\vspace{1em}
 
-La interfaz de control se completa con una resistencia en serie en la compuerta del MOSFET (\mbox{$R_{g}\approx 100~\Omega$}) para limitar el régimen de carga de la compuerta y un \emph{pull–down} (\mbox{$R_{\mathrm{pd}}\approx 100~\mathrm{k}\Omega$}) que asegura el apagado en reposo. En paralelo con la bobina se dispone un diodo de rueda libre (\emph{flyback}) rápido o Schottky, dimensionado para la corriente de la bobina y con tensión inversa acorde, a fin de suprimir sobretensiones al corte. En la alimentación de $5~\mathrm{V}$ se ubican condensadores de \emph{bulk} cerca de las cargas (típicamente del orden de $470$–$1000~\mu\mathrm{F}$) y desacoples locales de $100~\mathrm{nF}$, con la finalidad de amortiguar picos debidos a los servomotores y al propio electroimán. Finalmente, el firmware incorpora medidas de protección como límites por \emph{software} en el tiempo de activación del electroimán, vigilancia por \emph{watchdog} y paro de emergencia, coherentes con la filosofía de diseño seguro del conjunto.
+% Electrónica 
 
-\subsection{Interfaz gráfica de control}
+\subsection{Aspectos electrónicos en sistemas mecatrónicos}
 
-\subsubsection{Interfaz humano-máquina (HMI)}
+En los sistemas mecatrónicos y robóticos, el diseño electrónico constituye un elemento central para asegurar un funcionamiento preciso, estable y seguro. La arquitectura electrónica integra subsistemas de control, potencia y sensado que deben operar de manera coordinada, y cuya correcta disposición influye directamente en el desempeño global del sistema.
 
-En los sistemas robóticos con múltiples grados de libertad, la interacción entre el operador y el sistema representa un elemento crítico para garantizar precisión, seguridad y repetitividad. Las interfaces humano-máquina (HMI, por sus siglas en inglés) permiten que el usuario pueda supervisar y controlar el estado del sistema sin necesidad de interactuar directamente con los niveles más bajos del hardware.
+\subsubsection{Microcontroladores como unidades de control}
 
-\vspace{1em}
+Los microcontroladores modernos, basados en arquitecturas como AVR o ARM, suelen actuar como núcleo del sistema electrónico. Estos dispositivos permiten generar señales de modulación por ancho de pulso (PWM) para el accionamiento de servomotores y actuadores similares, adquirir señales analógicas provenientes de potenciómetros o sensores, gestionar entradas digitales y ejecutar algoritmos de control en tiempo real. Debido a su naturaleza integrada, es necesario que el entorno electrónico minimice interferencias y fluctuaciones que puedan afectar la precisión del control.
 
-En el contexto de los brazos robóticos, las interfaces gráficas de usuario (GUI) se han consolidado como una solución estándar tanto en entornos industriales como educativos. Estas interfaces no solo facilitan el control manual, sino que también permiten visualizar información en tiempo real, como posiciones angulares, trayectorias, estados de los actuadores y condiciones de funcionamiento.
+\subsubsection{Distribución de potencia y reducción de ruido}
 
-\vspace{1em}
+Un aspecto fundamental en el diseño electrónico de sistemas robóticos es la adecuada separación entre las líneas de potencia y las de lógica. Los actuadores, en particular los motores o elementos inductivos, introducen variaciones rápidas de corriente que pueden provocar caídas de tensión o ruidos eléctricos en las líneas de referencia. Para mitigar estos efectos se emplea la llamada topología de masa en estrella, en la cual los retornos de corriente convergen en un único nodo de referencia, reduciendo la posibilidad de acoplamientos no deseados hacia la electrónica de control. Esta técnica mejora la estabilidad de las mediciones analógicas y evita comportamientos impredecibles en el microcontrolador.
 
-La utilización de una HMI basada en software presenta ventajas significativas frente a interfaces exclusivamente físicas, tales como:
-\begin{itemize}
-    \item Mayor precisión en el ajuste de parámetros de movimiento.
-    \item Visualización clara del estado del sistema en tiempo real.
-    \item Posibilidad de implementar funciones avanzadas como grabación y reproducción de trayectorias.
-    \item Mayor seguridad operativa al reducir la intervención directa del usuario sobre el hardware.
-\end{itemize}
+\subsubsection{Conmutación de cargas inductivas}
 
-A partir de estos principios, se decidió incorporar una aplicación de escritorio como parte integral del sistema de control del prototipo.
+Los sistemas que manejan electroimanes, relés o motores deben considerar los fenómenos eléctricos asociados a la naturaleza inductiva de estos actuadores. Al ser desconectados, los inductores liberan la energía almacenada en su campo magnético generando picos de tensión que pueden resultar dañinos para los componentes de control. Para proteger el circuito se utilizan dispositivos como diodos de rueda libre o \emph{flyback}, capaces de conducir esta energía de manera segura. En ciertos casos se incorporan también capacitores de desacoplo, los cuales contribuyen a reducir interferencias de alta frecuencia asociadas a estos transitorios.
 
-\subsubsection{Justificación de una interfaz gráfica de control}
+\subsubsection{Compatibilidad electromagnética y desacoplo}
 
-La elección de una interfaz gráfica de escritorio frente a otras alternativas, como controles físicos dedicados o paneles externos, se basa en criterios de flexibilidad, escalabilidad y facilidad de desarrollo.
-
-\vspace{1em}
+La coexistencia de múltiples actuadores, sensores y líneas de señal dentro de un mismo sistema aumenta la probabilidad de interferencias electromagnéticas internas. Para garantizar la compatibilidad electromagnética (EMC) del conjunto se emplean técnicas como la colocación estratégica de capacitores de desacoplo cerca de los circuitos integrados, el mantenimiento de distancias adecuadas entre las líneas de potencia y aquellas destinadas al sensado, y el uso de cables trenzados o apantallados para señales susceptibles al ruido. Estas prácticas son esenciales para preservar la integridad de las señales y asegurar la estabilidad operativa del sistema, especialmente en aplicaciones que requieren precisión temporal o mediciones analógicas confiables.
 
 
-Una aplicación de escritorio permite modificar y ampliar las funcionalidades del sistema sin alterar el hardware, lo que resulta especialmente útil en entornos de prototipado y desarrollo. Asimismo, facilita la implementación de funciones complejas como la automatización de movimientos, la visualización dinámica del estado del sistema y la integración de funciones de seguridad mediante software.
 
-\vspace{1em}
 
-Este enfoque resulta adecuado para proyectos académicos y de investigación, donde se requiere iterar rápidamente sobre el diseño y evaluar distintos comportamientos del sistema sin necesidad de reconstruir la electrónica de control.
 
-\subsubsection{Arquitectura de comunicación entre la aplicación y el microcontrolador}
 
-El sistema se diseñó bajo una arquitectura distribuida, en la cual las tareas de alto nivel se delegan a una aplicación externa, mientras que el control de bajo nivel permanece en el microcontrolador.
+% Programación Atmega328p
 
-\vspace{1em}
+\subsection{Control de servomotores mediante modulación por ancho de pulso (PWM)}
 
-La aplicación es responsable de la generación de consignas de movimiento, la gestión de trayectorias y la interacción con el usuario, mientras que el microcontrolador ejecuta el control de tiempo real de los actuadores. La comunicación entre ambos módulos se realiza mediante un enlace serie asíncrono (UART), utilizando un protocolo textual simplificado.
+Los servomotores de tipo RC constituyen uno de los actuadores más empleados en sistemas robóticos educativos e industriales debido a su capacidad de posicionamiento angular. Su funcionamiento se basa en la técnica de modulación por ancho de pulso (PWM), donde la posición del eje se determina por la duración del pulso de control. De forma típica, el servomotor interpreta pulsos comprendidos entre 1~ms y 2~ms dentro de un periodo de aproximadamente 20~ms, lo cual corresponde al estándar ampliamente documentado para servos RC \cite{servocity_servofaq, mg996r_datasheet, TowerProSG90}. Esta técnica permite un control preciso y de baja complejidad computacional, lo que facilita su integración en microcontroladores de recursos limitados.
 
-\vspace{1em}
+Para obtener movimientos continuos y evitar vibraciones mecánicas, se emplean técnicas de \emph{slew rate limiting}, que consisten en limitar la variación máxima del ángulo por unidad de tiempo. Dicho suavizado mejora la estabilidad del sistema, reduce esfuerzos en las articulaciones y aumenta la vida útil de los componentes mecánicos.
 
-Esta separación de responsabilidades permite que el sistema mantenga un comportamiento determinístico en el control de los servomotores, al mismo tiempo que ofrece una interfaz flexible y de fácil modificación.
+\subsection{Conversión analógico-digital en microcontroladores}
 
-\subsubsection{Modos de operación del sistema de control}
+Los microcontroladores modernos incorporan conversores analógico-digitales (ADC) que permiten convertir señales analógicas en valores digitales discretos. En dispositivos basados en la arquitectura AVR, como los empleados en plataformas ampliamente utilizadas en educación y prototipado electrónico, los ADC suelen ofrecer una resolución de 10 bits \cite{arduino_uno_rev3_docs}. Esta resolución permite representar hasta 1024 niveles diferentes, lo que resulta adecuado para tareas de control articulado basadas en potenciómetros u otros sensores variables.
 
-Desde un punto de vista conceptual, el sistema fue diseñado para operar en dos modos diferenciados:
+Las lecturas analógicas suelen requerir procesos de \emph{escalado} o mapeo para convertir el rango del ADC en magnitudes físicas tales como grados articulares. Este proceso lineal permite correlacionar directamente la entrada del usuario con la posición deseada del actuador.
 
-\begin{itemize}
-    \item \textbf{Modo de control manual (control espejo)}: en este modo, la prioridad la tiene el controlador físico, y el sistema replica los movimientos realizados por el operador de forma directa.
-    \item \textbf{Modo de control por aplicación}: en este modo, las consignas de movimiento se generan desde la interfaz gráfica, permitiendo un control más preciso y la posibilidad de automatizar secuencias.
-\end{itemize}
+\subsection{Comunicación serial UART en sistemas embebidos}
 
-La existencia de estos modos responde al principio de diseño de redundancia funcional, permitiendo que el sistema continúe siendo operable aun cuando uno de los métodos de control no se encuentre disponible.
+La comunicación serial asíncrona mediante UART (Universal Asynchronous Receiver-Transmitter) es una de las interfaces más utilizadas en sistemas embebidos debido a su simplicidad y bajo costo. Este protocolo emplea tramas formadas por bits de inicio, datos y parada, permitiendo el intercambio de información entre un microcontrolador y una computadora o dispositivo externo.
 
-\subsubsection{Concepto de grabación y reproducción de trayectorias}
+En sistemas robóticos, la interfaz UART permite implementar arquitecturas distribuidas en las cuales el control de alto nivel reside en una aplicación externa, mientras que el microcontrolador ejecuta las tareas de control de bajo nivel. La naturaleza textual de diversos protocolos implementados sobre UART facilita su depuración y expansión.
 
-La posibilidad de registrar y repetir trayectorias es una característica presente en sistemas robóticos industriales, especialmente en aplicaciones de pick-and-place, manipulación y ensamblaje.
+\subsection{Interfaz humano-máquina (HMI) en robótica}
 
-\vspace{1em}
+Las interfaces humano-máquina (HMI) constituyen un componente clave en sistemas robóticos, ya que proveen el medio mediante el cual el operador interactúa con el sistema. Una HMI puede variar desde paneles de control físicos hasta aplicaciones gráficas avanzadas que permiten supervisar el estado del robot, introducir consignas y visualizar información relevante en tiempo real.
 
-Desde el punto de vista teórico, la grabación de trayectorias consiste en muestrear periódicamente el estado del sistema (en este caso, los ángulos articulares) y almacenarlos como una secuencia temporal de estados discretos. Posteriormente, estos estados pueden ser reproducidos respetando el mismo intervalo temporal, logrando la repetición aproximada del movimiento original.
+En el ámbito de la manipulación robótica, una HMI adecuada facilita la operación intuitiva del sistema, el registro de trayectorias, la automatización de tareas y el control seguro de los actuadores. La comunicación bidireccional entre el microcontrolador y la interfaz gráfica permite recibir telemetría, enviar comandos y mantener coherencia entre el estado físico del robot y su representación lógica en software.
 
-\vspace{1em}
+\subsection{Máquinas de estado finito en sistemas embebidos}
 
-Este enfoque permite analizar el comportamiento dinámico del sistema, optimizar movimientos y facilitar tareas repetitivas sin depender exclusivamente del control manual.
+Las máquinas de estado finito (FSM, por sus siglas en inglés) son un modelo ampliamente utilizado para estructurar la lógica de control en sistemas embebidos. En este enfoque, el comportamiento del sistema se representa mediante estados definidos y transiciones condicionadas, lo que permite modelar secuencias de eventos como cambios de modo de operación, activación de actuadores o ejecución de patrones temporizados.
 
-\subsubsection{Consideraciones de seguridad en interfaces gráficas de control}
+El uso de FSM ofrece ventajas en términos de claridad, robustez y mantenibilidad del código, especialmente en sistemas que integran múltiples modos de operación, temporizaciones y eventos asincrónicos, tales como botones, actuadores o señales provenientes de una interfaz externa.
 
-En sistemas mecatrónicos, el diseño de la interfaz de control no solo debe enfocarse en la funcionalidad, sino también en la seguridad del equipo y del operador.
+\subsection{Antirrebote en lectura de botones}
 
-\vspace{1em}
+Los interruptores mecánicos presentan un fenómeno conocido como ``rebote'' (\emph{bouncing}), caracterizado por múltiples transiciones rápidas entre niveles lógicos durante el cambio de estado. Si no se implementan mecanismos de filtrado, estos rebotes pueden generar lecturas erróneas, activaciones múltiples o comportamientos no deseados.
 
-Una interfaz bien diseñada debe evitar cambios bruscos de estado, incorporar verificaciones de coherencia en los comandos enviados y garantizar transiciones suaves entre modos de operación. Estos principios se aplicaron en el diseño conceptual de la aplicación de control, priorizando movimientos progresivos al iniciar trayectorias automáticas y limitando los rangos de operación de los actuadores por software.
+El antirrebote por software consiste en ignorar transiciones sucesivas durante un intervalo corto de tiempo, asegurando que cada pulsación se interprete como un único evento. Este procedimiento es esencial en sistemas donde se implementan botones para conmutar modos de operación o activar funciones críticas.
+
+\subsection{Control de actuadores digitales simples}
+
+Además de servomotores, los sistemas robóticos frecuentemente incorporan actuadores digitales como electroimanes, relés o elementos sonoros como buzzers. Su acción implica con frecuencia cargas inductivas, las cuales pueden generar picos de tensión durante la conmutación debido a la energía almacenada en sus campos magnéticos. Estos fenómenos se explican desde los principios de potencia y comportamiento eléctrico descritos en la literatura básica \cite{openstax_power_2020}. El control mediante salidas digitales permite activar o desactivar dichos actuadores de forma confiable, mientras que la incorporación de técnicas de protección evita daños en los componentes.
+
+Los buzzers se emplean comúnmente como medio de retroalimentación auditiva dentro de la interfaz humano-máquina, permitiendo indicar cambios de estado, alertas o confirmaciones al usuario. La generación de patrones sonoros mediante máquinas de estado aporta flexibilidad y precisión temporal.
+
+\subsection{Seguridad funcional en sistemas robóticos}
+
+La seguridad constituye un aspecto fundamental en sistemas robóticos, debido a la presencia de partes móviles y posibles riesgos para el operador. Las medidas de seguridad por software incluyen la imposición de límites angulares, la validación de comandos, la implementación de rampas de movimiento y la prevención de cambios bruscos de estado. Estas estrategias contribuyen a evitar daños en los actuadores, reducir esfuerzos innecesarios, prolongar la vida útil del mecanismo y proteger al usuario ante comportamientos inesperados.
+
+\subsection{Temporización y control en tiempo real}
+
+Los microcontroladores disponen de temporizadores internos que permiten implementar tareas periódicas, generar señales PWM o medir intervalos de tiempo. La temporización es esencial para coordinar el control de servomotores, ejecutar bucles de lectura, actualizar máquinas de estado y transmitir telemetría a tasas constantes.
+
+El uso de temporizadores en sistemas embebidos garantiza un comportamiento determinístico, especialmente en aquellas aplicaciones donde la sincronización temporal y la repetitividad del movimiento son críticas.
+
+
+
+
+
+% Interfaz de usuario
+
+\subsection{Interfaz humano-máquina (HMI)}
+
+En los sistemas robóticos con múltiples grados de libertad, la interacción entre el operador y la máquina constituye un elemento fundamental para garantizar precisión, seguridad y repetitividad. Las interfaces humano-máquina (HMI, por sus siglas en inglés) permiten que el usuario supervise y controle el estado del sistema sin interactuar directamente con los niveles más bajos del hardware.
+
+En el campo de la robótica manipuladora, las HMI han evolucionado desde paneles de control físico hasta interfaces gráficas de usuario (GUI), las cuales se han consolidado como una solución estándar tanto en entornos educativos como industriales. La popularidad de estos enfoques puede observarse en numerosos desarrollos y modelos de brazos robóticos disponibles en repositorios abiertos y plataformas de diseño asistido por computadora \cite{grabcad_robot_arm_6dof, grabcad_robotic_arm_216}. Este tipo de interfaces facilita el control manual y, simultáneamente, permite visualizar en tiempo real parámetros como posiciones articulares, trayectorias, estados de actuadores y condiciones operativas del robot.
+
+\subsection{Interfaces gráficas de usuario en robótica}
+
+Las interfaces gráficas proporcionan ventajas relevantes frente a mecanismos de control exclusivamente físicos. Entre las más destacadas se encuentran la precisión en la configuración de parámetros, la visualización clara del estado del sistema, la incorporación de funciones avanzadas como la grabación de trayectorias y la posibilidad de incluir restricciones de seguridad mediante software. En la robótica moderna, estas herramientas son fundamentales para mejorar la usabilidad y reducir la intervención directa sobre los actuadores, tal como se evidencia en múltiples implementaciones didácticas y experimentales \cite{youtube_robot_arm_control, robodacta_mini_arm_joystick}.
+
+\subsection{Arquitecturas de comunicación en sistemas robóticos}
+
+Los sistemas robóticos suelen adoptar arquitecturas distribuidas, en las cuales las tareas de alto nivel se ejecutan en una plataforma de cómputo externa, mientras que el controlador embebido gestiona el control de tiempo real. La interacción entre ambos módulos se implementa comúnmente mediante protocolos de comunicación serie, ya sea en configuraciones síncronas o asíncronas, utilizando estructuras de comunicación basadas en mensajes. Estos modelos permiten mantener un control determinístico a nivel de actuadores y, al mismo tiempo, ofrecen flexibilidad y extensibilidad en la capa superior del sistema.
+
+\subsection{Modos de operación en manipuladores robóticos}
+
+Muchos sistemas robóticos incorporan múltiples modos de operación con fines de redundancia funcional, seguridad y adaptabilidad. Un modelo común distingue entre el \textbf{control manual o directo}, donde los comandos provienen de la manipulación física por parte del operador, y el \textbf{control asistido por software}, donde las consignas se generan desde una interfaz gráfica, un planificador o un algoritmo supervisor. Este enfoque permite combinar la precisión del control automático con la intuición y supervisión humana, manteniendo así un equilibrio entre flexibilidad y confiabilidad.
+
+\subsection{Grabación y reproducción de trayectorias}
+
+La grabación de trayectorias es una técnica ampliamente utilizada en robótica industrial, especialmente en aplicaciones de manipulación, ensamblaje y tareas repetitivas. Consiste en muestrear el estado del robot —generalmente posiciones articulares o cartesianas— a intervalos regulares y almacenarlos en forma de secuencia temporal. La reproducción se realiza replicando la secuencia respetando el mismo ritmo de muestreo, lo que permite repetir movimientos con alta fidelidad sin requerir intervención directa del operador. Ejemplos didácticos y demostraciones funcionales de esta técnica pueden encontrarse en diversas plataformas de contenido educativo \cite{youtube_robot_arm_mirror}.
+
+\subsection{Seguridad en interfaces de control robótico}
+
+En el diseño de interfaces de control para sistemas mecatrónicos, la seguridad operativa es un criterio crítico. Una HMI bien diseñada debe evitar transiciones bruscas de estado, incluir verificaciones de coherencia de comandos, impedir movimientos fuera de rango y garantizar que los cambios entre modos de operación sean suaves y progresivos. Estos principios contribuyen a proteger tanto al operador como a los componentes mecánicos del robot, reduciendo la probabilidad de fallas o comportamientos inesperados del sistema.
+

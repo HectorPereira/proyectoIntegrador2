@@ -52,54 +52,60 @@ Finalmente, el proyecto se entregará con un prototipo completamente ensamblado,
  
 \end{enumerate}
 
-\subsubsection{Diagrama de Gantt}
+\subsubsection{Esquema de procedimiento seguido}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{anexos/Gantt.png}
-  \caption{Diagrama de Gantt. Fuente: elaboración própia}\label{fig:diagrama_gantt}
+  \caption{Esquema de procedimiento y tareas seguido durante el proyecto. Fuente: elaboración própia}\label{fig:diagrama_gantt}
 \end{figure}
 
-% TODO: Actualizar Gantt
-
+% TODO: Realizar explicación del Gantt
 
 
 \subsection{Materiales}
 
-\begin{itemize}
-  \item Estructura mecánica
-  \begin{itemize}
-    \item MDF de 3.0–3.2\,mm, corte láser (placas para base, eslabones y soportes).
-    \item Piezas de interfaz impresas en 3D (PLA) para articulaciones, casquillos/espaciadores y topes.
-    \item Tornillería M3: tornillos (varias longitudes), tuercas, arandelas planas y de presión.
-    \item Adhesivos y acabado: cianoacrilato/epoxi según unión, sellador para MDF, lubricante seco para contactos PLA–PLA.
-    \item Bridas y organizadores de cableado (guías/ojales) para alivio de tensión.
-  \end{itemize}
+\begin{table}[H]
+\centering
+\caption{Lista general de materiales utilizados en el proyecto. Fuente: elaboración propia.}
+\begin{tabular}{p{0.32\textwidth} p{0.65\textwidth}}
+\toprule
+\textbf{Categoría} & \textbf{Materiales} \\
+\midrule
 
-  \item Actuadores
-  \begin{itemize}
-    \item 4\,$\times$ servomotores MG996R de 180° (una unidad por articulación principal).
-    \item 1\,$\times$ servomotor SG90 de 180° (garra).
-    \item Electroimán: bobina de alambre de cobre esmaltado (calibre acorde al diseño), núcleo de acero dulce y carcasa.
-  \end{itemize}
+\textbf{Estructura mecánica} &
+MDF de 3.0--3.2\,mm cortado a láser (base, eslabones y soportes).\\
+& Piezas impresas en 3D (PLA) para articulaciones, espaciadores y topes.\\
+& Tornillería M3 (tornillos, tuercas, arandelas).\\
+& Adhesivos: cianoacrilato/epoxi, sellador para MDF.\\
+& Lubricante seco para contactos PLA--PLA.\\
+& Bridas y organizadores de cableado.\\
+\midrule
 
-  \item Electrónica de control
-  \begin{itemize}
-    \item Plataforma de desarrollo Arduino UNO Rev3.
-    \item Driver para electroimán: MOSFET canal N, resistencia de compuerta (100\,$\Omega$), resistor \emph{pull-down} (100\,k$\Omega$) y diodo de rueda libre (p.\,ej.\ 1N540x o Schottky) en la bobina.
-    \item Indicadores: LEDs con sus resistencias limitadoras (220–330\,$\Omega$) y buzzer 5\,V.
-    \item 4\,$\times$ potenciómetros lineales 10\,k$\Omega$ para el controlador espejo (con perillas y cables).
-    \item Distribución de potencia: borneras atornillables o conectores eléctricos, portafusibles y fusibles por rama de servos (3–5\,A típicos), condensadores electrolíticos de desacople (1000–2200\,\textmu F cerca de grupos de servos) y cerámicos locales.
-    \item Cableado de potencia y señal (sección acorde: p.\,ej.\ AWG18–20 para 5\,V de servos), funda termorretráctil e interruptor general.
-    \item Protoboard o placa perforada para interconexión y fijación de componentes.
-  \end{itemize}
+\textbf{Actuadores} &
+4$\times$ servomotores MG996R (180°).\\
+& 1$\times$ servomotor SG90 para garra.\\
+& Electroimán con bobina de cobre esmaltado y núcleo ferromagnético.\\
+\midrule
 
-  \item Fuente de alimentación
-  \begin{itemize}
-    \item Fuente ATX de PC (uso del riel +5\,V). Adaptador/breakout a bornes, puenteo \texttt{PS\_ON} a GND para encendido y masa en estrella. 
-    \item (Opcional para pruebas) fuente conmutada 5\,V–10\,A tipo “LED”.
-  \end{itemize}
+\textbf{Electrónica de control} &
+Arduino UNO Rev3.\\
+& Módulo relé para Arduino (incluye transistor de manejo, optoacoplador y diodo de protección).\\
+& LEDs + resistencias (220--330\,$\Omega$), buzzer 5\,V.\\
+& 4$\times$ potenciómetros lineales de 10\,k$\Omega$.\\
+& Borneras, portafusibles, fusibles (3--5\,A).\\
+& Capacitores de desacople (1000--2200\,\textmu F y cerámicos).\\
+& Cableado AWG18--20, funda termorretráctil, interruptor.\\
+& Protoboard o placa perforada.\\
+\midrule
 
-\end{itemize}
+\textbf{Fuente de alimentación} &
+Fuente ATX de PC (+5\,V) con adaptador a bornes.\\
+& Puenteo PS\_ON a GND y masa en estrella.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
 
 \subsection{Métodos de fabricación}
 \subsubsection{Tolerancias de fabricación}\label{Tolerancias}
@@ -128,124 +134,6 @@ Para imprimir superficies con interferencia entre sí, se debe considerar la pre
 
 El corte láser brinda una precisión prácticamente exacta en la capa superficial donde se encuentra el punto focal del láser. Se debe considerar que mientras el láser atraviesa el material, y la superficie de contacto con el láser se va alejando del punto de foco, se produce una apertura de aproximadamente 1.8 grados. Lo que se traduce en que si se diseña un agujero de 10mm, en la cara trasera habrán 10.2mm. 
 
-\subsection{Diseño y fabricación}
-\subsubsection{Articulaciónes desmontables}
-
-Con base en los lineamientos de tolerancias del apartado~\ref{Tolerancias}, se diseñó y fabricó una articulación desmontable para el brazo robótico. El objetivo fue verificar encastres, juego angular y comportamiento frente a rozamiento en las superficies de contacto.
-
-\vspace{1em}
-
-Inicialmente se construyó con descartes de MDF cortados a láser y herrajes M3. La pieza se sometió a esfuerzos de fricción, corte y rotación para observar desgaste, holguras y deformaciones. El prototipo permitió validar el principio mecánico, pero evidenció pérdida de tolerancia en contactos MDF–MDF bajo uso repetido. 
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{anexos/Articulacion/V2.png}
-  \caption{Sistema de articulación desmontable. Fuente: elaboración própia}\label{fig:articulacionV2}
-\end{figure}
-
-
-
-
-Posteriormente se reemplazaron las superficies de contacto por insertos impresos en PLA, configurando una interfaz PLA–PLA en las zonas con rozamiento. Se ajustaron tolerancias según las galgas obtenidas, reduciendo el juego en el conjunto ensamblado y mejorando la repetibilidad. Se documentaron espesores, holguras objetivo y par de apriete de tornillería para su reproducción. Véase figura \ref{fig:corte_pernoV3}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{anexos/Articulacion/Perno V3.png}
-  \caption{Corte transversal perno --- versión mejorada. Fuente: elaboración própia}\label{fig:corte_pernoV3}
-\end{figure}
-
-Se identifican con verde las superficie de contacto que friccionan contra el perno azúl, las cualés tienen un ajuste deslizante con el perno. En amarillo se muestra la pieza que actúa como tope para el seguro del perno. En el modelo anterior se utilizaba una sola pieza que hacía esta función, pero al utilizar este tope (con un ajuste apretado) permite regular la fuerza de ajuste y juego de la articulación. Luego el seguro que se encuentra entre el tope y el perno, permite montar y desmontar la articulación de manera sencilla.
-
-\subsubsection{Brazo robótico articulado}
-
-% TODO: Redactar Brazo robótico articulado
-
-% Se incorpora la articulación desmontable en los eslabones hombro y muñeca
-
-% Figura del despieze del brazo
-
-% \subsubsection{Base}
-
-% Se incorpora una base giratoria para permitir la rotación de la estructura. A la misma se le agrega una mesa donde se incorporan el arduino y la protoboard. 
-
-% Figura base
-
-% \subsubsection{Tablero}
-
-% Se crea un tablero para albergar los componentes electrónicos y conectores tanto para la fuente como para el controlador espejo, a fin de facilitar la visualización e interacción con los mismos.
-
-% Figura tablero
-
-
-\subsubsection{Electroimán}
-Para realizar la carcasa del electroimán se realiza uso de un torno manual. Hasta tener las medidas concretadas, se dejan un excedente en espesor y longitud para realizar pruebas durante el proceso de prototipado. Cuando se obtengan el resto de valores se dará lugar a una finalización de esta pieza por motivos de reducción de peso.
-
-\vspace{1em}
-
-La bobina del electroimán se construyó utilizando alambre de cobre esmaltado de 0,5 mm de diámetro, enrollado a lo largo de aproximadamente 5 metros para generar el campo magnético necesario. Como núcleo ferromagnético se empleó un tornillo de acero, seleccionado por su alta permeabilidad magnética y disponibilidad. 
-
-\vspace{1em}
-
-Para asegurar la integridad mecánica del devanado y permitir un montaje limpio dentro del efector, se diseñó e imprimió en 3D una carcasa encapsulante, la cual facilita el proceso de bobinado, protege el alambre y permite fijar la bobina de manera estable en la estructura del electroimán. Este encapsulamiento también mejora la manipulabilidad del conjunto y reduce el riesgo de daños por fricción o tensiones mecánicas durante la operación del brazo robótico.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{anexos/Torno/Pieza final.jpg}
-  \caption{Pieza fabricada. Fuente: elaboración própia}
-\end{figure}
-
-
-
-\subsection{Fuente de alimentación}
-
-En lo referente a la electrónica de potencia, se utilizó una fuente ATX de una computadora en desuso para alimentar los motores del sistema. Esta fuente fue seleccionada debido a su capacidad para suministrar líneas estables de 12 V y 5 V, necesarias para los distintos actuadores.
-
-\vspace{1em}
-
-Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, permitiendo un montaje seguro y una mejor organización del cableado dentro del proyecto, la misma se enciende por un interruptor ubicado en la parte delantera de la carcasa.
-
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{anexos/CAD/fuenteAlim.png}
-  \caption{Modelo CAD de fuente de alimentación. Fuente: elaboración própia}
-\end{figure}
-
-
-\subsubsection{Controlador espejo}
-
-Se realiza el diseño del controlador espejo tomando en consideración las tolerancias especuladas. Se elaboran bosquejos y se diseñan partes individuales para verificar calces y encastres, tomando como inspiración el anexo \ref{fig:insp.impreso}.
-
-% TODO: redactar Controlador espejo
-
-% Utilizando una filosofía de materiales híbrida, y luego de varias iteraciones, se llega al siguiente diseño: Un enfoque modular, con una estructura en MDF y con carcazas para protección y estética en PLA. 
-
-% Figura controlador espejo
-
-% Se conectan todos los potenciómetros entre sí y se crean conectores hembra para las entradas de alimentación, y las salidas analógicas y digitales de los potenciómetros y botones respectivamente.
-
-
-\subsection{Código microcontrolador}
-
-% TODO: redactar Código microcontrolador
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{anexos/Codigo/Flujo.png}
-  \caption{Diagrama de flujo del código en C. Fuente: elaboración própia}
-\end{figure}
-
-\subsection{Electrónica de control}
-
-% TODO: Redactar {Electrónica de control}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.7\textwidth]{anexos/circuito/tinkerCAD.png}
-  \caption{Diagrama de conexiones eléctricas. Fuente: elaboración própia}
-\end{figure}
-
-\subsection{}
 
 
 
