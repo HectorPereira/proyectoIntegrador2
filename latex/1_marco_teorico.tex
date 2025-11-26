@@ -80,7 +80,7 @@ Al comparar el MG996R con el SG90 (\cite{oracid_mg996r_test} y \cite{MrProject_s
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{anexos/Servomotores/servos.jpg}
-  \caption{Comparación de tamaños entre servomotores SG90, MG90S y MG996R. Fuente: elaboración própia}\label{fig:zaitronics_servos_image}
+  \caption{Comparación de tamaños entre servomotores SG90, MG90S y MG996R. Fuente: \url{https://ecrobotics.com.bo/producto/servo-motor-mg995r/}}\label{fig:zaitronics_servos_image}
 \end{figure}
 
 
@@ -92,7 +92,7 @@ Otra diferencia clave está en los materiales. El MG996R usa engranajes metálic
 
 \begin{table}[H]
 \centering
-\caption{Matriz de selección entre servos MG996R y SG90}
+\caption{Matriz de selección entre servos MG996R y SG90. Fuente: elaboración propia}
 \begin{tabular}{lccc}
 \toprule
 \textbf{Atributo} & \textbf{Peso} & \textbf{Servo MG996R} & \textbf{Servo SG90} \\
@@ -129,7 +129,7 @@ La comparación cuantitativa se resume en la matriz de selección (véase Tabla~
 
 \begin{table}[H]
 \centering
-\caption{Matriz de selección: MDF vs Impresión 3D vs Híbrido (MDF+PLA)}
+\caption{Matriz de selección: MDF vs Impresión 3D vs Híbrido (MDF+PLA). Fuente: elaboración propia}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Atributo} & \textbf{Peso} & \textbf{MDF} & \textbf{PLA} & \textbf{MDF+PLA} \\
@@ -166,7 +166,7 @@ La comparación cuantitativa se resume en la matriz de selección (véase Tabla~
 
 \begin{table}[H]
 \centering
-\caption{Matriz de selección de fuente de poder}
+\caption{Matriz de selección de fuente de poder. Fuente: elaboración propia}
 \begin{tabular}{lccccc}
 \toprule
 \textbf{Atributo} & \textbf{Peso} & \textbf{PC} & \textbf{LED} & \textbf{Genéricas} & \textbf{Fuente de lab.} \\
@@ -194,15 +194,19 @@ Con base en esa matriz (PC = 139, LED = 116, Genéricas = 102, Fuente de lab. = 
 
 Se consideraron tres controladores para el prototipo: Arduino UNO, Arduino NANO y ESP32. El Arduino UNO fue el más disponible en el taller y es el entorno con el que el equipo ya ha trabajado en otras asignaturas, lo que reduce tiempos de integración y riesgo de bloqueos. Su ecosistema es estable, la documentación y ejemplos son abundantes y la interfaz a 5 V simplifica el manejo de servomotores y periféricos típicos del proyecto (\cite{arduino_uno_rev3_docs}). 
 
+\vspace{1em}
+
 El Arduino NANO ofrece la misma plataforma ATmega328P en un formato más compacto. Mantiene la compatibilidad de librerías, el mapa de pines esencial y el mismo flujo de programación, con la ventaja de ocupar menos espacio en la base del brazo. A cambio, el conector y la disposición de pines pueden resultar menos cómodos en banco y, según versión, la disponibilidad en stock puede ser algo menor que la del UNO (\cite{arduino_nano_specs}).
+
+\vspace{1em}
 
 La ESP32 agrega mayor capacidad de cómputo y conectividad inalámbrica (Wi-Fi/BLE), pero requiere trabajar a 3.3 V lógicos, puede demandar adaptación de niveles para ciertos periféricos, y su curva de aprendizaje es más pronunciada para el equipo. Además, su disponibilidad local y costo por unidad resultan menos favorables en el contexto educativo planteado (\cite{espressif_esp32_series_ds}).
 
-La comparación cuantitativa de estos criterios se presenta en la matriz de selección (véase Tabla~\ref{tab:matriz_micro}).
+La comparación cuantitativa de estos criterios se presenta en la matriz de selección (véase el cuadro~\ref{tab:matriz_micro}).
 
 \begin{table}[H]
 \centering
-\caption{Matriz de selección de microcontrolador}
+\caption{Matriz de selección de microcontrolador. Fuente: elaboración propia}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Atributo} & \textbf{Peso} & \textbf{UNO} & \textbf{NANO} & \textbf{ESP32} \\

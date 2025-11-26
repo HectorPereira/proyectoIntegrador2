@@ -156,7 +156,9 @@ Posteriormente se reemplazaron las superficies de contacto por insertos impresos
 
 Se identifican con verde las superficie de contacto que friccionan contra el perno azúl, las cualés tienen un ajuste deslizante con el perno. En amarillo se muestra la pieza que actúa como tope para el seguro del perno. En el modelo anterior se utilizaba una sola pieza que hacía esta función, pero al utilizar este tope (con un ajuste apretado) permite regular la fuerza de ajuste y juego de la articulación. Luego el seguro que se encuentra entre el tope y el perno, permite montar y desmontar la articulación de manera sencilla.
 
-% TODO:
+\subsubsection{Brazo robótico articulado}
+
+% TODO: Redactar Brazo robótico articulado
 
 % Se incorpora la articulación desmontable en los eslabones hombro y muñeca
 
@@ -197,15 +199,24 @@ Para asegurar la integridad mecánica del devanado y permitir un montaje limpio 
 \subsection{Fuente de alimentación}
 
 En lo referente a la electrónica de potencia, se utilizó una fuente ATX de una computadora en desuso para alimentar los motores del sistema. Esta fuente fue seleccionada debido a su capacidad para suministrar líneas estables de 12 V y 5 V, necesarias para los distintos actuadores.
+
+\vspace{1em}
+
 Además, se diseñó e imprimió una carcasa para alojar y proteger la fuente, permitiendo un montaje seguro y una mejor organización del cableado dentro del proyecto, la misma se enciende por un interruptor ubicado en la parte delantera de la carcasa.
 
-% TODO: Figura de fuente de alimentacion
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/CAD/fuenteAlim.png}
+  \caption{Modelo CAD de fuente de alimentación. Fuente: elaboración própia}
+\end{figure}
+
 
 \subsubsection{Controlador espejo}
 
 Se realiza el diseño del controlador espejo tomando en consideración las tolerancias especuladas. Se elaboran bosquejos y se diseñan partes individuales para verificar calces y encastres, tomando como inspiración el anexo \ref{fig:insp.impreso}.
 
-% TODO: 
+% TODO: redactar Controlador espejo
 
 % Utilizando una filosofía de materiales híbrida, y luego de varias iteraciones, se llega al siguiente diseño: Un enfoque modular, con una estructura en MDF y con carcazas para protección y estética en PLA. 
 
@@ -216,13 +227,17 @@ Se realiza el diseño del controlador espejo tomando en consideración las toler
 
 \subsection{Código microcontrolador}
 
-% TODO: 
+% TODO: redactar Código microcontrolador
 
-% Diagrama de flujo del código
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{anexos/Codigo/Flujo.png}
+  \caption{Diagrama de flujo del código en C. Fuente: elaboración própia}
+\end{figure}
 
 \subsection{Electrónica de control}
 
-% Diagrama electrónica de control (TinkerCAD)
+% TODO: Redactar {Electrónica de control}
 
 \begin{figure}[H]
   \centering
