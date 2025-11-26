@@ -243,6 +243,13 @@ Se definieron dos modos principales de operación:
 
 La selección del modo se gestiona mediante la lógica interna del firmware, asegurando transiciones progresivas sin interrupciones bruscas. El envío regulado de comandos desde la interfaz gráfica se describe en el Anexo~\ref{gui:rate_limiter}.
 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{anexos/software/VentanaAppFinal.png}
+  \caption{Captura de la interfaz gráfica implementada en Python. Fuente: elaboración própia}
+\end{figure}
+
 \subsubsection{Procedimiento de grabación y reproducción de trayectorias}
 
 Se implementó un sistema de muestreo periódico de los ángulos articulares para registrar secuencias de movimiento. Las trayectorias se almacenan en estructuras ordenadas que conservan tanto los valores angulares como el intervalo de muestreo. El mecanismo de registro se presenta en el Anexo~\ref{gui:logger}, mientras que el algoritmo de reproducción —incluyendo el prealineado suave— se detalla en los Anexos~\ref{gui:smooth_playback} y~\ref{gui:playback_step}. Este método permite replicar movimientos de manera consistente respetando la cadencia temporal original.
